@@ -21,4 +21,4 @@ jobs:
           # You can target a project in a different organization
           # to the issue
           project-url: https://github.com/orgs/ZipCodeCore/projects/3
-          github-token: ${{ secrets.GH_ZCW_SVC_ACCOUNT_PAT }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
