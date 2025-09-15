@@ -11,6 +11,11 @@ on:
       - opened
       - reopened
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
   add-to-project:
     name: Add issue to project
