@@ -1,20 +1,23 @@
 package com.hire_me.Ping.notifications.service;
 
-import com.hire_me.Ping.notifications.dto.NotificationResponse;
-import com.hire_me.Ping.notifications.entity.Notification;
-import com.hire_me.Ping.notifications.entity.NotificationStatus;
-import com.hire_me.Ping.notifications.entity.NotificationType;
-import com.hire_me.Ping.notifications.mapper.NotificationMapper;
-import com.hire_me.Ping.notifications.repository.NotificationRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import com.hire_me.Ping.notifications.dto.NotificationResponse;
+import com.hire_me.Ping.notifications.entity.Notification;
+import com.hire_me.Ping.notifications.entity.NotificationType;
+import com.hire_me.Ping.notifications.mapper.NotificationMapper;
+import com.hire_me.Ping.notifications.repository.NotificationRepository;
 
 class NotificationQueryServiceTest {
 
