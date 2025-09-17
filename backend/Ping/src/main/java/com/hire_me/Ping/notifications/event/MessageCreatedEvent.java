@@ -1,14 +1,18 @@
 package com.hire_me.Ping.notifications.event;
-
 import java.util.UUID;
+import com.hire_me.Ping.notifications.entity.NotificationType;
 
 /**
- * Placeholder domain event representing a new message created.
- * Extend with fields and publish as needed in your app.
+ * Application event fired when a new message is created.
+ * Carries enough context to build a notification.
  */
-public class MessageCreatedEvent {
-    private final UUID messageId;
+public record MessageCreatedEvent(
+        UUID actorUserId,
+        UUID recipientUserId,
+        UUID directConversationId,
+        UUID channelId,
+        UUID messageId,
+        NotificationType type,
+        String text
+) {}
 
-    public MessageCreatedEvent(UUID messageId) { this.messageId = messageId; }
-    public UUID getMessageId() { return messageId; }
-}
