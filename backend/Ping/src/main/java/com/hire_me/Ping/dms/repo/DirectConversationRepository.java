@@ -36,7 +36,7 @@ public interface DirectConversationRepository extends JpaRepository<DirectConver
     @Query("select c from DirectConversation c where c.isGroup = false and c.id in (" +
             " select dp.conversationId from DirectParticipant dp " +
             " where dp.userId in (:u1, :u2) and dp.leftAt is null " +
-            " group by dp.conversationId having count(distinct dp.userId) = 2")
+            " group by dp.conversationId having count(distinct dp.userId) = 2)")
     Optional<DirectConversation> findDirectBetween(@Param("u1") Long user1, @Param("u2") Long user2);
     // This query tries to find a one-on-one (non-group) DM between two specific users.
     // - c.isGroup = false ensures it’s not a group chat.
