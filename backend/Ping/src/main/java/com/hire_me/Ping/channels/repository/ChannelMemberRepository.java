@@ -18,7 +18,7 @@ public interface ChannelMemberRepository extends JpaRepository<ChannelMember, UU
      * @param userId The ID of the user.
      * @return An Optional containing the ChannelMember if found.
      */
-    Optional<ChannelMember> findByChannelIdAndUserId(UUID channelId, UUID userId);
+    Optional<ChannelMember> findByChannelIdAndUserId(Long channelId, UUID userId);
 
     /**
      * Retrieves all members for a given channel ID.
