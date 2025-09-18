@@ -18,8 +18,18 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 // Allow public access to Swagger UI and API docs
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                // Allow public access to H2 console
+                .requestMatchers("/h2-console/**").permitAll()
                 // All other requests must be authenticated
                 .anyRequest().authenticated()
+            )
+            // Disable CSRF for H2 console
+            .csrf(csrf -> csrf
+                .ignoringRequestMatchers("/h2-console/**")
+            )
+            // Allow H2 console to be displayed in frames
+            .headers(headers -> headers
+                .frameOptions().sameOrigin()
             )
             // Use default form login for other protected endpoints
             .formLogin(withDefaults());
