@@ -3,7 +3,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import org.springframework.stereotype.Service;
+// Note: This class intentionally has no Spring stereotype annotation.
+// It is pure policy and can be wired by a configuration when ready.
 
 /**
  * Concrete implementation of NotificationRules.
@@ -19,7 +20,6 @@ import org.springframework.stereotype.Service;
  * For now, those dependencies are shown as interfaces you would implement
  * elsewhere in your app. You can swap them for your real services.
  */
-@Service
 public class NotificationRulesImpl implements NotificationRules {
 
     // ---- Dependencies on other domains (define/implement these in your app) ----
