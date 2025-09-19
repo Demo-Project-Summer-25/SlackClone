@@ -1,0 +1,22 @@
+import { Link } from 'react-router-dom';
+
+const Sidebar: React.FC = () => {
+  return (
+    <nav className="sidebar">
+      {/* ... other nav items */}
+      
+      <div className="nav-section">
+        <h3>Management</h3>
+        <Link to="/users" className="nav-link">
+         Users
+        </Link>
+        <Link to="/bots" className="nav-link">
+         AI Bots
+        </Link>
+        <Link to="/profile" className="nav-link">
+         My Profile
+        </Link>
+      </div>
+    </nav>
+  );
+};
