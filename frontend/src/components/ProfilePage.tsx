@@ -1,48 +1,56 @@
-import { useState } from "react";
+// frontend/src/components/ProfilePage.tsx
+import { useEffect, useState } from "react";
 import { 
-  X, 
-  Edit, 
-  Phone, 
-  Mail, 
-  Calendar,
-  MapPin,
-  Clock,
-  Users,
-  Activity,
-  Settings,
-  Shield,
-  Palette,
-  Keyboard,
-  LogOut,
-  Bell
+  X, Edit, Phone, Mail, MapPin, Clock, LogOut 
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Badge } from "./ui/badge";
-import { Separator } from "./ui/separator";
-import { Avatar, AvatarFallback } from "./ui/avatar";
-import { Input } from "./ui/input";
 import { Label } from "./ui/label";
+import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
-import { Switch } from "./ui/switch";
+import { Avatar, AvatarFallback } from "./ui/avatar";
+import { Badge } from "./ui/badge";
+import { useAuth } from "../hooks/useAuth";
 
 interface ProfilePageProps {
   onClose: () => void;
 }
 
 export function ProfilePage({ onClose }: ProfilePageProps) {
+  const { currentUser, isLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [userStatus, setUserStatus] = useState<"online" | "away" | "offline">("online");
-  
+
+  // Local editable state
   const [profile, setProfile] = useState({
-    displayName: "Mock",
+    displayName: "",
     title: "Junior Software Developer",
-    email: "Mock@gmail.com",
-    phone: "+1 (555) 123-4567",
+    email: "",
+    phone: "",
     location: "Wilmington, Delaware",
+    timezone: "EST",
     bio: "Hire me!",
     pronouns: "she/her"
   });
+
+  // Sync with currentUser when loaded
+  useEffect(() => {
+    if (currentUser) {
+      setProfile({
+        displayName: currentUser.displayName || currentUser.username,
+        title: "Junior Software Developer",
+        email: currentUser.email || "user@example.com",
+        phone: currentUser.phone || "+1 (555) 123-4567",
+        location: "Wilmington, Delaware",
+        timezone: "EST",
+        bio: "Hire me!",
+        pronouns: "she/her"
+      });
+    }
+  }, [currentUser]);
+
+  if (isLoading) return <div className="p-4">Loading...</div>;
+  if (!currentUser) return <div className="p-4">No profile found</div>;
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -55,7 +63,7 @@ export function ProfilePage({ onClose }: ProfilePageProps) {
 
   const handleSave = () => {
     setIsEditing(false);
-    // In a real app, this would save to the backend
+    // 🚀 TODO: send profile updates to backend
   };
 
   return (
@@ -89,14 +97,14 @@ export function ProfilePage({ onClose }: ProfilePageProps) {
 
       <div className="flex-1 overflow-auto">
         <div className="max-w-4xl mx-auto p-6 space-y-6">
-          {/* Profile Header Card */}
+          {/* Profile Header */}
           <Card>
             <CardContent className="p-6">
               <div className="flex items-start gap-6">
                 <div className="relative">
                   <Avatar className="w-24 h-24">
                     <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                      {profile.displayName.split(' ').map(n => n[0]).join('')}
+                      {profile.displayName.split(" ").map(n => n[0]).join("")}
                     </AvatarFallback>
                   </Avatar>
                   <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full border-4 border-background ${getStatusColor(userStatus)}`} />
@@ -156,6 +164,16 @@ export function ProfilePage({ onClose }: ProfilePageProps) {
                           Change Status
                         </Button>
                       </div>
+                      <div className="mt-2">
+                        <Badge
+                          variant={currentUser.accountStatus === "ACTIVE" ? "default" : "destructive"}
+                        >
+                          {currentUser.accountStatus}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Member since {new Date(currentUser.createdTimestamp).toLocaleDateString()}
+                        </p>
+                      </div>
                     </>
                   )}
                 </div>
@@ -168,7 +186,7 @@ export function ProfilePage({ onClose }: ProfilePageProps) {
             <CardHeader>
               <CardTitle>About</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent>
               {isEditing ? (
                 <div>
                   <Label htmlFor="bio">Bio</Label>
@@ -185,7 +203,7 @@ export function ProfilePage({ onClose }: ProfilePageProps) {
             </CardContent>
           </Card>
 
-          {/* Contact Information */}
+          {/* Contact Section */}
           <Card>
             <CardHeader>
               <CardTitle>Contact Information</CardTitle>
@@ -265,27 +283,26 @@ export function ProfilePage({ onClose }: ProfilePageProps) {
             </CardContent>
           </Card>
 
-          {/* Quick Actions */}
+          {/* Sign Out */}
           {!isEditing && (
-            <>
-              {/* Sign Out Section */}
-              <Card className="border-destructive/20">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <LogOut className="w-5 h-5 text-destructive" />
-                      <div>
-                        <p className="text-sm font-medium">Sign Out</p>
-                        <p className="text-xs text-muted-foreground">Log out of your Ping account</p>
-                      </div>
+            <Card className="border-destructive/20">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <LogOut className="w-5 h-5 text-destructive" />
+                    <div>
+                      <p className="text-sm font-medium">Sign Out</p>
+                      <p className="text-xs text-muted-foreground">
+                        Log out of your Ping account
+                      </p>
                     </div>
-                    <Button variant="destructive" size="sm">
-                      Sign Out
-                    </Button>
                   </div>
-                </CardContent>
-              </Card>
-            </>
+                  <Button variant="destructive" size="sm">
+                    Sign Out
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>

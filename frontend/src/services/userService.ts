@@ -9,11 +9,11 @@ export class UserService {
 
   // GET /api/users/
   static async getAllUsers(): Promise<User[]> {
-    return ApiService.get<User[]>(`/users`);
+    return ApiService.get<User[]>(`users`);
   }
 
   // PUT /api/users/{id}
   static async updateUser(id: string, updates: UserUpdateRequest): Promise<User> {
-    return ApiService.put<User>(`/users/${id}`, updates);
+    return ApiService.put<User>(`users/${id}`, updates);
   }
 }

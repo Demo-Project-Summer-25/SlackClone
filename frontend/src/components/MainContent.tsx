@@ -1,10 +1,23 @@
-import { Terminal, Folder, MessageCircle, User, Bell, Hash, Lock, Users, Settings, Shield, Palette, Keyboard, LogOut } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+// frontend/src/components/MainContent.tsx
+import {
+  Terminal,
+  Folder,
+  MessageCircle,
+  User,
+  Bell,
+  Hash,
+  Lock,
+  Settings,
+  Shield,
+  LogOut,
+} from "lucide-react";
+import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { DirectoryView } from "./DirectoryView";
 import { ProfilePage } from "./ProfilePage";
 import { useEffect, useState } from "react";
+import { useAuth } from "../hooks/useAuth"; // ✅ Auth hook
 
 interface MainContentProps {
   activeTab: string;
@@ -15,7 +28,12 @@ interface MainContentProps {
     memberCount: number;
     isPrivate: boolean;
   } | null;
-  onOpenDirectory?: (directory: { name: string; description: string; memberCount: number; isPrivate: boolean; }) => void;
+  onOpenDirectory?: (directory: {
+    name: string;
+    description: string;
+    memberCount: number;
+    isPrivate: boolean;
+  }) => void;
   onCloseDirectory?: () => void;
   showProfilePage?: boolean;
   onOpenProfilePage?: () => void;
@@ -30,19 +48,18 @@ export function MainContent({
   onCloseDirectory,
   showProfilePage,
   onOpenProfilePage,
-  onCloseProfilePage
+  onCloseProfilePage,
 }: MainContentProps) {
-  // Backend data states
+  const { currentUser, isLoading } = useAuth(); // ✅ real user
   const [directories, setDirectories] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  // Fetch directories and notifications (remove dms fetch since that's in DmPage)
+  // Fetch directories and notifications
   useEffect(() => {
     fetch("/api/channels")
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(setDirectories)
-      .catch(() => { 
-        // Mock data for directories if API fails
+      .catch(() => {
         setDirectories([
           {
             id: 1,
@@ -50,7 +67,7 @@ export function MainContent({
             description: "General team discussions",
             memberCount: 12,
             isPrivate: false,
-            unread: 3
+            unread: 3,
           },
           {
             id: 2,
@@ -58,7 +75,7 @@ export function MainContent({
             description: "Development team discussions",
             memberCount: 8,
             isPrivate: false,
-            unread: 0
+            unread: 0,
           },
           {
             id: 3,
@@ -66,93 +83,43 @@ export function MainContent({
             description: "Design team discussions",
             memberCount: 5,
             isPrivate: true,
-            unread: 1
-          }
+            unread: 1,
+          },
         ]);
       });
-    
+
     fetch("/api/notifications")
-      .then(res => res.json())
+      .then((res) => res.json())
       .then(setNotifications)
       .catch(() => {
-        // Mock notifications if API fails
         setNotifications([
           {
             id: 1,
             message: "John mentioned you in #general",
             time: "2 minutes ago",
-            unread: true
+            unread: true,
           },
           {
             id: 2,
             message: "New message in #development",
             time: "10 minutes ago",
-            unread: false
-          }
+            unread: false,
+          },
         ]);
       });
   }, []);
 
-  // If we're showing the profile page, show the profile interface
+  // If we're showing the full profile page
   if (showProfilePage && onCloseProfilePage) {
     return <ProfilePage onClose={onCloseProfilePage} />;
   }
 
-  // If we're in a directory, show the directory interface
+  // If we're in a directory view
   if (activeDirectory && onCloseDirectory) {
-    return <DirectoryView directory={activeDirectory} onBack={onCloseDirectory} />;
+    return (
+      <DirectoryView directory={activeDirectory} onBack={onCloseDirectory} />
+    );
   }
-
-  const renderTerminals = () => (
-    <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl mb-2">Channels</h2>
-        <p className="text-muted-foreground">Team channels and discussions</p>
-      </div>
-
-      <div className="space-y-3">
-        {/* Zip Code Channel - Active */}
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                  <Hash className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium">Zip Code</h4>
-                  <p className="text-xs text-muted-foreground">Main development channel</p>
-                </div>
-              </div>
-              <Badge variant="default" className="bg-green-500">
-                Active
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Mock Channel - Inactive */}
-        <Card className="border-gray-200 bg-gray-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-400 rounded-lg flex items-center justify-center">
-                  <Hash className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium">Mock Channel</h4>
-                  <p className="text-xs text-muted-foreground">Test channel for development</p>
-                </div>
-              </div>
-              <Badge variant="secondary" className="bg-gray-400">
-                Inactive
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
 
   const renderDirectories = () => (
     <div className="p-4 sm:p-6">
@@ -165,12 +132,14 @@ export function MainContent({
           <div
             key={directory.id || directory.name}
             className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors cursor-pointer"
-            onClick={() => onOpenDirectory?.({
-              name: directory.name,
-              description: directory.description,
-              memberCount: directory.memberCount,
-              isPrivate: directory.isPrivate
-            })}
+            onClick={() =>
+              onOpenDirectory?.({
+                name: directory.name,
+                description: directory.description,
+                memberCount: directory.memberCount,
+                isPrivate: directory.isPrivate,
+              })
+            }
           >
             {directory.isPrivate ? (
               <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -179,14 +148,21 @@ export function MainContent({
             )}
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm truncate">{directory.name}</span>
+                <span className="text-xs sm:text-sm truncate">
+                  {directory.name}
+                </span>
                 {directory.unread > 0 && (
-                  <Badge variant="destructive" className="text-xs px-1.5 py-0 shrink-0">
+                  <Badge
+                    variant="destructive"
+                    className="text-xs px-1.5 py-0 shrink-0"
+                  >
                     {directory.unread}
                   </Badge>
                 )}
               </div>
-              <p className="text-xs text-muted-foreground truncate">{directory.description}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {directory.description}
+              </p>
             </div>
           </div>
         ))}
@@ -194,93 +170,131 @@ export function MainContent({
     </div>
   );
 
-  const renderProfile = () => (
-    <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl mb-2">Profile</h2>
-        <p className="text-muted-foreground">Manage your account and preferences</p>
-      </div>
+  const renderProfile = () => {
+    if (isLoading) {
+      return <div className="p-4">Loading...</div>;
+    }
+    if (!currentUser) {
+      return <div className="p-4">No profile found</div>;
+    }
 
-      {/* Profile Header */}
-      <Card className="mb-6 cursor-pointer hover:shadow-md transition-shadow" onClick={onOpenProfilePage}>
-        <CardContent className="p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-primary-foreground text-xl">JD</span>
-            </div>
-            <div className="flex-1">
-              <h3 className="text-lg">Mock Name</h3>
-              <p className="text-muted-foreground">Mock@ping.dev</p>
-              <Badge variant="outline" className="mt-2">Junior Developer</Badge>
-            </div>
-            <div className="text-muted-foreground">
-              <span className="text-sm">Click to view profile</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+    return (
+      <div className="p-4 sm:p-6">
+        <div className="mb-6">
+          <h2 className="text-2xl mb-2">Profile</h2>
+          <p className="text-muted-foreground">
+            Manage your account and preferences
+          </p>
+        </div>
 
-      {/* Profile Sections */}
-      <div className="space-y-3">
-        {[
-          {
-            icon: Settings,
-            title: "Account Settings",
-            description: "Update your personal information and account preferences",
-            action: "Edit Profile"
-          },
-          {
-            icon: Shield,
-            title: "Privacy & Security",
-            description: "Security settings and privacy controls",
-            action: "Manage"
-          },
-        ].map((item) => {
-          const Icon = item.icon;
-          return (
-            <Card key={item.title} className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
-                      <Icon className="w-5 h-5 text-accent-foreground" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium">{item.title}</h4>
-                      <p className="text-xs text-muted-foreground">{item.description}</p>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className="text-xs">{item.action}</Badge>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-
-      {/* Logout Section */}
-      <div className="mt-6">
-        <Card className="border-destructive/20">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
-                  <LogOut className="w-5 h-5 text-destructive" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium">Sign Out</h4>
-                  <p className="text-xs text-muted-foreground">Log out of your Ping account</p>
-                </div>
+        {/* Profile Header */}
+        <Card
+          className="mb-6 cursor-pointer hover:shadow-md transition-shadow"
+          onClick={onOpenProfilePage}
+        >
+          <CardContent className="p-6">
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
+                <span className="text-primary-foreground text-xl">
+                  {currentUser.displayName?.[0] ||
+                    currentUser.username[0].toUpperCase()}
+                </span>
               </div>
-              <Button variant="destructive" size="sm">
-                Log Out
-              </Button>
+              <div className="flex-1">
+                <h3 className="text-lg">
+                  {currentUser.displayName || currentUser.username}
+                </h3>
+                <p className="text-muted-foreground">@{currentUser.username}</p>
+                <Badge
+                  variant={
+                    currentUser.accountStatus === "ACTIVE"
+                      ? "default"
+                      : "destructive"
+                  }
+                  className="mt-2"
+                >
+                  {currentUser.accountStatus}
+                </Badge>
+              </div>
+              <div className="text-muted-foreground">
+                <span className="text-sm">Click to view profile</span>
+              </div>
             </div>
           </CardContent>
         </Card>
+
+        {/* Profile Sections */}
+        <div className="space-y-3">
+          {[
+            {
+              icon: Settings,
+              title: "Account Settings",
+              description:
+                "Update your personal information and account preferences",
+              action: "Edit Profile",
+            },
+            {
+              icon: Shield,
+              title: "Privacy & Security",
+              description: "Security settings and privacy controls",
+              action: "Manage",
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <Card
+                key={item.title}
+                className="hover:shadow-md transition-shadow cursor-pointer"
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
+                        <Icon className="w-5 h-5 text-accent-foreground" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-medium">{item.title}</h4>
+                        <p className="text-xs text-muted-foreground">
+                          {item.description}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      {item.action}
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Logout Section */}
+        <div className="mt-6">
+          <Card className="border-destructive/20">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
+                    <LogOut className="w-5 h-5 text-destructive" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-medium">Sign Out</h4>
+                    <p className="text-xs text-muted-foreground">
+                      Log out of your Ping account
+                    </p>
+                  </div>
+                </div>
+                <Button variant="destructive" size="sm">
+                  Log Out
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderNotifications = () => (
     <div className="p-4 sm:p-6">
@@ -293,13 +307,18 @@ export function MainContent({
         {notifications.map((notification, index) => (
           <div
             key={notification.id || index}
-            className={`p-3 rounded-lg border transition-colors ${notification.unread ? "bg-accent/50 border-accent" : "bg-card border-border"
-              }`}
+            className={`p-3 rounded-lg border transition-colors ${
+              notification.unread
+                ? "bg-accent/50 border-accent"
+                : "bg-card border-border"
+            }`}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
                 <p className="text-xs sm:text-sm">{notification.message}</p>
-                <p className="text-xs text-muted-foreground mt-1">{notification.time}</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {notification.time}
+                </p>
               </div>
               {notification.unread && (
                 <div className="w-2 h-2 bg-primary rounded-full mt-1 shrink-0" />
@@ -312,8 +331,6 @@ export function MainContent({
   );
 
   switch (activeTab) {
-    case "terminals":
-      return renderTerminals();
     case "directories":
       return renderDirectories();
     case "profile":
@@ -321,6 +338,6 @@ export function MainContent({
     case "notifications":
       return renderNotifications();
     default:
-      return renderDirectories(); // Default to directories instead of terminals
+      return renderDirectories(); // default fallback
   }
 }
