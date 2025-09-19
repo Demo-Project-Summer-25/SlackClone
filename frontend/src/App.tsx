@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState } from "react";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { TopNavigation } from "./components/TopNavigation";
 import { DeveloperSidebar } from "./components/DeveloperSidebar";
 import { MainContent } from "./components/MainContent";
@@ -8,6 +9,7 @@ import { Button } from "./components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "./components/ui/resizable";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
+import { CanvasPage } from './components/Canvas/CanvasPage';
 import { 
   X, 
   Terminal, 
@@ -242,8 +244,16 @@ function AppContent() {
   );
 }
 
+// ✅ FIX: Proper Router structure
 export default function App() {
   return (
+    <ThemeProvider defaultTheme="system" storageKey="ping-theme">
+      <Router>
+        <Routes>
+          <Route path="/canvas" element={<CanvasPage />} />
+          <Route path="/*" element={<AppContent />} />
+        </Routes>
+      </Router>
     <ThemeProvider>
       <AppContent />
     </ThemeProvider>
