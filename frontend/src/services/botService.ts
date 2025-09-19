@@ -16,11 +16,11 @@ class BotService {
     });
   }
 
-  // POST /api/bots
+  // POST /api/bots/users/{userId}  (not /api/bots)
   async createBot(userId: string, request: BotCreateRequest): Promise<Bot> {
-    const response = await this.fetchWithAuth('/api/bots', {
+    const response = await this.fetchWithAuth(`/api/bots/users/${userId}`, {
       method: 'POST',
-      body: JSON.stringify({ ...request, userId }),
+      body: JSON.stringify(request),
     });
     
     if (!response.ok) {
@@ -41,9 +41,9 @@ class BotService {
     return response.json();
   }
 
-  // GET /api/users/{userId}/bots
+  // GET /api/bots/users/{userId}  (not /api/users/{userId}/bots)
   async getUserBots(userId: string): Promise<Bot[]> {
-    const response = await this.fetchWithAuth(`/api/users/${userId}/bots`);
+    const response = await this.fetchWithAuth(`/api/bots/users/${userId}`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch user bots: ${response.statusText}`);
@@ -52,9 +52,9 @@ class BotService {
     return response.json();
   }
 
-  // GET /api/users/{userId}/bots?active=true (assuming backend supports query param)
+  // GET /api/bots/users/{userId}/active
   async getUserActiveBots(userId: string): Promise<Bot[]> {
-    const response = await this.fetchWithAuth(`/api/users/${userId}/bots?active=true`);
+    const response = await this.fetchWithAuth(`/api/bots/users/${userId}/active`);
     
     if (!response.ok) {
       throw new Error(`Failed to fetch active bots: ${response.statusText}`);
