@@ -18,6 +18,7 @@ import {
   Edit,
   Layout
 } from "lucide-react";
+import { CanvasPage } from './Canvas/CanvasPage';
 
 interface DeveloperToolsContentProps {
   activeTool: string;
@@ -560,6 +561,10 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
       return renderAI();
     case "calendar":
       return renderCalendar();
+    case "ide":
+      return renderIDE();
+    case "canvas":
+      return <CanvasPage />;
     default:
       return (
         <div className="p-6 text-center">
