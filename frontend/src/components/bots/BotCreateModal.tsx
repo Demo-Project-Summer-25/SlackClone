@@ -9,12 +9,10 @@ interface BotCreateModalProps {
 const BotCreateModal: React.FC<BotCreateModalProps> = ({ onCreate, onClose }) => {
   const [formData, setFormData] = useState<BotCreateRequest>({
     name: '',
-    botType: 'CHAT_GPT',
+    botType: 'CLAUDE_SONNET',
     description: '',
-    avatarUrl: '',
     apiKey: '',
-    webhookUrl: '',
-    configurationJson: ''
+    configuration: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -37,7 +35,7 @@ const BotCreateModal: React.FC<BotCreateModalProps> = ({ onCreate, onClose }) =>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Create New Bot</h2>
-          <button onClick={onClose}>✕</button>
+          <button onClick={onClose}>×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="bot-form">
@@ -59,11 +57,10 @@ const BotCreateModal: React.FC<BotCreateModalProps> = ({ onCreate, onClose }) =>
               onChange={(e) => setFormData({ ...formData, botType: e.target.value as any })}
               required
             >
-              <option value="CHAT_GPT">ChatGPT</option>
-              <option value="CLAUDE">Claude</option>
-              <option value="GEMINI">Gemini</option>
-              <option value="CUSTOM">Custom</option>
-              <option value="WEBHOOK">Webhook</option>
+              <option value="CLAUDE_SONNET">Claude Sonnet</option>
+              <option value="CLAUDE_HAIKU">Claude Haiku</option> 
+              <option value="CLAUDE_OPUS">Claude Opus</option>
+              <option value="CUSTOM">Custom AI</option>
             </select>
           </div>
 
@@ -74,16 +71,6 @@ const BotCreateModal: React.FC<BotCreateModalProps> = ({ onCreate, onClose }) =>
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
               placeholder="What does this bot do?"
               rows={3}
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Avatar URL</label>
-            <input
-              type="url"
-              value={formData.avatarUrl}
-              onChange={(e) => setFormData({ ...formData, avatarUrl: e.target.value })}
-              placeholder="https://example.com/avatar.png"
             />
           </div>
 

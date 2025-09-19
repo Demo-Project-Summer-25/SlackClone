@@ -28,7 +28,7 @@ public class KanbanBoardController {
     }
 
     @GetMapping("/{boardId}")
-    public ResponseEntity<BoardResponse> getBoard(@PathVariable Long boardId) {
+    public ResponseEntity<BoardResponse> getBoard(@PathVariable UUID boardId) {
         return ResponseEntity.ok(boardService.get(boardId));
     }
 
@@ -38,7 +38,7 @@ public class KanbanBoardController {
     }
 
     @DeleteMapping("/{boardId}")
-    public ResponseEntity<Void> deleteBoard(@PathVariable Long boardId) {
+    public ResponseEntity<Void> deleteBoard(@PathVariable UUID boardId) {
         boardService.delete(boardId);
         return ResponseEntity.noContent().build();
     }

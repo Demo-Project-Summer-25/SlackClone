@@ -13,8 +13,9 @@ import java.util.UUID;
 public class KanbanBoard {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "uuid")
+    private UUID id;
 
     @Column(nullable = false, length = 140)
     private String name;
@@ -46,11 +47,11 @@ public class KanbanBoard {
         updatedAt = Instant.now();
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

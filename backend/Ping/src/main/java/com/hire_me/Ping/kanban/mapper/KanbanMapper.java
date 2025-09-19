@@ -114,7 +114,7 @@ public class KanbanMapper {
 
         List<BoardResponse.Column> columnResponses = board.getColumns().stream()
                 .sorted(Comparator.comparing(BoardColumn::getPosition, Comparator.nullsLast(Integer::compareTo))
-                        .thenComparing(BoardColumn::getId, Comparator.nullsLast(Long::compareTo)))
+                        .thenComparing(BoardColumn::getId, Comparator.nullsLast(UUID::compareTo)))
                 .map(column -> {
                     BoardResponse.Column colDto = new BoardResponse.Column();
                     colDto.setId(column.getId());
@@ -125,7 +125,7 @@ public class KanbanMapper {
 
                     List<CardResponse> cards = column.getCards().stream()
                             .sorted(Comparator.comparing(Card::getPosition, Comparator.nullsLast(Integer::compareTo))
-                                    .thenComparing(Card::getId, Comparator.nullsLast(Long::compareTo)))
+                                    .thenComparing(Card::getId, Comparator.nullsLast(UUID::compareTo)))
                             .map(this::toCardResponse)
                             .collect(Collectors.toList());
                     colDto.setCards(cards);

@@ -58,14 +58,21 @@ const BotManagement: React.FC<BotManagementProps> = ({ userId }) => {
       </div>
 
       <div className="bot-types-overview">
-        <h3>Bot Types Overview</h3>
+        <h3>AI Models Overview</h3>
         <div className="bot-type-stats">
-          {['CHAT_GPT', 'CLAUDE', 'GEMINI', 'CUSTOM', 'WEBHOOK'].map(type => {
+          {['CLAUDE_SONNET', 'CLAUDE_HAIKU', 'CLAUDE_OPUS', 'CUSTOM'].map(type => {
             const count = bots.filter(bot => bot.botType === type).length;
+            const displayName = {
+              'CLAUDE_SONNET': 'Claude Sonnet',
+              'CLAUDE_HAIKU': 'Claude Haiku', 
+              'CLAUDE_OPUS': 'Claude Opus',
+              'CUSTOM': 'Custom'
+            }[type];
+            
             return (
               <div key={type} className="bot-type-stat">
                 <span className={`bot-type-badge ${type.toLowerCase()}`}>
-                  {type.replace('_', ' ')}
+                  {displayName}
                 </span>
                 <span className="count">{count}</span>
               </div>

@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "board_column", indexes = {
@@ -13,15 +14,13 @@ import java.util.List;
 public class BoardColumn {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "uuid")
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "board_id", nullable = false)
+    @JoinColumn(name = "board_id", nullable = false, columnDefinition = "uuid")
     private KanbanBoard board;
-
-    @Column(name = "board_id", insertable = false, updatable = false)
-    private Long boardId;
 
     @Column(name = "position_order", nullable = false)
     private Integer position = 0;
@@ -50,11 +49,11 @@ public class BoardColumn {
         updatedAt = Instant.now();
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -66,8 +65,8 @@ public class BoardColumn {
         this.board = board;
     }
 
-    public Long getBoardId() {
-        return boardId;
+    public UUID getBoardId() {
+        return board != null ? board.getId() : null;
     }
 
     public Integer getPosition() {

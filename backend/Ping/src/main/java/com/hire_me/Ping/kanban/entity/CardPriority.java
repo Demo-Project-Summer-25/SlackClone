@@ -1,6 +1,7 @@
 package com.hire_me.Ping.kanban.entity;
 
 import jakarta.persistence.*;
+import java.util.UUID;
 
 @Entity
 @Table(name = "card_priority", uniqueConstraints = {
@@ -9,8 +10,9 @@ import jakarta.persistence.*;
 public class CardPriority {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "uuid")
+    private UUID id;
 
     @Column(name = "priority_key", nullable = false, length = 32)
     private String key;
@@ -24,11 +26,11 @@ public class CardPriority {
     @Column(name = "color_hex", length = 8)
     private String colorHex;
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 

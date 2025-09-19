@@ -34,10 +34,10 @@ const BotCard: React.FC<BotCardProps> = ({ bot, onUpdate, onDelete }) => {
   };
 
   return (
-    <div className={`bot-card ${bot.isActive ? 'active' : 'inactive'}`}>
+    <div className={`bot-card ${bot.status === 'ACTIVE' ? 'active' : 'inactive'}`}>
       <div className="bot-header">
         <img 
-          src={bot.avatarUrl || '/default-bot-avatar.png'} 
+          src="/default-bot-avatar.png" 
           alt={bot.name}
           className="bot-avatar"
         />
@@ -66,7 +66,7 @@ const BotCard: React.FC<BotCardProps> = ({ bot, onUpdate, onDelete }) => {
         <label className="toggle-switch">
           <input
             type="checkbox"
-            checked={bot.isActive}
+            checked={bot.status === 'ACTIVE'}
             onChange={handleToggleActive}
           />
           <span className="slider"></span>
