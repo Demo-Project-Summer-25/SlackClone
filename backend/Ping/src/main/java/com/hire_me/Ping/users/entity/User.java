@@ -60,45 +60,96 @@ public class User {
     @Enumerated(EnumType.STRING)
     private AccountStatus accountStatus = AccountStatus.ACTIVE;
 
-    public User() {}
+    @Column(nullable = false)
+    private String password;
 
-    public User(UUID id, String username, String email, String displayName, String profileUrl){
-                    this.id = id;
-                    this.username = username;
-                    this.email = email;
-                    this.displayName = displayName;
-                    this.profileUrl = profileUrl;
-                    this.accountStatus = AccountStatus.ACTIVE;
+    public User() {
     }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
+    public User(UUID id, String username, String email, String displayName, String profileUrl) {
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.displayName = displayName;
+        this.profileUrl = profileUrl;
+        this.accountStatus = AccountStatus.ACTIVE;
+    }
 
-    public String getUsername() {return username; }
-    public void setUsername(String username) { this.username = username; }
+    public UUID getId() {
+        return id;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public void setId(UUID id) {
+        this.id = id;
+    }
 
-    public String getDisplayName() { return displayName; }
-    public void setDisplayName(String displayName) { this.displayName = displayName; }
+    public String getUsername() {
+        return username;
+    }
 
-    public String getProfileUrl() { return profileUrl; }
-    public void setProfileUrl(String profileUrl) { this.profileUrl = profileUrl; }
+    public void setUsername(String username) {
+        this.username = username;
+    }
 
-    public LocalDateTime getCreatedTimestamp() { return createdTimestamp; }
-    public void setCreatedTimestamp(LocalDateTime createdTimestamp) { this.createdTimestamp = createdTimestamp; }
+    public String getEmail() {
+        return email;
+    }
 
-    public LocalDateTime getUpdatedTimestamp() { return updatedTimestamp; }
-    public void setUpdatedTimestamp(LocalDateTime updatedTimestamp) { this.updatedTimestamp = updatedTimestamp; }
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-    public AccountStatus getAccountStatus() { return accountStatus; }
-    public void setAccountStatus(AccountStatus accountStatus) { this.accountStatus = accountStatus; }
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
+    }
+
+    public String getProfileUrl() {
+        return profileUrl;
+    }
+
+    public void setProfileUrl(String profileUrl) {
+        this.profileUrl = profileUrl;
+    }
+
+    public LocalDateTime getCreatedTimestamp() {
+        return createdTimestamp;
+    }
+
+    public void setCreatedTimestamp(LocalDateTime createdTimestamp) {
+        this.createdTimestamp = createdTimestamp;
+    }
+
+    public LocalDateTime getUpdatedTimestamp() {
+        return updatedTimestamp;
+    }
+
+    public void setUpdatedTimestamp(LocalDateTime updatedTimestamp) {
+        this.updatedTimestamp = updatedTimestamp;
+    }
+
+    public AccountStatus getAccountStatus() {
+        return accountStatus;
+    }
+
+    public void setAccountStatus(AccountStatus accountStatus) {
+        this.accountStatus = accountStatus;
+    }
 
     public static enum AccountStatus {
         ACTIVE,
         INACTIVE,
         SUSPENDED
     }
-}
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+}
