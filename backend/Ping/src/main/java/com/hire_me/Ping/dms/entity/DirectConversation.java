@@ -1,56 +1,54 @@
 package com.hire_me.Ping.dms.entity;
 
-import jakarta.persistence.*;               // JPA annotations like @Entity
-import java.time.Instant;                   // time type
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 // This class maps to the "direct_conversation" table.
 @Entity
-@Table(name = "direct_conversation")
+@Table(name = "DIRECT_CONVERSATION")
 public class DirectConversation {
-    // Primary key (auto number).
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    // Who created this DM (user id).
-    @Column(name = "created_by_user_id", nullable = false)
-    private Long createdByUserId;
+  // Primary key (auto number).
+  @Id
+  @Column(name = "ID")
+  private UUID id;
 
-    // True = group DM (3+ people). False = 1:1 DM.
-    @Column(name = "is_group", nullable = false)
-    private boolean isGroup = false;
+  // Who created this DM (user id).
+  @Column(name = "CREATED_BY_USER_ID")
+  private UUID createdByUserId; // Keep as UUID since User entity uses UUID
 
-    // Optional name for the DM (mainly for groups).
-    @Column(length = 140)
-    private String title;
+  // Optional name for the DM (mainly for groups).
+  @Column(name = "TITLE")
+  private String title;
 
-    // When this DM was created.
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt = Instant.now();
+  // True = group DM (3+ people). False = 1:1 DM.
+  @Column(name = "IS_GROUP")
+  private boolean isGroup;
 
-    // Participants (read-only association helper). Maintains backrefs from DirectParticipant.conversation
-    @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<DirectParticipant> participants = new ArrayList<>();
+  // When this DM was created.
+  @Column(name = "CREATED_AT")
+  private LocalDateTime createdAt;
 
-    // --- getters/setters: small methods to read/write fields ---
+  // Default constructor
+  public DirectConversation() {
+    this.id = UUID.randomUUID();
+  }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+  // --- getters/setters: small methods to read/write fields ---
 
-    public Long getCreatedByUserId() { return createdByUserId; }
-    public void setCreatedByUserId(Long createdByUserId) { this.createdByUserId = createdByUserId; }
+  public UUID getId() { return id; }
+  public void setId(UUID id) { this.id = id; }
 
-    public boolean isGroup() { return isGroup; }
-    public void setGroup(boolean group) { isGroup = group; }
+  public UUID getCreatedByUserId() { return createdByUserId; }
+  public void setCreatedByUserId(UUID createdByUserId) { this.createdByUserId = createdByUserId; }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+  public String getTitle() { return title; }
+  public void setTitle(String title) { this.title = title; }
 
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+  public boolean isGroup() { return isGroup; }
+  public void setGroup(boolean group) { isGroup = group; }
 
-    public List<DirectParticipant> getParticipants() { return participants; }
-    public void setParticipants(List<DirectParticipant> participants) { this.participants = participants; }
+  public LocalDateTime getCreatedAt() { return createdAt; }
+  public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

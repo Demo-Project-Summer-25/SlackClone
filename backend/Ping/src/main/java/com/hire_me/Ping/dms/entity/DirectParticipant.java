@@ -1,83 +1,81 @@
 package com.hire_me.Ping.dms.entity;
 
 import jakarta.persistence.*;               // JPA annotations
-import java.time.Instant;                   // time type
+import java.time.LocalDateTime;             // time type
+import java.util.UUID;                      // UUID type
 
-// This class maps to the "direct_participant" table.
+// This class maps to the "DIRECT_PARTICIPANT" table.
 // It says which users are inside which DM.
 @Entity
 @Table(
-    name = "direct_participant",
+    name = "DIRECT_PARTICIPANT",
     uniqueConstraints = @UniqueConstraint( // do not allow the same user in the same DM twice
-        columnNames = {"conversation_id", "user_id"}
+        columnNames = {"DIRECT_CONVERSATION_ID", "USER_ID"}
     ),
     indexes = {
-        @Index(name = "idx_participant_conversation", columnList = "conversation_id"),
-        @Index(name = "idx_participant_user", columnList = "user_id")
+        @Index(name = "idx_participant_conversation", columnList = "DIRECT_CONVERSATION_ID"),
+        @Index(name = "idx_participant_user", columnList = "USER_ID")
     }
 )
 public class DirectParticipant {
-    // Primary key (auto number).
+    // Primary key (UUID).
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @Column(name = "ID")
+    private UUID id;
 
     // Which DM this row belongs to (FK column kept for simple queries)
-    @Column(name = "conversation_id", nullable = false)
-    private Long conversationId;
-
-    // Helpful association to the conversation (read-only; uses same FK column)
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "conversation_id", nullable = false, insertable = false, updatable = false)
-    private DirectConversation conversation;
+    @Column(name = "DIRECT_CONVERSATION_ID")
+    private UUID directConversationId;
 
     // Which user is the participant.
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
-
-    // Is this user an admin of the DM (can add/remove others for groups).
-    @Column(name = "is_admin", nullable = false)
-    private boolean isAdmin = false;
+    @Column(name = "USER_ID")
+    private UUID userId;
 
     // When the user joined the DM.
-    @Column(name = "joined_at", nullable = false)
-    private Instant joinedAt = Instant.now();
+    @Column(name = "JOINED_AT")
+    private LocalDateTime joinedAt;
 
     // When the user left the DM. null = still in.
-    @Column(name = "left_at")
-    private Instant leftAt;
+    @Column(name = "LEFT_AT")
+    private LocalDateTime leftAt;
+
+    // Is this user an admin of the DM (can add/remove others for groups).
+    @Column(name = "ADMIN")
+    private boolean admin;
 
     // How much the user wants to be notified.
-    // ALL = every message, MENTIONS = only @me, MUTED = never.
+    // ALL = every message, MENTIONS = only @me, NONE = never.
     @Enumerated(EnumType.STRING)
-    @Column(name = "notify_level", length = 16, nullable = false)
-    private NotifyLevel notifyLevel = NotifyLevel.ALL;
+    @Column(name = "NOTIFY_LEVEL")
+    private NotifyLevel notifyLevel;
 
     // Small list type for notify options.
-    public enum NotifyLevel { ALL, MENTIONS, MUTED }
+    public enum NotifyLevel { ALL, MENTIONS, NONE }
+
+    // Default constructor
+    public DirectParticipant() {
+        this.id = UUID.randomUUID();
+    }
 
     // --- getters/setters ---
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public Long getConversationId() { return conversationId; }
-    public void setConversationId(Long conversationId) { this.conversationId = conversationId; }
+    public UUID getDirectConversationId() { return directConversationId; }
+    public void setDirectConversationId(UUID directConversationId) { this.directConversationId = directConversationId; }
 
-    public DirectConversation getConversation() { return conversation; }
-    public void setConversation(DirectConversation conversation) { this.conversation = conversation; }
+    public UUID getUserId() { return userId; }
+    public void setUserId(UUID userId) { this.userId = userId; }
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public LocalDateTime getJoinedAt() { return joinedAt; }
+    public void setJoinedAt(LocalDateTime joinedAt) { this.joinedAt = joinedAt; }
 
-    public boolean isAdmin() { return isAdmin; }
-    public void setAdmin(boolean admin) { isAdmin = admin; }
+    public LocalDateTime getLeftAt() { return leftAt; }
+    public void setLeftAt(LocalDateTime leftAt) { this.leftAt = leftAt; }
 
-    public Instant getJoinedAt() { return joinedAt; }
-    public void setJoinedAt(Instant joinedAt) { this.joinedAt = joinedAt; }
-
-    public Instant getLeftAt() { return leftAt; }
-    public void setLeftAt(Instant leftAt) { this.leftAt = leftAt; }
+    public boolean isAdmin() { return admin; }
+    public void setAdmin(boolean admin) { this.admin = admin; }
 
     public NotifyLevel getNotifyLevel() { return notifyLevel; }
     public void setNotifyLevel(NotifyLevel notifyLevel) { this.notifyLevel = notifyLevel; }

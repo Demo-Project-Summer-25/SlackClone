@@ -8,6 +8,8 @@ import com.hire_me.Ping.messages.service.MessageService.PageParams;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 // REST controller for message-related endpoints
 @RestController
 @RequestMapping("/api")
@@ -25,7 +27,7 @@ public class MessageController {
   // List messages in a channel
   @GetMapping("/channels/{channelId}/messages")
   public ResponseEntity<?> listChannel(@PathVariable Long channelId,
-                                       @RequestParam(required = false) Long after,
+                                       @RequestParam(required = false) UUID after,
                                        @RequestParam(defaultValue = "50") int limit) {
     return ResponseEntity.ok(service.listChannel(channelId, new PageParams(after, limit)));
   }
@@ -45,15 +47,15 @@ public class MessageController {
 
   // List messages in a direct conversation (DM)
   @GetMapping("/dms/{dmId}/messages")
-  public ResponseEntity<?> listDm(@PathVariable Long dmId,
-                                  @RequestParam(required = false) Long after,
+  public ResponseEntity<?> listDm(@PathVariable UUID dmId,
+                                  @RequestParam(required = false) UUID after,
                                   @RequestParam(defaultValue = "50") int limit) {
     return ResponseEntity.ok(service.listDm(dmId, new PageParams(after, limit)));
   }
 
   // Post a new message to a direct conversation (DM)
   @PostMapping("/dms/{dmId}/messages")
-  public ResponseEntity<?> postDm(@PathVariable Long dmId,
+  public ResponseEntity<?> postDm(@PathVariable UUID dmId,
                                   @RequestBody MessageCreateRequest req) {
     if (req.contentType() == null) {
       req = new MessageCreateRequest(req.senderUserId(), req.content(), ContentType.TEXT);
@@ -65,14 +67,14 @@ public class MessageController {
 
   // Edit a message
   @PatchMapping("/messages/{messageId}")
-  public ResponseEntity<?> edit(@PathVariable Long messageId,
+  public ResponseEntity<?> edit(@PathVariable UUID messageId,
                                 @RequestBody MessageUpdateRequest req) {
     return ResponseEntity.ok(service.edit(messageId, req));
   }
 
   // Delete a message
   @DeleteMapping("/messages/{messageId}")
-  public ResponseEntity<?> delete(@PathVariable Long messageId) {
+  public ResponseEntity<?> delete(@PathVariable UUID messageId) {
     service.delete(messageId);
     return ResponseEntity.noContent().build();
   }
