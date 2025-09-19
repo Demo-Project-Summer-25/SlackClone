@@ -63,10 +63,10 @@ const BotManagement: React.FC<BotManagementProps> = ({ userId }) => {
           {['CLAUDE_SONNET', 'CLAUDE_HAIKU', 'CLAUDE_OPUS', 'CUSTOM'].map(type => {
             const count = bots.filter(bot => bot.botType === type).length;
             const displayName = {
-              'CLAUDE_SONNET': '🧠 Claude Sonnet',
-              'CLAUDE_HAIKU': '🧠 Claude Haiku', 
-              'CLAUDE_OPUS': '🧠 Claude Opus',
-              'CUSTOM': '⚙️ Custom'
+              'CLAUDE_SONNET': ' Claude Sonnet',
+              'CLAUDE_HAIKU': ' Claude Haiku', 
+              'CLAUDE_OPUS': ' Claude Opus',
+              'CUSTOM': ' Custom'
             }[type];
             
             return (
