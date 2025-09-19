@@ -11,12 +11,10 @@ const BotEditModal: React.FC<BotEditModalProps> = ({ bot, onUpdate, onClose }) =
   const [formData, setFormData] = useState<BotUpdateRequest>({
     name: bot.name,
     description: bot.description || '',
-    avatarUrl: bot.avatarUrl || '',
-    status: bot.status,
-    apiKey: bot.apiKey || '',
-    webhookUrl: bot.webhookUrl || '',
-    configurationJson: bot.configurationJson || '',
-    isActive: bot.isActive
+    botType: bot.botType,
+    apiKey: '', // Don't pre-fill for security
+    configuration: '',
+    status: bot.status
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -39,7 +37,7 @@ const BotEditModal: React.FC<BotEditModalProps> = ({ bot, onUpdate, onClose }) =
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Edit Bot: {bot.name}</h2>
-          <button onClick={onClose}>✕</button>
+          <button onClick={onClose}>×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="bot-form">
@@ -63,15 +61,6 @@ const BotEditModal: React.FC<BotEditModalProps> = ({ bot, onUpdate, onClose }) =
           </div>
 
           <div className="form-group">
-            <label>Avatar URL</label>
-            <input
-              type="url"
-              value={formData.avatarUrl}
-              onChange={(e) => setFormData({ ...formData, avatarUrl: e.target.value })}
-            />
-          </div>
-
-          <div className="form-group">
             <label>Status</label>
             <select
               value={formData.status}
@@ -83,7 +72,7 @@ const BotEditModal: React.FC<BotEditModalProps> = ({ bot, onUpdate, onClose }) =
             </select>
           </div>
 
-          {(bot.botType === 'CHAT_GPT' || bot.botType === 'CLAUDE' || bot.botType === 'GEMINI') && (
+          {(bot.botType === 'CLAUDE_SONNET' || bot.botType === 'CLAUDE_HAIKU' || bot.botType === 'CLAUDE_OPUS') && (
             <div className="form-group">
               <label>API Key</label>
               <input
@@ -94,28 +83,6 @@ const BotEditModal: React.FC<BotEditModalProps> = ({ bot, onUpdate, onClose }) =
               />
             </div>
           )}
-
-          {bot.botType === 'WEBHOOK' && (
-            <div className="form-group">
-              <label>Webhook URL</label>
-              <input
-                type="url"
-                value={formData.webhookUrl}
-                onChange={(e) => setFormData({ ...formData, webhookUrl: e.target.value })}
-              />
-            </div>
-          )}
-
-          <div className="form-group">
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={formData.isActive}
-                onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-              />
-              Active Bot
-            </label>
-          </div>
 
           <div className="form-actions">
             <button type="button" onClick={onClose} disabled={isSubmitting}>

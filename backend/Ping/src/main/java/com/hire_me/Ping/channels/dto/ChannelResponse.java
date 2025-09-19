@@ -37,7 +37,7 @@ public class ChannelResponse {
         this.description = description;
     }
 
-    public boolean IsPublic() {
+    public boolean isPublic() {
         return isPublic;
     }
 

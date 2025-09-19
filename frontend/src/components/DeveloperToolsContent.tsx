@@ -18,6 +18,7 @@ import {
   Edit,
   Layout
 } from "lucide-react";
+import { CanvasPage } from './Canvas/CanvasPage';
 
 interface DeveloperToolsContentProps {
   activeTool: string;
@@ -551,106 +552,18 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
       </div>
     );
   };
-
-  const renderIDE = () => {
-    return (
-      <div className="p-4 sm:p-6 h-full flex flex-col">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-          <div>
-            <h2 className="text-2xl mb-2">IDE Sandbox</h2>
-            <p className="text-muted-foreground">Quickly write and test your code.</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Play className="w-4 h-4 mr-2" />
-              Run
-            </Button>
-          </div>
-        </div>
-
-        <div className={`flex-1 flex gap-4 ${ideLayout === "stacked" ? "flex-col" : "flex-row"}`}>
-          {/* Code Editor */}
-          <div className={`${ideLayout === "stacked" ? "h-1/2" : "flex-1"} flex flex-col`}>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm">Editor</h3>
-              <div className="flex gap-1">
-                <Badge variant="outline" className="text-xs">Java</Badge>
-              </div>
-            </div>
-            <div className="flex-1 bg-muted/30 rounded-lg p-4 min-h-[200px] font-mono text-sm">
-              <div className="space-y-1">
-                <div>
-                  <span className="text-blue-600">import</span>{" "}
-                  <span className="text-green-600">React</span>{" "}
-                  <span className="text-blue-600">from</span>{" "}
-                  <span className="text-orange-600">'react'</span>;
-                </div>
-                <div></div>
-                <div>
-                  <span className="text-blue-600">function</span>{" "}
-                  <span className="text-green-600">App</span>() {"{"}
-                </div>
-                <div className="ml-4">
-                  <span className="text-blue-600">return</span> (
-                </div>
-                <div className="ml-8">
-                  {"<"}<span className="text-red-600">div</span>{" "}
-                  <span className="text-green-600">className</span>=
-                  <span className="text-orange-600">"app"</span>{">"}
-                </div>
-                <div className="ml-12">
-                  {"<"}<span className="text-red-600">h1</span>{">"}Hello, World!
-                  {"</"}<span className="text-red-600">h1</span>{">"}
-                </div>
-                <div className="ml-12">
-                  {"<"}<span className="text-red-600">p</span>{">"}Welcome to the IDE Sandbox
-                  {"</"}<span className="text-red-600">p</span>{">"}
-                </div>
-                <div className="ml-8">
-                  {"</"}<span className="text-red-600">div</span>{">"}
-                </div>
-                <div className="ml-4">);</div>
-                <div>{"}"}</div>
-                <div></div>
-                <div>
-                  <span className="text-blue-600">export default</span>{" "}
-                  <span className="text-green-600">App</span>;
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Output/Preview */}
-          <div className={`${ideLayout === "stacked" ? "h-1/2" : "flex-1"} flex flex-col`}>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm">Preview</h3>
-            </div>
-            <div className="flex-1 bg-background border-2 border-border rounded-lg p-6 min-h-[200px]">
-              <div className="space-y-4">
-                <h1 className="text-2xl">Hello, World!</h1>
-                <p className="text-muted-foreground">Welcome to the IDE Sandbox</p>
-                <div className="mt-6 p-4 bg-muted/20 rounded-lg">
-                  <p className="text-sm text-muted-foreground">Output will appear here when you run your code</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   switch (activeTool) {
     case "kanban":
       return renderKanban();
-    case "uml":
-      return renderWireFrame();
+    case "canvas":
+      return <CanvasPage />;
     case "ai":
       return renderAI();
     case "calendar":
       return renderCalendar();
     case "ide":
       return renderIDE();
+    
     default:
       return (
         <div className="p-6 text-center">

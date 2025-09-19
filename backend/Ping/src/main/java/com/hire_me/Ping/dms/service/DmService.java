@@ -11,18 +11,19 @@ import com.hire_me.Ping.dms.repo.DirectParticipantRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.time.Instant;  // Changed from LocalDateTime
 import java.util.*;
 
 @Service
 public class DmService {
     private final DirectConversationRepository conversationRepo;
     private final DirectParticipantRepository participantRepo;
-    private final DmMapper mapper = new DmMapper();
+    private final DmMapper mapper;
 
-    public DmService(DirectConversationRepository conversationRepo, DirectParticipantRepository participantRepo) {
+    public DmService(DirectConversationRepository conversationRepo, DirectParticipantRepository participantRepo, DmMapper mapper) {
         this.conversationRepo = conversationRepo;
         this.participantRepo = participantRepo;
+        this.mapper = mapper;
     }
 
     @Transactional
@@ -35,7 +36,7 @@ public class DmService {
         conv = conversationRepo.save(conv);
 
         // Ensure creator is present in the participant list as admin by default
-        Map<Long, DmParticipantRequest> byUser = new LinkedHashMap<>();
+        Map<UUID, DmParticipantRequest> byUser = new LinkedHashMap<>();
         if (req.getParticipants() != null) {
             for (DmParticipantRequest p : req.getParticipants()) {
                 if (p.getUserId() != null) {
@@ -57,48 +58,48 @@ public class DmService {
         }
         participantRepo.saveAll(parts);
 
-        List<DirectParticipant> saved = participantRepo.findByConversationId(conv.getId());
+        List<DirectParticipant> saved = participantRepo.findByDirectConversationId(conv.getId());
         return mapper.toResponse(conv, saved);
     }
 
     private DmParticipantRequest creatorAdmin(DmCreateRequest req) {
         DmParticipantRequest creator = new DmParticipantRequest();
         creator.setUserId(req.getCreatedByUserId());
-        creator.setAdmin(Boolean.TRUE); // creator is admin by default
+        creator.setAdmin(Boolean.TRUE);
         return creator;
     }
 
     @Transactional(readOnly = true)
-    public DmResponse get(Long conversationId) {
+    public DmResponse get(UUID conversationId) {
         DirectConversation conv = conversationRepo.findById(conversationId)
                 .orElseThrow(() -> new NoSuchElementException("DM not found: " + conversationId));
-        List<DirectParticipant> parts = participantRepo.findByConversationId(conversationId);
+        List<DirectParticipant> parts = participantRepo.findByDirectConversationId(conversationId);
         return mapper.toResponse(conv, parts);
     }
 
     @Transactional(readOnly = true)
-    public List<DmResponse> listForUser(Long userId) {
-        List<Long> ids = conversationRepo.findActiveConversationIdsByUser(userId);
+    public List<DmResponse> listForUser(UUID userId) {
+        List<UUID> ids = conversationRepo.findActiveConversationIdsByUser(userId);
         if (ids.isEmpty()) return Collections.emptyList();
         List<DirectConversation> convs = conversationRepo.findAllByIds(ids);
-        return mapper.toResponses(convs, participantRepo::findByConversationId);
+        return mapper.toResponses(convs, participantRepo::findByDirectConversationId);
     }
 
     @Transactional
-    public DmResponse addParticipant(Long conversationId, DmParticipantRequest req) {
+    public DmResponse addParticipant(UUID conversationId, DmParticipantRequest req) {
         if (req.getUserId() == null) throw new IllegalArgumentException("userId is required");
 
         DirectConversation conv = conversationRepo.findById(conversationId)
                 .orElseThrow(() -> new NoSuchElementException("DM not found: " + conversationId));
 
-        if (participantRepo.existsByConversationIdAndUserId(conversationId, req.getUserId())) {
+        if (participantRepo.existsByDirectConversationIdAndUserId(conversationId, req.getUserId())) {
             // already present (possibly previously left) -> rejoin if left
-            Optional<DirectParticipant> existing = participantRepo.findByConversationIdAndUserIdAndLeftAtIsNull(conversationId, req.getUserId());
+            Optional<DirectParticipant> existing = participantRepo.findByDirectConversationIdAndUserIdAndLeftAtIsNull(conversationId, req.getUserId());
             if (existing.isPresent()) {
                 // No-op, still inside
             } else {
                 DirectParticipant rejoin = mapper.toParticipant(conversationId, req);
-                rejoin.setJoinedAt(Instant.now());
+                rejoin.setJoinedAt(Instant.now());  // Changed from LocalDateTime.now()
                 rejoin.setLeftAt(null);
                 participantRepo.save(rejoin);
             }
@@ -106,18 +107,18 @@ public class DmService {
             participantRepo.save(mapper.toParticipant(conversationId, req));
         }
 
-        List<DirectParticipant> parts = participantRepo.findByConversationId(conversationId);
+        List<DirectParticipant> parts = participantRepo.findByDirectConversationId(conversationId);
         return mapper.toResponse(conv, parts);
     }
 
     @Transactional
-    public DmResponse removeParticipant(Long conversationId, Long userId) {
+    public DmResponse removeParticipant(UUID conversationId, UUID userId) {
         DirectConversation conv = conversationRepo.findById(conversationId)
                 .orElseThrow(() -> new NoSuchElementException("DM not found: " + conversationId));
-        participantRepo.findByConversationIdAndUserIdAndLeftAtIsNull(conversationId, userId)
-                .ifPresent(p -> participantRepo.softLeave(p, Instant.now()));
+        participantRepo.findByDirectConversationIdAndUserIdAndLeftAtIsNull(conversationId, userId)
+                .ifPresent(p -> participantRepo.softLeave(p, Instant.now()));  // Changed from LocalDateTime.now()
 
-        List<DirectParticipant> parts = participantRepo.findByConversationId(conversationId);
+        List<DirectParticipant> parts = participantRepo.findByDirectConversationId(conversationId);
         return mapper.toResponse(conv, parts);
     }
 }

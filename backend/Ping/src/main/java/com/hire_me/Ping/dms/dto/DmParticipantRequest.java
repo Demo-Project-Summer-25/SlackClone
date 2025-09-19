@@ -2,26 +2,28 @@ package com.hire_me.Ping.dms.dto;
 
 
 import com.hire_me.Ping.dms.entity.DirectParticipant;
+import java.util.UUID;
 // We import DirectParticipant because we need its inner enum (NotifyLevel).
-// Enums are like a fixed set of options (ALL, MENTIONS_ONLY, NONE, etc.).
+// Enums are like a fixed set of options (ALL, MENTIONS_ONLY, NONE, etc.)
+// We import UUID because user IDs are now UUIDs instead of Long numbers.
 
 
 public class DmParticipantRequest {
     // This class represents ONE participant inside a DM.
-    // It’s used both when creating a DM (inside DmCreateRequest)
+    // It's used both when creating a DM (inside DmCreateRequest)
     // and when adding a new participant to an existing DM.
 
 
-    private Long userId;
+    private UUID userId;
     // The ID of the user we want to add to the DM.
-    // Example: if we’re adding Josiah and his userId is 5, this field = 5.
+    // Example: if we're adding Josiah and his userId is a550e8400-e29b-41d4-a716-446655440000, this field = that UUID.
 
 
     private Boolean admin; // optional, defaults to false
     // Whether this user should be an admin in the DM.
     // - true → they are an admin (can manage participants, rename chat, etc.)
     // - false (or null) → just a normal participant.
-    // Default is false, so if the client doesn’t send anything, they are NOT admin.
+    // Default is false, so if the client doesn't send anything, they are NOT admin.
 
 
     private DirectParticipant.NotifyLevel notifyLevel; // optional, defaults to ALL
@@ -38,15 +40,15 @@ public class DmParticipantRequest {
     // These allow Spring to read/write the fields when JSON is sent in a request.
 
 
-    public Long getUserId() {
+    public UUID getUserId() {
         return userId;
     }
-    // Returns the user’s ID.
+    // Returns the user's ID.
 
-    public void setUserId(Long userId) {
+    public void setUserId(UUID userId) {
         this.userId = userId;
     }
-    // Sets the user’s ID.
+    // Sets the user's ID.
 
 
     public Boolean getAdmin() {

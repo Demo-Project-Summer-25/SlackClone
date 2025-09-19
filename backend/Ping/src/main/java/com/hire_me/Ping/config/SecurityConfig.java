@@ -25,6 +25,7 @@ public class SecurityConfig {
         http
             .authorizeHttpRequests(authorize -> authorize
                 // Allow public access to user login/registration
+                .requestMatchers("/api/**").permitAll()
                 .requestMatchers("/api/users/login", "/api/users/register").permitAll() 
                 // Allow public access to Swagger UI and API docs
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
