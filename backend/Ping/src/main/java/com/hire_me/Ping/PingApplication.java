@@ -10,4 +10,4 @@ public class PingApplication {
 		SpringApplication.run(PingApplication.class, args);
 	}
 
-}
+ }
