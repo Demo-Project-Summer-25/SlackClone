@@ -6,10 +6,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.UUID;
 
-public interface CardAssignmentRepository extends JpaRepository<CardAssignment, Long> {
-    List<CardAssignment> findByCardId(Long cardId);
+public interface CardAssignmentRepository extends JpaRepository<CardAssignment, UUID> {
+    List<CardAssignment> findByCard_Id(UUID cardId);
 
-    boolean existsByCardIdAndAssigneeId(Long cardId, UUID assigneeId);
+    boolean existsByCard_IdAndAssigneeId(UUID cardId, UUID assigneeId);
 
-    void deleteByCardIdAndAssigneeId(Long cardId, UUID assigneeId);
+    void deleteByCard_IdAndAssigneeId(UUID cardId, UUID assigneeId);
 }

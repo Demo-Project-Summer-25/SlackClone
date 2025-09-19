@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface KanbanBoardRepository extends JpaRepository<KanbanBoard, Long> {
+public interface KanbanBoardRepository extends JpaRepository<KanbanBoard, UUID> {
 
     List<KanbanBoard> findByOwnerIdOrderByCreatedAtAsc(UUID ownerId);
 
@@ -18,5 +18,5 @@ public interface KanbanBoardRepository extends JpaRepository<KanbanBoard, Long> 
             "columns.cards.priority",
             "columns.cards.assignments"
     })
-    Optional<KanbanBoard> findWithDetailsById(Long id);
+    Optional<KanbanBoard> findWithDetailsById(UUID id);
 }

@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Comparator;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 @Service
 public class CardService {
@@ -62,7 +63,7 @@ public class CardService {
     }
 
     @Transactional
-    public BoardResponse update(Long cardId, CardUpdateRequest request) {
+    public BoardResponse update(UUID cardId, CardUpdateRequest request) {
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new NoSuchElementException("Card not found: " + cardId));
 
@@ -83,20 +84,20 @@ public class CardService {
 
         mapper.updateCard(card, request);
         cardRepository.save(card);
-        return boardService.get(card.getColumn().getBoardId());
+        return boardService.get(card.getColumn().getBoard().getId());
     }
 
     @Transactional
-    public BoardResponse delete(Long cardId) {
+    public BoardResponse delete(UUID cardId) {
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new NoSuchElementException("Card not found: " + cardId));
-        Long boardId = card.getColumn().getBoardId();
+        UUID boardId = card.getColumn().getBoard().getId();
         cardRepository.delete(card);
         return boardService.get(boardId);
     }
 
-    private int nextCardPosition(Long columnId) {
-        return cardRepository.findByColumnIdOrderByPositionAsc(columnId).stream()
+    private int nextCardPosition(UUID columnId) {
+        return cardRepository.findByColumn_IdOrderByPositionAsc(columnId).stream()
                 .map(Card::getPosition)
                 .filter(position -> position != null)
                 .max(Comparator.naturalOrder())

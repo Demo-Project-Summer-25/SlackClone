@@ -14,22 +14,17 @@ import java.util.UUID;
 public class Card {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "uuid")
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "column_id", nullable = false)
+    @JoinColumn(name = "column_id", nullable = false, columnDefinition = "uuid")
     private BoardColumn column;
 
-    @Column(name = "column_id", insertable = false, updatable = false)
-    private Long columnId;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "priority_id")
+    @JoinColumn(name = "priority_id", columnDefinition = "uuid")
     private CardPriority priority;
-
-    @Column(name = "priority_id", insertable = false, updatable = false)
-    private Long priorityId;
 
     @Column(nullable = false, length = 200)
     private String title;
@@ -71,11 +66,11 @@ public class Card {
         updatedAt = Instant.now();
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -87,8 +82,8 @@ public class Card {
         this.column = column;
     }
 
-    public Long getColumnId() {
-        return columnId;
+    public UUID getColumnId() {
+        return column != null ? column.getId() : null;
     }
 
     public CardPriority getPriority() {
@@ -99,8 +94,8 @@ public class Card {
         this.priority = priority;
     }
 
-    public Long getPriorityId() {
-        return priorityId;
+    public UUID getPriorityId() {
+        return priority != null ? priority.getId() : null;
     }
 
     public String getTitle() {

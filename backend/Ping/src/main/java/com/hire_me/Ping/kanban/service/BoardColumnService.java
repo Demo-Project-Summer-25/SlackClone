@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 @Service
 public class BoardColumnService {
@@ -49,7 +50,7 @@ public class BoardColumnService {
     }
 
     @Transactional
-    public BoardResponse update(Long columnId, ColumnUpdateRequest request) {
+    public BoardResponse update(UUID columnId, ColumnUpdateRequest request) {
         BoardColumn column = columnRepository.findById(columnId)
                 .orElseThrow(() -> new NoSuchElementException("Column not found: " + columnId));
 
@@ -59,16 +60,16 @@ public class BoardColumnService {
     }
 
     @Transactional
-    public BoardResponse delete(Long columnId) {
+    public BoardResponse delete(UUID columnId) {
         BoardColumn column = columnRepository.findById(columnId)
                 .orElseThrow(() -> new NoSuchElementException("Column not found: " + columnId));
-        Long boardId = column.getBoardId();
+        UUID boardId = column.getBoardId();
         columnRepository.delete(column);
         return boardService.get(boardId);
     }
 
-    private int nextColumnPosition(Long boardId) {
-        return columnRepository.findByBoardIdOrderByPositionAsc(boardId).stream()
+    private int nextColumnPosition(UUID boardId) {
+        return columnRepository.findByBoard_IdOrderByPositionAsc(boardId).stream()
                 .map(BoardColumn::getPosition)
                 .filter(position -> position != null)
                 .max(Comparator.naturalOrder())

@@ -32,7 +32,7 @@ public class KanbanBoardService {
     }
 
     @Transactional(readOnly = true)
-    public BoardResponse get(Long boardId) {
+    public BoardResponse get(UUID boardId) {
         KanbanBoard board = boardRepository.findWithDetailsById(boardId)
                 .orElseThrow(() -> new NoSuchElementException("Board not found: " + boardId));
         return mapper.toBoardResponse(board);
@@ -47,7 +47,7 @@ public class KanbanBoardService {
     }
 
     @Transactional
-    public void delete(Long boardId) {
+    public void delete(UUID boardId) {
         if (!boardRepository.existsById(boardId)) {
             throw new NoSuchElementException("Board not found: " + boardId);
         }

@@ -32,25 +32,25 @@ public class CardAssignmentService {
     }
 
     @Transactional
-    public BoardResponse assign(Long cardId, CardAssignmentRequest request) {
+    public BoardResponse assign(UUID cardId, CardAssignmentRequest request) {
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new NoSuchElementException("Card not found: " + cardId));
 
-        if (!assignmentRepository.existsByCardIdAndAssigneeId(cardId, request.getUserId())) {
+        if (!assignmentRepository.existsByCard_IdAndAssigneeId(cardId, request.getUserId())) {
             CardAssignment assignment = mapper.toAssignment(request);
             card.addAssignment(assignment);
             cardRepository.save(card);
         }
 
-        return boardService.get(card.getColumn().getBoardId());
+        return boardService.get(card.getColumn().getBoard().getId());
     }
 
     @Transactional
-    public BoardResponse unassign(Long cardId, UUID userId) {
+    public BoardResponse unassign(UUID cardId, UUID userId) {
         Card card = cardRepository.findById(cardId)
                 .orElseThrow(() -> new NoSuchElementException("Card not found: " + cardId));
-        Long boardId = card.getColumn().getBoardId();
-        assignmentRepository.deleteByCardIdAndAssigneeId(cardId, userId);
+        UUID boardId = card.getColumn().getBoard().getId();
+        assignmentRepository.deleteByCard_IdAndAssigneeId(cardId, userId);
         return boardService.get(boardId);
     }
 }

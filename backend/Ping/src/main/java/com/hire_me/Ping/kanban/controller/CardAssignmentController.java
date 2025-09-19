@@ -20,13 +20,13 @@ public class CardAssignmentController {
     }
 
     @PostMapping("/cards/{cardId}/assignments")
-    public ResponseEntity<BoardResponse> assign(@PathVariable Long cardId,
+    public ResponseEntity<BoardResponse> assign(@PathVariable UUID cardId,
                                                 @Valid @RequestBody CardAssignmentRequest request) {
         return ResponseEntity.ok(assignmentService.assign(cardId, request));
     }
 
     @DeleteMapping("/cards/{cardId}/assignments/{userId}")
-    public ResponseEntity<BoardResponse> unassign(@PathVariable Long cardId,
+    public ResponseEntity<BoardResponse> unassign(@PathVariable UUID cardId,
                                                   @PathVariable UUID userId) {
         return ResponseEntity.ok(assignmentService.unassign(cardId, userId));
     }
