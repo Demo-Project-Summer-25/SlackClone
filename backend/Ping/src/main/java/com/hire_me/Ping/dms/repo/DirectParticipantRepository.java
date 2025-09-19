@@ -2,8 +2,10 @@ package com.hire_me.Ping.dms.repo;
 
 import com.hire_me.Ping.dms.entity.DirectParticipant;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -38,8 +40,28 @@ public interface DirectParticipantRepository extends JpaRepository<DirectPartici
     // Optional = may or may not exist.
 
 
+    // ---------- Custom Queries ----------
+
+    @Query("SELECT dp FROM DirectParticipant dp WHERE dp.directConversationId = :conversationId AND dp.leftAt IS NULL")
+    List<DirectParticipant> findActiveParticipants(@Param("conversationId") UUID conversationId);
+    // Returns all active participants in a given conversation.
+    // Custom query to find participants where leftAt is NULL.
+
+
+    @Query("SELECT dp FROM DirectParticipant dp WHERE dp.userId = :userId AND dp.leftAt IS NULL")
+    List<DirectParticipant> findActiveParticipantsByUser(@Param("userId") UUID userId);
+    // Returns all active conversations for a given user.
+    // Custom query to find conversations where leftAt is NULL.
+
+
+    @Query("SELECT dp FROM DirectParticipant dp WHERE dp.directConversationId = :conversationId AND dp.userId = :userId")
+    DirectParticipant findByConversationAndUser(@Param("conversationId") UUID conversationId, @Param("userId") UUID userId);
+    // Finds a participant by conversation and user ID.
+    // Custom query for direct lookup.
+
+
     // ---------- Custom Default Method ----------
-    default void softLeave(DirectParticipant participant, LocalDateTime leftAt) {
+    default void softLeave(DirectParticipant participant, Instant leftAt) {
         // Instead of fully deleting the participant from the DB,
         // we "soft delete" them by setting leftAt = timestamp of when they left.
         // This preserves history (we know they were once in this DM).
@@ -47,6 +69,11 @@ public interface DirectParticipantRepository extends JpaRepository<DirectPartici
 
         // Save the updated participant back to the database.
         save(participant);
+    }
+    
+    // Convenience method to soft leave with current timestamp
+    default void softLeave(DirectParticipant participant) {
+        softLeave(participant, Instant.now());
     }
 }
 

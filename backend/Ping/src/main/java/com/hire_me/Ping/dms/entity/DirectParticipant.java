@@ -1,8 +1,8 @@
 package com.hire_me.Ping.dms.entity;
 
-import jakarta.persistence.*;               // JPA annotations
-import java.time.LocalDateTime;             // time type
-import java.util.UUID;                      // UUID type
+import jakarta.persistence.*;
+import java.time.Instant;
+import java.util.UUID;
 
 // This class maps to the "DIRECT_PARTICIPANT" table.
 // It says which users are inside which DM.
@@ -18,27 +18,28 @@ import java.util.UUID;                      // UUID type
     }
 )
 public class DirectParticipant {
+    
     // Primary key (UUID).
     @Id
-    @Column(name = "ID")
-    private UUID id;
-
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;  // Changed from Long to UUID
+    
     // Which DM this row belongs to (FK column kept for simple queries)
     @Column(name = "DIRECT_CONVERSATION_ID")
-    private UUID directConversationId;
-
+    private UUID directConversationId;  // Changed from Long to UUID
+    
     // Which user is the participant.
     @Column(name = "USER_ID")
-    private UUID userId;
-
+    private UUID userId;  // Should already be UUID
+    
     // When the user joined the DM.
     @Column(name = "JOINED_AT")
-    private LocalDateTime joinedAt;
-
+    private Instant joinedAt;
+    
     // When the user left the DM. null = still in.
     @Column(name = "LEFT_AT")
-    private LocalDateTime leftAt;
-
+    private Instant leftAt;
+    
     // Is this user an admin of the DM (can add/remove others for groups).
     @Column(name = "ADMIN")
     private boolean admin;
@@ -57,6 +58,13 @@ public class DirectParticipant {
         this.id = UUID.randomUUID();
     }
 
+    @PrePersist
+    protected void onCreate() {
+        if (joinedAt == null) {
+            joinedAt = Instant.now();
+        }
+    }
+    
     // --- getters/setters ---
 
     public UUID getId() { return id; }
@@ -68,11 +76,11 @@ public class DirectParticipant {
     public UUID getUserId() { return userId; }
     public void setUserId(UUID userId) { this.userId = userId; }
 
-    public LocalDateTime getJoinedAt() { return joinedAt; }
-    public void setJoinedAt(LocalDateTime joinedAt) { this.joinedAt = joinedAt; }
+    public Instant getJoinedAt() { return joinedAt; }
+    public void setJoinedAt(Instant joinedAt) { this.joinedAt = joinedAt; }
 
-    public LocalDateTime getLeftAt() { return leftAt; }
-    public void setLeftAt(LocalDateTime leftAt) { this.leftAt = leftAt; }
+    public Instant getLeftAt() { return leftAt; }
+    public void setLeftAt(Instant leftAt) { this.leftAt = leftAt; }
 
     public boolean isAdmin() { return admin; }
     public void setAdmin(boolean admin) { this.admin = admin; }
