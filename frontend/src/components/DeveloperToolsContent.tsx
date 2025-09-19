@@ -555,16 +555,15 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
   switch (activeTool) {
     case "kanban":
       return renderKanban();
-    case "uml":
-      return renderWireFrame();
+    case "canvas":
+      return <CanvasPage />;
     case "ai":
       return renderAI();
     case "calendar":
       return renderCalendar();
     case "ide":
       return renderIDE();
-    case "canvas":
-      return <CanvasPage />;
+    
     default:
       return (
         <div className="p-6 text-center">
