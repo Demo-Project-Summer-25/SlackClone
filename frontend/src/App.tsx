@@ -14,14 +14,14 @@ import {
   X, 
   Terminal, 
   Kanban,
-  PanelLeftOpen // Changed from PanelRightOpen since sidebar is now on the right
+  PanelLeftOpen
 } from "lucide-react";
 import React from 'react'; 
 import { DmPage } from './pages/DmPage';
 import './styles/dm.css';
 
 function AppContent() {
-  // Default to directories tab (not terminals)
+  // Default to directories tab
   const [activeTab, setActiveTab] = useState("directories");
   // Default to AI bot on the right
   const [activeTool, setActiveTool] = useState("ai");
@@ -57,6 +57,11 @@ function AppContent() {
         // Keep both open but remove split mode
       }
     }
+  };
+
+  // Handle terminal selection - just show a toast notification for now
+  const handleTerminalSelect = (terminal: { id: string; name: string; type: string; status: "running" | "paused" }) => {
+    toast(`Selected terminal: ${terminal.name} (${terminal.status})`);
   };
 
   // Handle tab changes - close DM conversations when switching tabs
@@ -104,9 +109,9 @@ function AppContent() {
           variant="ghost"
           size="sm"
           onClick={() => setShowDeveloperSidebar(true)}
-          className="fixed top-4 right-4 z-50 bg-background/80 backdrop-blur-sm" // Changed from left-4 to right-4
+          className="fixed top-4 right-4 z-50 bg-background/80 backdrop-blur-sm"
         >
-          <PanelLeftOpen className="w-4 h-4" /> {/* Changed icon */}
+          <PanelLeftOpen className="w-4 h-4" />
         </Button>
       )}
 
@@ -115,6 +120,7 @@ function AppContent() {
         onTabChange={handleTabChange}
         splitScreenMode={splitScreenMode}
         onSplitScreenToggle={handleSplitScreenToggle}
+        onTerminalSelect={handleTerminalSelect}
       />
       
       <div className="flex flex-1 overflow-hidden">
