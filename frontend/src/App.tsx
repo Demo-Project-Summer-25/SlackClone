@@ -237,7 +237,6 @@ function AppContent() {
           />
         )}
       </div>
-      
       <Toaster />
     </div>
   );
