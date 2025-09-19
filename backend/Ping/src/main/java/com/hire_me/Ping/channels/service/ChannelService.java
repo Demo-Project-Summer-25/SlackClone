@@ -42,14 +42,14 @@ public class ChannelService {
         return channelMapper.toResponse(savedChannel);
     }
 
-    public ChannelResponse getChannelResponseById(Long channelId) {
+    public ChannelResponse getChannelResponseById(UUID channelId) {
         return channelRepository.findById(channelId)
                 .map(channelMapper::toResponse)
                 .orElseThrow(() -> new RuntimeException("Channel not found with id: " + channelId));
     }
 
     @Transactional
-    public ChannelResponse updateChannel(Long channelId, ChannelUpdateRequest updateRequest) {
+    public ChannelResponse updateChannel(UUID channelId, ChannelUpdateRequest updateRequest) {
         Channel channel = findChannelById(channelId);
         // TODO: Add authorization logic
         
@@ -59,7 +59,7 @@ public class ChannelService {
     }
 
     @Transactional
-    public void deleteChannel(Long channelId) {
+    public void deleteChannel(UUID channelId) {
         // TODO: Add authorization logic
         if (!channelRepository.existsById(channelId)) {
             throw new RuntimeException("Channel not found with id: " + channelId);
@@ -67,7 +67,7 @@ public class ChannelService {
         channelRepository.deleteById(channelId);
     }
 
-    public Channel findChannelById(Long channelId) {
+    public Channel findChannelById(UUID channelId) {
         return channelRepository.findById(channelId)
                 .orElseThrow(() -> new RuntimeException("Channel not found with id: " + channelId));
     }

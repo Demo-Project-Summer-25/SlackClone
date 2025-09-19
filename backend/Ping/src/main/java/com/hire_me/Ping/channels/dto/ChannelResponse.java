@@ -2,9 +2,10 @@ package com.hire_me.Ping.channels.dto;
 
 import com.hire_me.Ping.users.dto.UserPublicDto;
 import java.time.Instant;
+import java.util.UUID;
 
 public class ChannelResponse {
-    private Long id;
+    private UUID id;
     private String name;
     private String description;
     private boolean isPublic;
@@ -12,11 +13,11 @@ public class ChannelResponse {
     private Instant createdAt;
 
     // Getters and Setters
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -36,7 +37,7 @@ public class ChannelResponse {
         this.description = description;
     }
 
-    public boolean IsPublic() {
+    public boolean isPublic() {
         return isPublic;
     }
 

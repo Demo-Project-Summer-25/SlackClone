@@ -29,17 +29,17 @@ public class ChannelController {
     }
 
     @GetMapping("/{channelId}")
-    public ResponseEntity<ChannelResponse> getChannelById(@PathVariable Long channelId) {
+    public ResponseEntity<ChannelResponse> getChannelById(@PathVariable UUID channelId) {
         return ResponseEntity.ok(channelService.getChannelResponseById(channelId));
     }
 
     @PutMapping("/{channelId}")
-    public ResponseEntity<ChannelResponse> updateChannel(@PathVariable Long channelId, @Valid @RequestBody ChannelUpdateRequest updateRequest) {
+    public ResponseEntity<ChannelResponse> updateChannel(@PathVariable UUID channelId, @Valid @RequestBody ChannelUpdateRequest updateRequest) {
         return ResponseEntity.ok(channelService.updateChannel(channelId, updateRequest));
     }
 
     @DeleteMapping("/{channelId}")
-    public ResponseEntity<Void> deleteChannel(@PathVariable Long channelId) {
+    public ResponseEntity<Void> deleteChannel(@PathVariable UUID channelId) {
         channelService.deleteChannel(channelId);
         return ResponseEntity.noContent().build();
     }

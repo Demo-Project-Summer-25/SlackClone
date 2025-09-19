@@ -25,13 +25,13 @@ public class ChannelMemberController {
     }
 
     @GetMapping
-    public ResponseEntity<List<ChannelMemberResponse>> getChannelMembers(@PathVariable Long channelId) {
+    public ResponseEntity<List<ChannelMemberResponse>> getChannelMembers(@PathVariable UUID channelId) {
         return ResponseEntity.ok(memberService.getChannelMembers(channelId));
     }
 
     @PostMapping
     public ResponseEntity<ChannelMemberResponse> addMember(
-            @PathVariable Long channelId, 
+            @PathVariable UUID channelId, 
             @Valid @RequestBody ChannelMemberRequest memberRequest) {
         UUID requesterId = getAuthenticatedUserId(); // Placeholder
         ChannelMemberResponse response = memberService.addMember(channelId, memberRequest, requesterId);
@@ -39,7 +39,7 @@ public class ChannelMemberController {
     }
 
     @DeleteMapping("/{userId}")
-    public ResponseEntity<Void> removeMember(@PathVariable Long channelId, @PathVariable UUID userId) {
+    public ResponseEntity<Void> removeMember(@PathVariable UUID channelId, @PathVariable UUID userId) {
         UUID requesterId = getAuthenticatedUserId(); // Placeholder
         memberService.removeMember(channelId, userId, requesterId);
         return ResponseEntity.noContent().build();

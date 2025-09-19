@@ -1,13 +1,14 @@
 package com.hire_me.Ping.dms.dto;
 
-
 import com.hire_me.Ping.dms.entity.DirectParticipant;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-// - DirectParticipant.NotifyLevel: used to show each participant’s notification settings.
+import java.util.UUID;
+// - DirectParticipant.NotifyLevel: used to show each participant's notification settings.
 // - Instant: represents a specific moment in time (like a timestamp).
 // - List + ArrayList: holds multiple participants in this DM.
+// - UUID: for unique identifiers instead of Long numbers.
 
 
 public class DmResponse {
@@ -16,15 +17,15 @@ public class DmResponse {
     // we create a DM, fetch one by ID, or list DMs for a user.
 
 
-    private Long id;
+    private UUID id;
     // The unique ID of this DM conversation in the database.
 
 
-    private Long createdByUserId;
+    private UUID createdByUserId;
     // The ID of the user who originally created this DM.
 
 
-    private boolean group;
+    private boolean isGroup;
     // Whether this is a group DM (true) or a one-to-one DM (false).
 
 
@@ -37,21 +38,21 @@ public class DmResponse {
     // When this DM was first created (timestamp).
 
 
-    private List<Participant> participants = new ArrayList<>();
+    private List<ParticipantInfo> participants = new ArrayList<>();
     // A list of all participants (users) in this DM.
-    // Each participant is represented by the nested Participant class below.
+    // Each participant is represented by the nested ParticipantInfo class below.
     // Starts off as an empty list, ready to be filled.
 
 
-    // ---------- Nested static class: Participant ----------
+    // ---------- Nested static class: ParticipantInfo ----------
     // This is an "inner DTO" that represents one participant inside the DM.
-    // Each DMResponse will contain a list of these Participant objects.
+    // Each DMResponse will contain a list of these ParticipantInfo objects.
 
-    public static class Participant {
-        private Long userId;
-        // The user’s ID (unique identifier in the system).
+    public static class ParticipantInfo {
+        private UUID userId;
+        // The user's ID (unique identifier in the system).
 
-        private boolean admin;
+        private boolean isAdmin;
         // Whether this user is an admin in this DM.
         // Admins may have special privileges like renaming or adding/removing participants.
 
@@ -62,19 +63,19 @@ public class DmResponse {
         // The timestamp when this user left the DM (null if they are still in the conversation).
 
         private DirectParticipant.NotifyLevel notifyLevel;
-        // The user’s notification preference for this DM.
-        // (ALL, MENTIONS_ONLY, NONE, etc.)
+        // The user's notification preference for this DM.
+        // (ALL, MENTIONS, NONE, etc.)
 
 
-        // ----- Getters and Setters for Participant -----
+        // ----- Getters and Setters for ParticipantInfo -----
         // These methods allow reading and updating fields.
         // Spring/Jackson use these automatically when converting to/from JSON.
 
-        public Long getUserId() { return userId; }
-        public void setUserId(Long userId) { this.userId = userId; }
+        public UUID getUserId() { return userId; }
+        public void setUserId(UUID userId) { this.userId = userId; }
 
-        public boolean isAdmin() { return admin; }
-        public void setAdmin(boolean admin) { this.admin = admin; }
+        public boolean isAdmin() { return isAdmin; }
+        public void setAdmin(boolean admin) { isAdmin = admin; }
 
         public Instant getJoinedAt() { return joinedAt; }
         public void setJoinedAt(Instant joinedAt) { this.joinedAt = joinedAt; }
@@ -90,14 +91,14 @@ public class DmResponse {
     // ----- Getters and Setters for DmResponse -----
     // These expose the outer DMResponse fields.
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public Long getCreatedByUserId() { return createdByUserId; }
-    public void setCreatedByUserId(Long createdByUserId) { this.createdByUserId = createdByUserId; }
+    public UUID getCreatedByUserId() { return createdByUserId; }
+    public void setCreatedByUserId(UUID createdByUserId) { this.createdByUserId = createdByUserId; }
 
-    public boolean isGroup() { return group; }
-    public void setGroup(boolean group) { this.group = group; }
+    public boolean isGroup() { return isGroup; }
+    public void setGroup(boolean group) { isGroup = group; }
 
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
@@ -105,6 +106,6 @@ public class DmResponse {
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
 
-    public List<Participant> getParticipants() { return participants; }
-    public void setParticipants(List<Participant> participants) { this.participants = participants; }
+    public List<ParticipantInfo> getParticipants() { return participants; }
+    public void setParticipants(List<ParticipantInfo> participants) { this.participants = participants; }
 }
