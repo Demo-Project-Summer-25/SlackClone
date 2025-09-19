@@ -18,7 +18,7 @@ public interface ChannelMemberRepository extends JpaRepository<ChannelMember, UU
      * @param userId The ID of the user.
      * @return An Optional containing the ChannelMember if found.
      */
-    Optional<ChannelMember> findByChannelIdAndUserId(Long channelId, UUID userId);
+    Optional<ChannelMember> findByChannelIdAndUserId(UUID channelId, UUID userId);
 
     /**
      * Retrieves all members for a given channel ID.
@@ -27,12 +27,12 @@ public interface ChannelMemberRepository extends JpaRepository<ChannelMember, UU
      * @return A list of members for the channel.
      */
     @Query("SELECT cm FROM ChannelMember cm JOIN FETCH cm.user WHERE cm.channel.id = :channelId")
-    List<ChannelMember> findAllByChannelId(Long channelId);
+    List<ChannelMember> findAllByChannelId(UUID channelId);
 
     /**
      * Deletes a membership entry by channel and user IDs.
      * @param channelId The ID of the channel.
      * @param userId The ID of the user.
      */
-    void deleteByChannelIdAndUserId(Long channelId, UUID userId);
+    void deleteByChannelIdAndUserId(UUID channelId, UUID userId);
 }
