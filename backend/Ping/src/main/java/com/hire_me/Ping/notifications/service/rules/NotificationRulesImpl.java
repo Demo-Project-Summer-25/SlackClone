@@ -20,7 +20,7 @@
  * For now, those dependencies are shown as interfaces you would implement
  * elsewhere in your app. You can swap them for your real services.
  */
-public class NotificationRulesImpl implements NotificationRules {
+//.    public class NotificationRulesImpl implements NotificationRules {
 
 //     // ---- Dependencies on other domains (define/implement these in your app) ----
 //     private final ConversationService conversationService;   // who is in a DM
