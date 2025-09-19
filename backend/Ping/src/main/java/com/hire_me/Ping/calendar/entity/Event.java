@@ -3,8 +3,12 @@ package com.hire_me.Ping.calendar.entity;
 import java.time.Instant;
 import java.util.UUID;
 
+import com.hire_me.Ping.calendar.model.EventVisibility; // <-- add this import
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
@@ -49,9 +53,13 @@ public class Event {
     @Column(name = "end_utc", nullable = false)
     private Instant endUtc;
 
-    // Keep timezone for correct display/formatting (required, not optional)
     @Column(name = "timezone", nullable = false, length = 100)
     private String timezone; // e.g., "America/New_York"
+
+    // Visibility setting (required)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility", nullable = false, length = 20)
+    private EventVisibility visibility = EventVisibility.PRIVATE;
 
     // --- Optional (only these two as requested) ---
     @Column(length = 4000)
@@ -65,6 +73,7 @@ public class Event {
 
     public Event(UUID organizerId, Calendar calendar, String title,
                  Instant startUtc, Instant endUtc, String timezone,
+                 EventVisibility visibility,
                  String description, String location) {
         this.organizerId = organizerId;
         this.calendar = calendar;
@@ -72,6 +81,7 @@ public class Event {
         this.startUtc = startUtc;
         this.endUtc = endUtc;
         this.timezone = timezone;
+        this.visibility = visibility;
         this.description = description;
         this.location = location;
     }
@@ -97,6 +107,9 @@ public class Event {
 
     public String getTimezone() { return timezone; }
     public void setTimezone(String timezone) { this.timezone = timezone; }
+
+    public EventVisibility getVisibility() { return visibility; }
+    public void setVisibility(EventVisibility visibility) { this.visibility = visibility; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
