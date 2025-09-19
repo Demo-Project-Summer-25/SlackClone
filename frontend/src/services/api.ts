@@ -2,7 +2,7 @@ import { config } from '../config/environment';
 
 // Base API service for making HTTP requests
 export class ApiService {
-  private static readonly BASE_URL = import.meta.env.VITE_API_BASE_URL || config.API_BASE_URL;
+  private static readonly BASE_URL = 'http://localhost:8080/api';
 
   // Build query string from params object
   static buildQueryString(params: Record<string, any>): string {

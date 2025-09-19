@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from 'react';
 import { TopNavigation } from "./components/TopNavigation";
 import { DeveloperSidebar } from "./components/DeveloperSidebar";
 import { MainContent } from "./components/MainContent";
@@ -12,43 +12,24 @@ import {
   X, 
   Terminal, 
   Kanban,
-  PanelRightOpen
+  PanelLeftOpen // Changed from PanelRightOpen since sidebar is now on the right
 } from "lucide-react";
+import React from 'react'; 
+import { DmPage } from './pages/DmPage';
+import './styles/dm.css';
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState("notifications");
-  const [activeTool, setActiveTool] = useState("kanban");
+  // Default to directories tab (not terminals)
+  const [activeTab, setActiveTab] = useState("directories");
+  // Default to AI bot on the right
+  const [activeTool, setActiveTool] = useState("ai");
   const [showDeveloperSidebar, setShowDeveloperSidebar] = useState(true);
   const [showMainContent, setShowMainContent] = useState(true);
+  // Default to showing dev tools (AI bot) on the right
   const [showDevTools, setShowDevTools] = useState(true);
+  // Default to split screen mode
   const [splitScreenMode, setSplitScreenMode] = useState(true);
 
-  // Handle split screen mode toggle
-  const handleSplitScreenToggle = (enabled: boolean) => {
-    setSplitScreenMode(enabled);
-    
-    if (enabled) {
-      // If turning on split screen, automatically open AI bot on the right
-      setShowDevTools(true);
-      setActiveTool("ai"); // Automatically open AI bot
-      
-      // If no main content is open, open terminals
-      if (!showMainContent) {
-        setShowMainContent(true);
-      }
-    } else {
-      // If turning off split screen and both panels are open, close dev tools panel
-      if (showMainContent && showDevTools) {
-        setShowDevTools(false);
-      }
-    }
-  };
-
-  const [activeDM, setActiveDM] = useState<{
-    name: string;
-    status: "online" | "away" | "offline";
-    lastMessage: string;
-  } | null>(null);
   const [activeDirectory, setActiveDirectory] = useState<{
     name: string;
     description: string;
@@ -56,86 +37,53 @@ function AppContent() {
     isPrivate: boolean;
   } | null>(null);
 
-  const [activeTerminal, setActiveTerminal] = useState<{
-    id: string;
-    name: string;
-    type: string;
-    status: "Active" | "Inactive";
-  } | null>(null);
-
   const [showProfilePage, setShowProfilePage] = useState(false);
 
-  // Handle tab changes with split screen logic
-  const handleTabChange = (tab: string) => {
-    const openPanelsCount = (showMainContent ? 1 : 0) + (showDevTools ? 1 : 0);
-
-    // Close any open DM, directory, terminal, or profile page when switching tabs
-    setActiveDM(null);
-    setActiveDirectory(null);
-    setActiveTerminal(null);
-    setShowProfilePage(false);
-
-    if (!splitScreenMode) {
-      // Single screen mode - close other panels when opening a new one
-      setActiveTab(tab);
-      setShowMainContent(true);
-      setShowDevTools(false);
-    } else {
-      // Split screen mode - allow up to 2 panels of any type
-      setActiveTab(tab);
+  // Handle split screen mode toggle
+  const handleSplitScreenToggle = (enabled: boolean) => {
+    setSplitScreenMode(enabled);
+    
+    if (enabled) {
+      setShowDevTools(true);
+      setActiveTool("ai");
       
       if (!showMainContent) {
-        if (openPanelsCount >= 2) {
-          toast.error("Close a tab to open a new one", {
-            description: "You can only have 2 panels open in split screen mode"
-          });
-          return;
-        }
         setShowMainContent(true);
       }
-    }
-  };
-
-  // Handle developer tool changes with split screen logic
-  const handleToolChange = (tool: string) => {
-    const openPanelsCount = (showMainContent ? 1 : 0) + (showDevTools ? 1 : 0);
-
-    if (!splitScreenMode) {
-      // Single screen mode - close main content and show dev tools
-      setActiveTool(tool);
-      setShowDevTools(true);
-      setShowMainContent(false);
     } else {
-      // Split screen mode - allow up to 2 panels
-      if (!showDevTools) {
-        if (openPanelsCount >= 2) {
-          toast.error("Close a tab to open a new one", {
-            description: "You can only have 2 panels open in split screen mode"
-          });
-          return;
-        }
-        setShowDevTools(true);
+      if (showMainContent && showDevTools) {
+        // Keep both open but remove split mode
       }
-      setActiveTool(tool);
     }
   };
 
-  const bothPanelsVisible = showMainContent && showDevTools;
-  const onlyMainVisible = showMainContent && !showDevTools;
-  const onlyDevToolsVisible = !showMainContent && showDevTools;
-
-  // Handle terminal selection - no action needed, just for display
-  const handleTerminalSelect = (terminal: { id: string; name: string; type: string; status: "Active" | "Inactive" }) => {
-    // Terminal selection is purely informational - no panels need to open
+  // Handle tab changes - close DM conversations when switching tabs
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    
+    // Clear any active states when switching tabs
+    if (tab !== "directories") {
+      setActiveDirectory(null);
+    }
+    if (tab !== "profile") {
+      setShowProfilePage(false);
+    }
+    
+    // Auto-open main content when switching tabs
+    if (!showMainContent) {
+      setShowMainContent(true);
+    }
   };
+
+  // Determine which panels are visible
+  const bothPanelsVisible = splitScreenMode && showMainContent && showDevTools;
+  const onlyMainVisible = showMainContent && (!showDevTools || !splitScreenMode);
+  const onlyDevToolsVisible = !showMainContent && showDevTools;
 
   // Handle panel closing with split screen mode considerations
   const handleCloseMainContent = () => {
     setShowMainContent(false);
-    // Clear any active conversations when closing main content
-    setActiveDM(null);
     setActiveDirectory(null);
-    setActiveTerminal(null);
     setShowProfilePage(false);
   };
 
@@ -143,21 +91,21 @@ function AppContent() {
     setShowDevTools(false);
   };
 
+  // Use Alice's actual ID from import.sql
+  const currentUserId = '68973614-94db-4f98-9729-0712e0c5c0fa';
+
   return (
-    <div className="h-screen flex flex-col bg-background">
-      {/* Toggle button only for sidebar when hidden */}
+    <div className="flex flex-col h-screen bg-background">
+      {/* Show toggle button on the RIGHT when sidebar is hidden */}
       {!showDeveloperSidebar && (
-        <div className="absolute top-2 right-2 z-50 flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setShowDeveloperSidebar(true)}
-            className="bg-background/90 backdrop-blur-sm"
-          >
-            <PanelRightOpen className="w-4 h-4 mr-2" />
-            Show Sidebar
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowDeveloperSidebar(true)}
+          className="fixed top-4 right-4 z-50 bg-background/80 backdrop-blur-sm" // Changed from left-4 to right-4
+        >
+          <PanelLeftOpen className="w-4 h-4" /> {/* Changed icon */}
+        </Button>
       )}
 
       <TopNavigation 
@@ -165,10 +113,10 @@ function AppContent() {
         onTabChange={handleTabChange}
         splitScreenMode={splitScreenMode}
         onSplitScreenToggle={handleSplitScreenToggle}
-        onTerminalSelect={handleTerminalSelect}
       />
       
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex flex-1 overflow-hidden">
+        {/* Main content area - now comes FIRST (left side) */}
         <div className="flex-1 flex overflow-hidden">
           {bothPanelsVisible ? (
             <ResizablePanelGroup direction="horizontal" className="flex-1">
@@ -182,21 +130,22 @@ function AppContent() {
                   >
                     <X className="w-4 h-4" />
                   </Button>
-                  <MainContent 
-                    activeTab={activeTab} 
-                    isInSplitMode={bothPanelsVisible}
-                    activeDM={activeDM}
-                    onOpenDM={setActiveDM}
-                    onCloseDM={() => setActiveDM(null)}
-                    activeDirectory={activeDirectory}
-                    onOpenDirectory={setActiveDirectory}
-                    onCloseDirectory={() => setActiveDirectory(null)}
-                    activeTerminal={activeTerminal}
-                    onCloseTerminal={() => setActiveTerminal(null)}
-                    showProfilePage={showProfilePage}
-                    onOpenProfilePage={() => setShowProfilePage(true)}
-                    onCloseProfilePage={() => setShowProfilePage(false)}
-                  />
+                  
+                  {/* Show DM Page when dms tab is active */}
+                  {activeTab === "dms" ? (
+                    <DmPage currentUserId={currentUserId} />
+                  ) : (
+                    <MainContent 
+                      activeTab={activeTab} 
+                      isInSplitMode={bothPanelsVisible}
+                      activeDirectory={activeDirectory}
+                      onOpenDirectory={setActiveDirectory}
+                      onCloseDirectory={() => setActiveDirectory(null)}
+                      showProfilePage={showProfilePage}
+                      onOpenProfilePage={() => setShowProfilePage(true)}
+                      onCloseProfilePage={() => setShowProfilePage(false)}
+                    />
+                  )}
                 </div>
               </ResizablePanel>
               
@@ -226,21 +175,22 @@ function AppContent() {
               >
                 <X className="w-4 h-4" />
               </Button>
-              <MainContent 
-                activeTab={activeTab} 
-                isInSplitMode={false}
-                activeDM={activeDM}
-                onOpenDM={setActiveDM}
-                onCloseDM={() => setActiveDM(null)}
-                activeDirectory={activeDirectory}
-                onOpenDirectory={setActiveDirectory}
-                onCloseDirectory={() => setActiveDirectory(null)}
-                activeTerminal={activeTerminal}
-                onCloseTerminal={() => setActiveTerminal(null)}
-                showProfilePage={showProfilePage}
-                onOpenProfilePage={() => setShowProfilePage(true)}
-                onCloseProfilePage={() => setShowProfilePage(false)}
-              />
+              
+              {/* Show DM Page when dms tab is active */}
+              {activeTab === "dms" ? (
+                <DmPage currentUserId={currentUserId} />
+              ) : (
+                <MainContent 
+                  activeTab={activeTab} 
+                  isInSplitMode={false}
+                  activeDirectory={activeDirectory}
+                  onOpenDirectory={setActiveDirectory}
+                  onCloseDirectory={() => setActiveDirectory(null)}
+                  showProfilePage={showProfilePage}
+                  onOpenProfilePage={() => setShowProfilePage(true)}
+                  onCloseProfilePage={() => setShowProfilePage(false)}
+                />
+              )}
             </div>
           ) : onlyDevToolsVisible ? (
             <div className="flex-1 overflow-auto relative">
@@ -256,15 +206,14 @@ function AppContent() {
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center">
-              <div className="text-center space-y-4">
-                <p className="text-muted-foreground">No panels open</p>
-                <div className="flex gap-2">
+              <div className="text-center">
+                <h3 className="text-lg font-medium mb-2">No panels open</h3>
+                <p className="text-muted-foreground mb-4">Select a tab or open a tool to get started</p>
+                <div className="space-x-2">
                   <Button onClick={() => setShowMainContent(true)}>
-                    <Terminal className="w-4 h-4 mr-2" />
-                    Open Main
+                    Open Main Content
                   </Button>
-                  <Button onClick={() => setShowDevTools(true)}>
-                    <Kanban className="w-4 h-4 mr-2" />
+                  <Button variant="outline" onClick={() => setShowDevTools(true)}>
                     Open Dev Tools
                   </Button>
                 </div>
@@ -272,15 +221,16 @@ function AppContent() {
             </div>
           )}
         </div>
-        
+
+        {/* Developer Sidebar - now comes SECOND (right side) */}
         {showDeveloperSidebar && (
-          <div className="relative">
-            <DeveloperSidebar activeTool={activeTool} onToolChange={handleToolChange} />
-          </div>
+          <DeveloperSidebar 
+            activeTool={activeTool}
+            onToolChange={setActiveTool}
+            onClose={() => setShowDeveloperSidebar(false)}
+          />
         )}
       </div>
-      
-
       
       <Toaster />
     </div>
@@ -289,7 +239,7 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="ping-theme">
+    <ThemeProvider>
       <AppContent />
     </ThemeProvider>
   );
