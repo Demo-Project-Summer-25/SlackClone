@@ -16,11 +16,11 @@ import java.util.UUID;
                          columnNames = {"channel_id", "user_id"})  // Auto-creates index for (channel_id, user_id)
     }
     // Uncomment these indexes when you need better query performance:
-    // , indexes = {
-    //     @Index(name = "idx_channel_member_user", columnList = "user_id"),     // For finding user's channels
-    //     @Index(name = "idx_channel_member_role", columnList = "role"),        // For permission/role queries  
-    //     @Index(name = "idx_channel_member_joined", columnList = "joined_at")  // For sorting by join date
-    // }
+    , indexes = {
+        @Index(name = "idx_channel_member_user", columnList = "user_id"),     // For finding user's channels
+        @Index(name = "idx_channel_member_role", columnList = "role"),        // For permission/role queries  
+        @Index(name = "idx_channel_member_joined", columnList = "joined_at")  // For sorting by join date
+    }
 )
 public class ChannelMember {
 

@@ -29,13 +29,13 @@ public class ChannelMemberService {
         this.userService = userService;
     }
 
-    public List<ChannelMemberResponse> getChannelMembers(Long channelId) {
+    public List<ChannelMemberResponse> getChannelMembers(UUID channelId) {
         List<ChannelMember> members = memberRepository.findAllByChannelId(channelId);
         return channelMapper.membersToResponseList(members);
     }
 
     @Transactional
-    public ChannelMemberResponse addMember(Long channelId, ChannelMemberRequest request, UUID requesterId) {
+    public ChannelMemberResponse addMember(UUID channelId, ChannelMemberRequest request, UUID requesterId) {
         checkManagerPermissions(channelId, requesterId);
 
         if (memberRepository.findByChannelIdAndUserId(channelId, request.getUserId()).isPresent()) {
@@ -53,12 +53,12 @@ public class ChannelMemberService {
     }
 
     @Transactional
-    public void removeMember(Long channelId, UUID memberUserId, UUID requesterId) {
+    public void removeMember(UUID channelId, UUID memberUserId, UUID requesterId) {
         checkManagerPermissions(channelId, requesterId);
         memberRepository.deleteByChannelIdAndUserId(channelId, memberUserId);
     }
 
-    private void checkManagerPermissions(Long channelId, UUID requesterId) {
+    private void checkManagerPermissions(UUID channelId, UUID requesterId) {
         ChannelMember requesterMembership = memberRepository.findByChannelIdAndUserId(channelId, requesterId)
                 .orElseThrow(() -> new RuntimeException("Requester is not a member of the channel."));
 
