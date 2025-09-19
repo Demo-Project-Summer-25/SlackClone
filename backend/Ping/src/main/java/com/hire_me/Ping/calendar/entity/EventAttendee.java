@@ -1,5 +1,7 @@
 package com.hire_me.Ping.calendar.entity;
 
+import java.util.UUID;
+
 import com.hire_me.Ping.calendar.model.AttendeeStatus;
 
 import jakarta.persistence.Column;
@@ -24,8 +26,8 @@ import jakarta.persistence.UniqueConstraint;
 public class EventAttendee {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     // Link to the event (required)
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -35,7 +37,7 @@ public class EventAttendee {
 
     // The invited user (store userId for simplicity)
     @Column(name = "user_id", nullable = false)
-    private Long userId;
+    private UUID userId;
 
     // RSVP status (INVITED/GOING/MAYBE/DECLINED)
     @Enumerated(EnumType.STRING)
@@ -45,21 +47,21 @@ public class EventAttendee {
     // ---- Constructors ----
     public EventAttendee() {}
 
-    public EventAttendee(Event event, Long userId, AttendeeStatus status) {
+    public EventAttendee(Event event, UUID userId, AttendeeStatus status) {
         this.event = event;
         this.userId = userId;
         this.status = status;
     }
 
     // ---- Getters/Setters ----
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
     public Event getEvent() { return event; }
     public void setEvent(Event event) { this.event = event; }
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public UUID getUserId() { return userId; }
+    public void setUserId(UUID userId) { this.userId = userId; }
 
     public AttendeeStatus getStatus() { return status; }
     public void setStatus(AttendeeStatus status) { this.status = status; }

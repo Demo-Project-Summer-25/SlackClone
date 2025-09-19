@@ -1,4 +1,7 @@
 package com.hire_me.Ping.calendar.entity;
+
+import java.util.UUID;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -15,12 +18,12 @@ import jakarta.persistence.UniqueConstraint;
 public class Calendar {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     // One calendar per user — store the owner's userId for now
     @Column(name = "owner_id", nullable = false)
-    private Long ownerId;
+    private UUID ownerId;
 
     @Column(name = "default_timezone", length = 100)
     private String defaultTimezone;           // e.g., "America/New_York"
@@ -31,18 +34,18 @@ public class Calendar {
     // ---- Constructors ----
     public Calendar() {}
 
-    public Calendar(Long ownerId, String defaultTimezone, Integer defaultReminderMinutes) {
+    public Calendar(UUID ownerId, String defaultTimezone, Integer defaultReminderMinutes) {
         this.ownerId = ownerId;
         this.defaultTimezone = defaultTimezone;
         this.defaultReminderMinutes = defaultReminderMinutes;
     }
 
     // ---- Getters/Setters ----
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public Long getOwnerId() { return ownerId; }
-    public void setOwnerId(Long ownerId) { this.ownerId = ownerId; }
+    public UUID getOwnerId() { return ownerId; }
+    public void setOwnerId(UUID ownerId) { this.ownerId = ownerId; }
 
     public String getDefaultTimezone() { return defaultTimezone; }
     public void setDefaultTimezone(String defaultTimezone) { this.defaultTimezone = defaultTimezone; }

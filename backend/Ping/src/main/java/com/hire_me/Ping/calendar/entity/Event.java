@@ -1,6 +1,7 @@
 package com.hire_me.Ping.calendar.entity;
 
 import java.time.Instant;
+import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,12 +26,12 @@ import jakarta.persistence.Table;
 public class Event {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     // The user who created/owns this event (usually the calendar's owner)
     @Column(name = "organizer_id", nullable = false)
-    private Long organizerId;
+    private UUID organizerId;
 
     // Belongs to exactly one Calendar
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -62,7 +63,7 @@ public class Event {
     // ---- Constructors ----
     public Event() {}
 
-    public Event(Long organizerId, Calendar calendar, String title,
+    public Event(UUID organizerId, Calendar calendar, String title,
                  Instant startUtc, Instant endUtc, String timezone,
                  String description, String location) {
         this.organizerId = organizerId;
@@ -76,11 +77,11 @@ public class Event {
     }
 
     // ---- Getters/Setters ----
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public Long getOrganizerId() { return organizerId; }
-    public void setOrganizerId(Long organizerId) { this.organizerId = organizerId; }
+    public UUID getOrganizerId() { return organizerId; }
+    public void setOrganizerId(UUID organizerId) { this.organizerId = organizerId; }
 
     public Calendar getCalendar() { return calendar; }
     public void setCalendar(Calendar calendar) { this.calendar = calendar; }
