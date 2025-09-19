@@ -37,7 +37,7 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ user, onUpdate, onClose }
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Edit Profile</h2>
-          <button onClick={onClose}>✕</button>
+          <button onClick={onClose}>×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="user-form">
@@ -87,10 +87,10 @@ const UserEditModal: React.FC<UserEditModalProps> = ({ user, onUpdate, onClose }
               value={formData.status}
               onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
             >
-              <option value="ONLINE"> Online</option>
-              <option value="AWAY"> Away</option>
-              <option value="BUSY"> Busy</option>
-              <option value="OFFLINE"> Offline</option>
+              <option value="ONLINE">Online</option>
+              <option value="AWAY">Away</option>
+              <option value="BUSY">Busy</option>
+              <option value="OFFLINE">Offline</option>
             </select>
           </div>
 

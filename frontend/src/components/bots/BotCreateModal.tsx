@@ -35,7 +35,7 @@ const BotCreateModal: React.FC<BotCreateModalProps> = ({ onCreate, onClose }) =>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Create New Bot</h2>
-          <button onClick={onClose}>✕</button>
+          <button onClick={onClose}>×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="bot-form">
@@ -57,10 +57,10 @@ const BotCreateModal: React.FC<BotCreateModalProps> = ({ onCreate, onClose }) =>
               onChange={(e) => setFormData({ ...formData, botType: e.target.value as any })}
               required
             >
-              <option value="CLAUDE_SONNET">🧠 Claude Sonnet</option>
-              <option value="CLAUDE_HAIKU">🧠 Claude Haiku</option> 
-              <option value="CLAUDE_OPUS">🧠 Claude Opus</option>
-              <option value="CUSTOM">⚙️ Custom AI</option>
+              <option value="CLAUDE_SONNET">Claude Sonnet</option>
+              <option value="CLAUDE_HAIKU">Claude Haiku</option> 
+              <option value="CLAUDE_OPUS">Claude Opus</option>
+              <option value="CUSTOM">Custom AI</option>
             </select>
           </div>
 

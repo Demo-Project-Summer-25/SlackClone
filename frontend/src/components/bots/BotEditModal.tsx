@@ -37,7 +37,7 @@ const BotEditModal: React.FC<BotEditModalProps> = ({ bot, onUpdate, onClose }) =
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Edit Bot: {bot.name}</h2>
-          <button onClick={onClose}>✕</button>
+          <button onClick={onClose}>×</button>
         </div>
 
         <form onSubmit={handleSubmit} className="bot-form">
