@@ -1,8 +1,7 @@
 package com.hire_me.Ping.messages.dto;
 
-import com.hire_me.Ping.messages.entity.Message.ContentType;
-
-import java.time.LocalDateTime;
+import com.hire_me.Ping.messages.entity.Message;
+import java.time.Instant;
 import java.util.UUID;
 
 // DTO for sending message data to clients
@@ -12,8 +11,8 @@ public record MessageResponse(
     UUID directConversationId,
     UUID senderUserId,
     String content,
-    ContentType contentType,
+    Message.ContentType contentType,
     boolean deleted,
-    LocalDateTime createdAt,
-    LocalDateTime editedAt
+    Instant createdAt,
+    Instant editedAt
 ) {}

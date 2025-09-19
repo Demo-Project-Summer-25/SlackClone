@@ -11,7 +11,7 @@ import com.hire_me.Ping.dms.repo.DirectParticipantRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;  // Changed from LocalDateTime
 import java.util.*;
 
 @Service
@@ -65,7 +65,7 @@ public class DmService {
     private DmParticipantRequest creatorAdmin(DmCreateRequest req) {
         DmParticipantRequest creator = new DmParticipantRequest();
         creator.setUserId(req.getCreatedByUserId());
-        creator.setAdmin(Boolean.TRUE); // creator is admin by default
+        creator.setAdmin(Boolean.TRUE);
         return creator;
     }
 
@@ -99,7 +99,7 @@ public class DmService {
                 // No-op, still inside
             } else {
                 DirectParticipant rejoin = mapper.toParticipant(conversationId, req);
-                rejoin.setJoinedAt(LocalDateTime.now());
+                rejoin.setJoinedAt(Instant.now());  // Changed from LocalDateTime.now()
                 rejoin.setLeftAt(null);
                 participantRepo.save(rejoin);
             }
@@ -116,7 +116,7 @@ public class DmService {
         DirectConversation conv = conversationRepo.findById(conversationId)
                 .orElseThrow(() -> new NoSuchElementException("DM not found: " + conversationId));
         participantRepo.findByDirectConversationIdAndUserIdAndLeftAtIsNull(conversationId, userId)
-                .ifPresent(p -> participantRepo.softLeave(p, LocalDateTime.now()));
+                .ifPresent(p -> participantRepo.softLeave(p, Instant.now()));  // Changed from LocalDateTime.now()
 
         List<DirectParticipant> parts = participantRepo.findByDirectConversationId(conversationId);
         return mapper.toResponse(conv, parts);

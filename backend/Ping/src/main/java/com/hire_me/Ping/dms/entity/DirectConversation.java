@@ -18,6 +18,12 @@ public class DirectConversation {
   @Column(name = "is_group")
   private boolean isGroup;
 
+  @Column(name = "title")
+  private String title;
+
+  @Column(name = "created_by_user_id")
+  private UUID createdByUserId;  // Added missing field
+
   // When this DM was created.
   @Column(name = "created_at")
   private Instant createdAt;
@@ -51,6 +57,12 @@ public class DirectConversation {
 
   public boolean isGroup() { return isGroup; }
   public void setGroup(boolean group) { isGroup = group; }
+
+  public String getTitle() { return title; }
+  public void setTitle(String title) { this.title = title; }
+
+  public UUID getCreatedByUserId() { return createdByUserId; }
+  public void setCreatedByUserId(UUID createdByUserId) { this.createdByUserId = createdByUserId; }
 
   public Instant getCreatedAt() { return createdAt; }
   public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }

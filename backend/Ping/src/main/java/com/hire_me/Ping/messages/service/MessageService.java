@@ -10,7 +10,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;  // Changed from LocalDateTime
 import java.util.List;
 import java.util.UUID;
 
@@ -63,7 +63,7 @@ public class MessageService {
     message.setContent(req.content().trim());
     message.setContentType(req.contentType() != null ? req.contentType() : Message.ContentType.TEXT);
     message.setDeleted(false);
-    message.setCreatedAt(LocalDateTime.now());
+    message.setCreatedAt(Instant.now());  // Changed from LocalDateTime.now()
     
     Message saved = repository.save(message);
     return mapper.toResponse(saved);
@@ -104,7 +104,7 @@ public class MessageService {
     message.setContent(req.content().trim());
     message.setContentType(req.contentType() != null ? req.contentType() : Message.ContentType.TEXT);
     message.setDeleted(false);
-    message.setCreatedAt(LocalDateTime.now());
+    message.setCreatedAt(Instant.now());  // Changed from LocalDateTime.now()
     
     Message saved = repository.save(message);
     return mapper.toResponse(saved);
@@ -127,7 +127,7 @@ public class MessageService {
     }
     
     message.setContent(req.content().trim());
-    message.setEditedAt(LocalDateTime.now());
+    message.setEditedAt(Instant.now());  // Changed from LocalDateTime.now()
     
     Message saved = repository.save(message);
     return mapper.toResponse(saved);

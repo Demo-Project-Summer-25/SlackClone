@@ -21,14 +21,14 @@ public interface DirectConversationRepository extends JpaRepository<DirectConver
     // ---------------- CUSTOM QUERIES ----------------
 
 
-    @Query("select dp.directConversationId from DirectParticipant dp where dp.userId = :userId and dp.leftAt is null")
+    @Query("SELECT dp.directConversationId FROM DirectParticipant dp WHERE dp.userId = :userId AND dp.leftAt IS NULL")
     List<UUID> findActiveConversationIdsByUser(@Param("userId") UUID userId);
     // This query finds the IDs of all conversations where a given user is *currently active*.
     // - "dp.leftAt is null" means they haven't left the conversation.
     // Returns just the IDs, not the full conversation objects.
 
 
-    @Query("select c from DirectConversation c where c.id in :ids")
+    @Query("SELECT dc FROM DirectConversation dc WHERE dc.id IN :ids")
     List<DirectConversation> findAllByIds(@Param("ids") List<UUID> ids);
     // Given a list of conversation IDs, this returns the full DirectConversation entities.
     // Useful when you already know which conversations matter and you just need details.
