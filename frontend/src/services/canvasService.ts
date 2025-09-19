@@ -1,4 +1,4 @@
-import { apiClient } from './api';
+import { ApiService } from './api';  // ✅ Use your existing ApiService
 
 export interface Canvas {
   id: string;                   
@@ -22,27 +22,28 @@ export interface UpdateCanvasRequest {
 }
 
 export const canvasService = {
+  // Get all canvases
   getCanvases: async (): Promise<Canvas[]> => {
-    const response = await apiClient.get('/api/canvases');  
-    return response.data;
+    return ApiService.get<Canvas[]>('/canvases');  
   },
-  
-  getCanvas: async (id: string): Promise<Canvas> => {        
-    const response = await apiClient.get(`/api/canvases/${id}`);
-    return response.data;
+
+  // Get a specific canvas
+  getCanvas: async (id: string): Promise<Canvas> => {
+    return ApiService.get<Canvas>(`/canvases/${id}`);  
   },
-  
+
+  // Create a new canvas
   createCanvas: async (data: CreateCanvasRequest): Promise<Canvas> => {
-    const response = await apiClient.post('/api/canvases', data);
-    return response.data;
+    return ApiService.post<Canvas>('/canvases', data);  
   },
-  
-  updateCanvas: async (id: string, canvas: UpdateCanvasRequest): Promise<Canvas> => {  
-    const response = await apiClient.put(`/api/canvases/${id}`, canvas);
-    return response.data;
+
+  // Update a canvas
+  updateCanvas: async (id: string, canvas: UpdateCanvasRequest): Promise<Canvas> => {
+    return ApiService.put<Canvas>(`/canvases/${id}`, canvas);  
   },
-  
-  deleteCanvas: async (id: string): Promise<void> => {       
-    await apiClient.delete(`/api/canvases/${id}`);
-  }
+
+  // Delete a canvas
+  deleteCanvas: async (id: string): Promise<void> => {
+    return ApiService.delete<void>(`/canvases/${id}`);
+  },
 };

@@ -10,13 +10,13 @@ import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "./componen
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
 import { CanvasPage } from './components/Canvas/CanvasPage';
-import { 
-  X, 
-  Terminal, 
+import {
+  X,
+  Terminal,
   Kanban,
   PanelLeftOpen
 } from "lucide-react";
-import React from 'react'; 
+import React from 'react';
 import { DmPage } from './pages/DmPage';
 import './styles/dm.css';
 
@@ -44,11 +44,11 @@ function AppContent() {
   // Handle split screen mode toggle
   const handleSplitScreenToggle = (enabled: boolean) => {
     setSplitScreenMode(enabled);
-    
+
     if (enabled) {
       setShowDevTools(true);
       setActiveTool("ai");
-      
+
       if (!showMainContent) {
         setShowMainContent(true);
       }
@@ -67,7 +67,7 @@ function AppContent() {
   // Handle tab changes - close DM conversations when switching tabs
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    
+
     // Clear any active states when switching tabs
     if (tab !== "directories") {
       setActiveDirectory(null);
@@ -75,7 +75,7 @@ function AppContent() {
     if (tab !== "profile") {
       setShowProfilePage(false);
     }
-    
+
     // Auto-open main content when switching tabs
     if (!showMainContent) {
       setShowMainContent(true);
@@ -115,14 +115,14 @@ function AppContent() {
         </Button>
       )}
 
-      <TopNavigation 
-        activeTab={activeTab} 
+      <TopNavigation
+        activeTab={activeTab}
         onTabChange={handleTabChange}
         splitScreenMode={splitScreenMode}
         onSplitScreenToggle={handleSplitScreenToggle}
         onTerminalSelect={handleTerminalSelect}
       />
-      
+
       <div className="flex flex-1 overflow-hidden">
         {/* Main content area - now comes FIRST (left side) */}
         <div className="flex-1 flex overflow-hidden">
@@ -138,13 +138,13 @@ function AppContent() {
                   >
                     <X className="w-4 h-4" />
                   </Button>
-                  
+
                   {/* Show DM Page when dms tab is active */}
                   {activeTab === "dms" ? (
                     <DmPage currentUserId={currentUserId} />
                   ) : (
-                    <MainContent 
-                      activeTab={activeTab} 
+                    <MainContent
+                      activeTab={activeTab}
                       isInSplitMode={bothPanelsVisible}
                       activeDirectory={activeDirectory}
                       onOpenDirectory={setActiveDirectory}
@@ -156,9 +156,9 @@ function AppContent() {
                   )}
                 </div>
               </ResizablePanel>
-              
+
               <ResizableHandle withHandle />
-              
+
               <ResizablePanel defaultSize={40} minSize={25}>
                 <div className="h-full overflow-auto relative">
                   <Button
@@ -183,13 +183,13 @@ function AppContent() {
               >
                 <X className="w-4 h-4" />
               </Button>
-              
+
               {/* Show DM Page when dms tab is active */}
               {activeTab === "dms" ? (
                 <DmPage currentUserId={currentUserId} />
               ) : (
-                <MainContent 
-                  activeTab={activeTab} 
+                <MainContent
+                  activeTab={activeTab}
                   isInSplitMode={false}
                   activeDirectory={activeDirectory}
                   onOpenDirectory={setActiveDirectory}
@@ -232,14 +232,14 @@ function AppContent() {
 
         {/* Developer Sidebar - now comes SECOND (right side) */}
         {showDeveloperSidebar && (
-          <DeveloperSidebar 
+          <DeveloperSidebar
             activeTool={activeTool}
             onToolChange={setActiveTool}
             onClose={() => setShowDeveloperSidebar(false)}
           />
         )}
       </div>
-      
+
       <Toaster />
     </div>
   );
@@ -249,14 +249,8 @@ function AppContent() {
 export default function App() {
   return (
     <ThemeProvider defaultTheme="system" storageKey="ping-theme">
-      <Router>
-        <Routes>
-          <Route path="/canvas" element={<CanvasPage />} />
-          <Route path="/*" element={<AppContent />} />
-        </Routes>
-      </Router>
-    <ThemeProvider>
       <AppContent />
     </ThemeProvider>
   );
 }
+
