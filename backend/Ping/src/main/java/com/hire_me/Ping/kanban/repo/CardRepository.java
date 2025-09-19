@@ -5,11 +5,12 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface CardRepository extends JpaRepository<Card, Long> {
-    List<Card> findByColumnIdOrderByPositionAsc(Long columnId);
+public interface CardRepository extends JpaRepository<Card, UUID> {
+    List<Card> findByColumn_IdOrderByPositionAsc(UUID columnId);
 
-    List<Card> findByColumnBoardIdOrderByPositionAsc(Long boardId);
+    List<Card> findByColumn_Board_IdOrderByPositionAsc(UUID boardId);
 
-    Optional<Card> findByIdAndColumnBoardId(Long cardId, Long boardId);
+    Optional<Card> findByIdAndColumn_Board_Id(UUID cardId, UUID boardId);
 }

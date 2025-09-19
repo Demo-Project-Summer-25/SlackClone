@@ -14,15 +14,13 @@ import java.util.UUID;
 public class CardAssignment {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "uuid")
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "card_id", nullable = false)
+    @JoinColumn(name = "card_id", nullable = false, columnDefinition = "uuid")
     private Card card;
-
-    @Column(name = "card_id", insertable = false, updatable = false)
-    private Long cardId;
 
     @Column(name = "assignee_id", nullable = false, columnDefinition = "uuid")
     private UUID assigneeId;
@@ -37,11 +35,11 @@ public class CardAssignment {
         }
     }
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -53,8 +51,8 @@ public class CardAssignment {
         this.card = card;
     }
 
-    public Long getCardId() {
-        return cardId;
+    public UUID getCardId() {
+        return card != null ? card.getId() : null;
     }
 
     public UUID getAssigneeId() {

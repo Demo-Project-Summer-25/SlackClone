@@ -14,7 +14,7 @@ import java.util.UUID;
 public class CardCreateRequest {
 
     @NotNull
-    private Long columnId;
+    private UUID columnId;
 
     @NotBlank
     @Size(max = 200)
@@ -27,7 +27,7 @@ public class CardCreateRequest {
 
     private Instant dueAt;
 
-    private Long priorityId;
+    private UUID priorityId;
 
     @NotNull
     private UUID createdBy;
@@ -35,11 +35,11 @@ public class CardCreateRequest {
     @Valid
     private List<CardAssignmentRequest> assignees = new ArrayList<>();
 
-    public Long getColumnId() {
+    public UUID getColumnId() {
         return columnId;
     }
 
-    public void setColumnId(Long columnId) {
+    public void setColumnId(UUID columnId) {
         this.columnId = columnId;
     }
 
@@ -75,11 +75,11 @@ public class CardCreateRequest {
         this.dueAt = dueAt;
     }
 
-    public Long getPriorityId() {
+    public UUID getPriorityId() {
         return priorityId;
     }
 
-    public void setPriorityId(Long priorityId) {
+    public void setPriorityId(UUID priorityId) {
         this.priorityId = priorityId;
     }
 

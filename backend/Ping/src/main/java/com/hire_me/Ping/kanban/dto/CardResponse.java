@@ -6,13 +6,13 @@ import java.util.List;
 import java.util.UUID;
 
 public class CardResponse {
-    private Long id;
-    private Long columnId;
+    private UUID id;
+    private UUID columnId;
     private String title;
     private String description;
     private Integer position;
     private Instant dueAt;
-    private Long priorityId;
+    private UUID priorityId;
     private String priorityLabel;
     private String priorityColor;
     private UUID createdBy;
@@ -21,19 +21,19 @@ public class CardResponse {
     private Instant updatedAt;
     private List<UUID> assignees = new ArrayList<>();
 
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
-    public Long getColumnId() {
+    public UUID getColumnId() {
         return columnId;
     }
 
-    public void setColumnId(Long columnId) {
+    public void setColumnId(UUID columnId) {
         this.columnId = columnId;
     }
 
@@ -69,11 +69,11 @@ public class CardResponse {
         this.dueAt = dueAt;
     }
 
-    public Long getPriorityId() {
+    public UUID getPriorityId() {
         return priorityId;
     }
 
-    public void setPriorityId(Long priorityId) {
+    public void setPriorityId(UUID priorityId) {
         this.priorityId = priorityId;
     }
 

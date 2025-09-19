@@ -8,6 +8,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api")
 public class ColumnController {
@@ -19,20 +21,20 @@ public class ColumnController {
     }
 
     @PostMapping("/boards/{boardId}/columns")
-    public ResponseEntity<BoardResponse> createColumn(@PathVariable Long boardId,
+    public ResponseEntity<BoardResponse> createColumn(@PathVariable UUID boardId,
                                                       @Valid @RequestBody ColumnCreateRequest request) {
         request.setBoardId(boardId);
         return ResponseEntity.ok(columnService.create(request));
     }
 
     @PatchMapping("/columns/{columnId}")
-    public ResponseEntity<BoardResponse> updateColumn(@PathVariable Long columnId,
+    public ResponseEntity<BoardResponse> updateColumn(@PathVariable UUID columnId,
                                                       @Valid @RequestBody ColumnUpdateRequest request) {
         return ResponseEntity.ok(columnService.update(columnId, request));
     }
 
     @DeleteMapping("/columns/{columnId}")
-    public ResponseEntity<BoardResponse> deleteColumn(@PathVariable Long columnId) {
+    public ResponseEntity<BoardResponse> deleteColumn(@PathVariable UUID columnId) {
         return ResponseEntity.ok(columnService.delete(columnId));
     }
 }

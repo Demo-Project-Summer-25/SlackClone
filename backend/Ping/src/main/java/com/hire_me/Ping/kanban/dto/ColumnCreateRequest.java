@@ -5,10 +5,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.UUID;
+
 public class ColumnCreateRequest {
 
     @NotNull
-    private Long boardId;
+    private UUID boardId;
 
     @NotBlank
     @Size(max = 140)
@@ -17,11 +19,11 @@ public class ColumnCreateRequest {
     @Min(0)
     private Integer position;
 
-    public Long getBoardId() {
+    public UUID getBoardId() {
         return boardId;
     }
 
-    public void setBoardId(Long boardId) {
+    public void setBoardId(UUID boardId) {
         this.boardId = boardId;
     }
 

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
+import java.util.UUID;
 
 public class CardUpdateRequest {
 
@@ -14,11 +15,11 @@ public class CardUpdateRequest {
 
     private Instant dueAt;
 
-    private Long priorityId;
+    private UUID priorityId;
 
     private Boolean archived;
 
-    private Long columnId;
+    private UUID columnId;
 
     @Min(0)
     private Integer position;
@@ -47,11 +48,11 @@ public class CardUpdateRequest {
         this.dueAt = dueAt;
     }
 
-    public Long getPriorityId() {
+    public UUID getPriorityId() {
         return priorityId;
     }
 
-    public void setPriorityId(Long priorityId) {
+    public void setPriorityId(UUID priorityId) {
         this.priorityId = priorityId;
     }
 
@@ -63,11 +64,11 @@ public class CardUpdateRequest {
         this.archived = archived;
     }
 
-    public Long getColumnId() {
+    public UUID getColumnId() {
         return columnId;
     }
 
-    public void setColumnId(Long columnId) {
+    public void setColumnId(UUID columnId) {
         this.columnId = columnId;
     }
 
