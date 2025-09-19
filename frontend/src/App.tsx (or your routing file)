@@ -1,0 +1,25 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import UserManagement from './pages/UserManagement';
+import UserProfile from './pages/UserProfile';
+import BotManagement from './pages/BotManagement';
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        {/* User Management Routes */}
+        <Route path="/users" element={<UserManagement />} />
+        <Route path="/users/:userId" element={<UserProfile />} />
+        <Route path="/profile" element={<UserProfile />} /> {/* Current user's profile */}
+        
+        {/* Bot Management Routes */}
+        <Route path="/bots" element={<BotManagement />} />
+        
+        {/* Settings */}
+        <Route path="/settings" element={<Settings />} />
+        
+        {/* ... other routes */}
+      </Routes>
+    </Router>
+  );
+}
