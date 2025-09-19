@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
-import { useUser } from '../../hooks/useUsers';
+import React, { useState, useEffect } from 'react';
+import { UserService } from '../../services/userService';
+import { User } from '../../types/user';
+import { Badge } from '../ui/badge';
 import { useBots } from '../../hooks/useBots';
-import UserEditModal from './UserEditModal';
 import BotManager from '../bots/BotManager';
 
 interface UserProfileProps {
@@ -9,52 +10,68 @@ interface UserProfileProps {
   isOwnProfile?: boolean;
 }
 
-const UserProfile: React.FC<UserProfileProps> = ({ userId, isOwnProfile = false }) => {
-  const { user, loading, error, updateUser } = useUser(userId);
+export const UserProfile = ({ userId, isOwnProfile = false }: UserProfileProps) => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { bots } = useBots(userId);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  if (loading) return <div>Loading profile...</div>;
-  if (error) return <div>Error: {error}</div>;
-  if (!user) return <div>User not found</div>;
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const userData = await UserService.getUserById(userId);
+        setUser(userData);
+      } catch (err) {
+        setError('Failed to load user');
+        console.error('Failed to load user:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUser();
+  }, [userId]);
+
+  if (loading) return <div className="p-4">Loading...</div>;
+  if (error) return <div className="p-4 text-red-500">Error: {error}</div>;
+  if (!user) return <div className="p-4">User not found</div>;
 
   return (
-    <div className="user-profile">
-      <div className="profile-header">
-        <img 
-          src={user.profilePictureUrl || '/default-avatar.png'} 
-          alt={user.displayName || user.username}
-          className="profile-avatar"
-        />
-        <div className="profile-info">
-          <h1>{user.displayName || user.username}</h1>
-          <p className="username">@{user.username}</p>
-          <p className="email">{user.email}</p>
-          <span className={`status-indicator ${user.status?.toLowerCase()}`}>
-            {user.status}
+    <div className="p-6 max-w-md mx-auto bg-white rounded-lg shadow-md">
+      <div className="text-center">
+        <div className="w-24 h-24 bg-blue-500 rounded-full mx-auto mb-4 flex items-center justify-center">
+          <span className="text-white text-2xl font-bold">
+            {user.displayName?.[0] || user.username[0].toUpperCase()}
           </span>
-          {user.bio && <p className="bio">{user.bio}</p>}
         </div>
+        
+        <h1 className="text-2xl font-bold">{user.displayName || user.username}</h1>
+        <p className="text-gray-600 text-lg">@{user.username}</p>
+        
+        <div className="mt-4">
+          <Badge variant={user.accountStatus === 'ACTIVE' ? 'default' : 'destructive'}>
+            {user.accountStatus}
+          </Badge>
+        </div>
+        
         {isOwnProfile && (
-          <button onClick={() => setIsEditModalOpen(true)}>
-            Edit Profile
-          </button>
+          <div className="mt-4">
+            <button className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+              Edit Profile
+            </button>
+          </div>
         )}
+        
+        <div className="mt-6 text-sm text-gray-500">
+          Member since {new Date(user.createdTimestamp).toLocaleDateString()}
+        </div>
       </div>
 
       {isOwnProfile && (
-        <div className="user-bots-section">
-          <h2>My Bots ({bots.length})</h2>
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold mb-4">My Bots ({bots.length})</h2>
           <BotManager userId={userId} />
         </div>
-      )}
-
-      {isEditModalOpen && (
-        <UserEditModal
-          user={user}
-          onUpdate={updateUser}
-          onClose={() => setIsEditModalOpen(false)}
-        />
       )}
     </div>
   );

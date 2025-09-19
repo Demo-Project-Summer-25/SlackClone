@@ -161,8 +161,8 @@ export function DirectoryView({ directory, onBack }: DirectoryViewProps) {
             size="sm"
             className="shrink-0"
           >
-            <Send className="w-4 h-4" />
-          </Button>
+            <Send className="w-4 h-4" /> 
+          </Button> 
         </div>
       </div>
     </div>

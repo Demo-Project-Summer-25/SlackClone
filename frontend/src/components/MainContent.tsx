@@ -2,7 +2,6 @@ import { Terminal, Folder, MessageCircle, User, Bell, Hash, Lock, Users, Setting
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
-import { DirectMessageChat } from "./DirectMessageChat";
 import { DirectoryView } from "./DirectoryView";
 import { ProfilePage } from "./ProfilePage";
 import { useEffect, useState } from "react";
@@ -10,13 +9,6 @@ import { useEffect, useState } from "react";
 interface MainContentProps {
   activeTab: string;
   isInSplitMode?: boolean;
-  activeDM?: {
-    name: string;
-    status: "online" | "away" | "offline";
-    lastMessage: string;
-  } | null;
-  onOpenDM?: (dm: { name: string; status: "online" | "away" | "offline"; lastMessage: string; }) => void;
-  onCloseDM?: () => void;
   activeDirectory?: {
     name: string;
     description: string;
@@ -25,13 +17,6 @@ interface MainContentProps {
   } | null;
   onOpenDirectory?: (directory: { name: string; description: string; memberCount: number; isPrivate: boolean; }) => void;
   onCloseDirectory?: () => void;
-  activeTerminal?: {
-    id: string;
-    name: string;
-    type: string;
-    status: "running" | "stopped";
-  } | null;
-  onCloseTerminal?: () => void;
   showProfilePage?: boolean;
   onOpenProfilePage?: () => void;
   onCloseProfilePage?: () => void;
@@ -40,37 +25,72 @@ interface MainContentProps {
 export function MainContent({
   activeTab,
   isInSplitMode = false,
-  activeDM,
-  onOpenDM,
-  onCloseDM,
   activeDirectory,
   onOpenDirectory,
   onCloseDirectory,
-  activeTerminal,
-  onCloseTerminal,
   showProfilePage,
   onOpenProfilePage,
   onCloseProfilePage
 }: MainContentProps) {
   // Backend data states
   const [directories, setDirectories] = useState<any[]>([]);
-  const [dms, setDms] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  // Fetch directories
+  // Fetch directories and notifications (remove dms fetch since that's in DmPage)
   useEffect(() => {
     fetch("/api/channels")
       .then(res => res.json())
       .then(setDirectories)
-      .catch(() => { });
-    fetch("/api/dms")
-      .then(res => res.json())
-      .then(setDms)
-      .catch(() => { });
+      .catch(() => { 
+        // Mock data for directories if API fails
+        setDirectories([
+          {
+            id: 1,
+            name: "general",
+            description: "General team discussions",
+            memberCount: 12,
+            isPrivate: false,
+            unread: 3
+          },
+          {
+            id: 2,
+            name: "development",
+            description: "Development team discussions",
+            memberCount: 8,
+            isPrivate: false,
+            unread: 0
+          },
+          {
+            id: 3,
+            name: "design",
+            description: "Design team discussions",
+            memberCount: 5,
+            isPrivate: true,
+            unread: 1
+          }
+        ]);
+      });
+    
     fetch("/api/notifications")
       .then(res => res.json())
       .then(setNotifications)
-      .catch(() => { });
+      .catch(() => {
+        // Mock notifications if API fails
+        setNotifications([
+          {
+            id: 1,
+            message: "John mentioned you in #general",
+            time: "2 minutes ago",
+            unread: true
+          },
+          {
+            id: 2,
+            message: "New message in #development",
+            time: "10 minutes ago",
+            unread: false
+          }
+        ]);
+      });
   }, []);
 
   // If we're showing the profile page, show the profile interface
@@ -78,76 +98,58 @@ export function MainContent({
     return <ProfilePage onClose={onCloseProfilePage} />;
   }
 
-  // If we're in a DM conversation, show the chat interface
-  if (activeDM && onCloseDM) {
-    return <DirectMessageChat contact={activeDM} onBack={onCloseDM} />;
-  }
-
   // If we're in a directory, show the directory interface
   if (activeDirectory && onCloseDirectory) {
     return <DirectoryView directory={activeDirectory} onBack={onCloseDirectory} />;
   }
 
-  // If we're in a terminal, show the terminal interface
-  if (activeTerminal && onCloseTerminal) {
-    return (
-      <div className="flex flex-col h-full">
-        {/* Terminal Header */}
-        <div className="flex items-center justify-between p-4 border-b border-border">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={onCloseTerminal}>
-              ← Back to Terminals
-            </Button>
-            <div>
-              <h2 className="font-medium">{activeTerminal.name}</h2>
-              <p className="text-sm text-muted-foreground">{activeTerminal.type}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant={activeTerminal.status === "running" ? "default" : "secondary"}>
-              {activeTerminal.status}
-            </Badge>
-            <Button variant="outline" size="sm">
-              {activeTerminal.status === "running" ? "Stop" : "Start"}
-            </Button>
-          </div>
-        </div>
-
-        {/* Terminal Content */}
-        <div className="flex-1 bg-black text-green-400 p-4 font-mono text-sm overflow-auto">
-          <div className="space-y-1">
-            <div>Welcome to {activeTerminal.name}</div>
-            <div>Type: {activeTerminal.type}</div>
-            <div>Status: {activeTerminal.status}</div>
-            <div className="mt-4">
-              <span className="text-blue-400">~/workspace $</span>
-              <span className="animate-pulse ml-1">█</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
   const renderTerminals = () => (
     <div className="p-4 sm:p-6">
       <div className="mb-6">
-        <h2 className="text-2xl mb-2">Terminals</h2>
-        <p className="text-muted-foreground">Quick access to your development environments</p>
+        <h2 className="text-2xl mb-2">Channels</h2>
+        <p className="text-muted-foreground">Team channels and discussions</p>
       </div>
 
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center space-y-4">
-          <Terminal className="w-12 h-12 text-muted-foreground mx-auto" />
-          <div>
-            <h3 className="text-lg font-medium mb-2">Select a Terminal</h3>
-            <p className="text-muted-foreground mb-4">
-              Use the Terminals dropdown in the navigation bar to access your development environments.
-            </p>
-            <p className="text-sm text-muted-foreground">
-              Click on "Terminals" above to see all available terminals and their status.
-            </p>
-          </div>
-        </div>
+      <div className="space-y-3">
+        {/* Zip Code Channel - Active */}
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                  <Hash className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium">Zip Code</h4>
+                  <p className="text-xs text-muted-foreground">Main development channel</p>
+                </div>
+              </div>
+              <Badge variant="default" className="bg-green-500">
+                Active
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Mock Channel - Inactive */}
+        <Card className="border-gray-200 bg-gray-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-400 rounded-lg flex items-center justify-center">
+                  <Hash className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium">Mock Channel</h4>
+                  <p className="text-xs text-muted-foreground">Test channel for development</p>
+                </div>
+              </div>
+              <Badge variant="secondary" className="bg-gray-400">
+                Inactive
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
@@ -191,48 +193,6 @@ export function MainContent({
       </div>
     </div>
   );
-
-  const renderDMs = () => (
-    <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl mb-2">Pings</h2>
-        <p className="text-muted-foreground">Private conversations with team members</p>
-      </div>
-      <div className="space-y-2">
-        {dms.map((dm) => (
-          <div
-            key={dm.id || dm.name}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors cursor-pointer"
-            onClick={() => onOpenDM?.(dm)}
-          >
-            <div className="relative shrink-0">
-              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-primary-foreground text-xs sm:text-sm">
-                  {dm.name.split(' ').map((n: string) => n[0]).join('')}
-                </span>
-              </div>
-              <div className={`absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-background ${dm.status === "online" ? "bg-green-500" :
-                  dm.status === "away" ? "bg-yellow-500" : "bg-gray-400"
-                }`} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <span className="text-xs sm:text-sm truncate">{dm.name}</span>
-                {dm.unread > 0 && (
-                  <Badge variant="destructive" className="text-xs px-1.5 py-0 shrink-0">
-                    {dm.unread}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground truncate">{dm.lastMessage}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-
-
 
   const renderProfile = () => (
     <div className="p-4 sm:p-6">
@@ -356,13 +316,11 @@ export function MainContent({
       return renderTerminals();
     case "directories":
       return renderDirectories();
-    case "dms":
-      return renderDMs();
     case "profile":
       return renderProfile();
     case "notifications":
       return renderNotifications();
     default:
-      return renderTerminals();
+      return renderDirectories(); // Default to directories instead of terminals
   }
 }

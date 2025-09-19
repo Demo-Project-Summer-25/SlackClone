@@ -1,37 +1,12 @@
-import { ApiService } from './api';
-
-// Message interfaces matching your backend entities
-export interface MessageResponse {
-  id: string;  // Changed from number to string (UUID)
-  channelId?: number;  // Keep as number for channels
-  directConversationId?: string;  // Changed from number to string (UUID)
-  senderUserId: string;  // Changed from number to string (UUID)
-  content: string;
-  contentType: 'TEXT' | 'IMAGE' | 'FILE';
-  deleted: boolean;
-  createdAt: string;
-  editedAt?: string;
-}
-
-export interface MessageCreateRequest {
-  senderUserId: string;  // Changed from number to string (UUID)
-  content: string;
-  contentType?: 'TEXT' | 'IMAGE' | 'FILE';
-}
-
-export interface MessageUpdateRequest {
-  content: string;
-}
-
-export interface MessageQueryParams {
-  after?: string;      // Changed from number to string (UUID)
-  before?: string;     // Changed from number to string (UUID)
-  limit?: number;      // Keep as number
-  since?: string;      // Keep as string (ISO timestamp)
-}
+import ApiService from './api';
+import { 
+  MessageResponse, 
+  MessageCreateRequest, 
+  MessageUpdateRequest, 
+  MessageQueryParams 
+} from '../types/api';
 
 export class MessageService {
-  
   // ===============================
   // CHANNEL MESSAGE OPERATIONS
   // ===============================
