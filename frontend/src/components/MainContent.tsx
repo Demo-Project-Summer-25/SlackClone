@@ -59,53 +59,17 @@ export function MainContent({
     fetch("/api/channels")
       .then((res) => res.json())
       .then(setDirectories)
-      .catch(() => {
-        setDirectories([
-          {
-            id: 1,
-            name: "general",
-            description: "General team discussions",
-            memberCount: 12,
-            isPrivate: false,
-            unread: 3,
-          },
-          {
-            id: 2,
-            name: "development",
-            description: "Development team discussions",
-            memberCount: 8,
-            isPrivate: false,
-            unread: 0,
-          },
-          {
-            id: 3,
-            name: "design",
-            description: "Design team discussions",
-            memberCount: 5,
-            isPrivate: true,
-            unread: 1,
-          },
-        ]);
+      .catch(() => { 
+        // No mock data - just empty array
+        setDirectories([]);
       });
 
     fetch("/api/notifications")
       .then((res) => res.json())
       .then(setNotifications)
       .catch(() => {
-        setNotifications([
-          {
-            id: 1,
-            message: "John mentioned you in #general",
-            time: "2 minutes ago",
-            unread: true,
-          },
-          {
-            id: 2,
-            message: "New message in #development",
-            time: "10 minutes ago",
-            unread: false,
-          },
-        ]);
+        // No mock notifications - just empty array
+        setNotifications([]);
       });
   }, []);
 
@@ -116,10 +80,59 @@ export function MainContent({
 
   // If we're in a directory view
   if (activeDirectory && onCloseDirectory) {
-    return (
-      <DirectoryView directory={activeDirectory} onBack={onCloseDirectory} />
-    );
+    return <DirectoryView directory={activeDirectory} onBack={onCloseDirectory} />;
   }
+
+  const renderTerminals = () => (
+    <div className="p-4 sm:p-6">
+      <div className="mb-6">
+        <h2 className="text-2xl mb-2">Channels</h2>
+        <p className="text-muted-foreground">Team channels and discussions</p>
+      </div>
+
+      <div className="space-y-3">
+        {/* Zip Code Channel - Active */}
+        <Card className="border-green-200 bg-green-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
+                  <Hash className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium">Zip Code</h4>
+                  <p className="text-xs text-muted-foreground">Main development channel</p>
+                </div>
+              </div>
+              <Badge variant="default" className="bg-green-500">
+                Active
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Mock Channel - Inactive */}
+        <Card className="border-gray-200 bg-gray-50">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-gray-400 rounded-lg flex items-center justify-center">
+                  <Hash className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-medium">Mock Channel</h4>
+                  <p className="text-xs text-muted-foreground">Test channel for development</p>
+                </div>
+              </div>
+              <Badge variant="secondary" className="bg-gray-400">
+                Inactive
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
 
   const renderDirectories = () => (
     <div className="p-4 sm:p-6">
@@ -338,6 +351,6 @@ export function MainContent({
     case "notifications":
       return renderNotifications();
     default:
-      return renderDirectories(); // default fallback
+      return renderDirectories(); // Default to directories instead of terminals
   }
 }
