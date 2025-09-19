@@ -7,10 +7,15 @@ import org.springframework.stereotype.Component;
 // Maps Message entity to MessageResponse DTO
 @Component
 public class MessageMapper {
+  
   public MessageResponse toResponse(Message m) {
-    String safeContent = m.isDeleted() ? "" : m.getContent();
-
+    if (m == null) {
+      return null;
+    }
+    
     // If the message is deleted, we return empty content 
+    String safeContent = m.isDeleted() ? "[This message was deleted]" : m.getContent();
+
     return new MessageResponse(
         m.getId(),
         m.getChannelId(),

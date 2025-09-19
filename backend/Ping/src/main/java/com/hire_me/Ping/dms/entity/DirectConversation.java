@@ -1,56 +1,72 @@
 package com.hire_me.Ping.dms.entity;
 
-import jakarta.persistence.*;               // JPA annotations like @Entity
-import java.time.Instant;                   // time type
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.persistence.*;
+import java.time.Instant;
+import java.util.UUID;
 
 // This class maps to the "direct_conversation" table.
 @Entity
 @Table(name = "direct_conversation")
 public class DirectConversation {
-    // Primary key (auto number).
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
 
-    // Who created this DM (user id).
-    @Column(name = "created_by_user_id", nullable = false)
-    private Long createdByUserId;
+  // Primary key (UUID).
+  @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private UUID id;  // Changed from Long to UUID
 
-    // True = group DM (3+ people). False = 1:1 DM.
-    @Column(name = "is_group", nullable = false)
-    private boolean isGroup = false;
+  // True = group DM (3+ people). False = 1:1 DM.
+  @Column(name = "is_group")
+  private boolean isGroup;
 
-    // Optional name for the DM (mainly for groups).
-    @Column(length = 140)
-    private String title;
+  @Column(name = "title")
+  private String title;
 
-    // When this DM was created.
-    @Column(name = "created_at", nullable = false)
-    private Instant createdAt = Instant.now();
+  @Column(name = "created_by_user_id")
+  private UUID createdByUserId;  // Added missing field
 
-    // Participants (read-only association helper). Maintains backrefs from DirectParticipant.conversation
-    @OneToMany(mappedBy = "conversation", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<DirectParticipant> participants = new ArrayList<>();
+  // When this DM was created.
+  @Column(name = "created_at")
+  private Instant createdAt;
 
-    // --- getters/setters: small methods to read/write fields ---
+  // When this DM was last updated.
+  @Column(name = "updated_at")
+  private Instant updatedAt;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+  // Automatically set createdAt and updatedAt before inserting a record.
+  @PrePersist
+  protected void onCreate() {
+    createdAt = Instant.now();
+    updatedAt = Instant.now();
+  }
 
-    public Long getCreatedByUserId() { return createdByUserId; }
-    public void setCreatedByUserId(Long createdByUserId) { this.createdByUserId = createdByUserId; }
+  // Automatically update updatedAt before updating a record.
+  @PreUpdate
+  protected void onUpdate() {
+    updatedAt = Instant.now();
+  }
 
-    public boolean isGroup() { return isGroup; }
-    public void setGroup(boolean group) { isGroup = group; }
+  // Default constructor
+  public DirectConversation() {
+    this.id = UUID.randomUUID();
+  }
 
-    public String getTitle() { return title; }
-    public void setTitle(String title) { this.title = title; }
+  // --- getters/setters: small methods to read/write fields ---
 
-    public Instant getCreatedAt() { return createdAt; }
-    public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+  public UUID getId() { return id; }
+  public void setId(UUID id) { this.id = id; }
 
-    public List<DirectParticipant> getParticipants() { return participants; }
-    public void setParticipants(List<DirectParticipant> participants) { this.participants = participants; }
+  public boolean isGroup() { return isGroup; }
+  public void setGroup(boolean group) { isGroup = group; }
+
+  public String getTitle() { return title; }
+  public void setTitle(String title) { this.title = title; }
+
+  public UUID getCreatedByUserId() { return createdByUserId; }
+  public void setCreatedByUserId(UUID createdByUserId) { this.createdByUserId = createdByUserId; }
+
+  public Instant getCreatedAt() { return createdAt; }
+  public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+  public Instant getUpdatedAt() { return updatedAt; }
+  public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
 }
