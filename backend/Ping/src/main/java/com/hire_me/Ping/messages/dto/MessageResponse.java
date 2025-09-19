@@ -7,7 +7,7 @@ import java.util.UUID;
 // DTO for sending message data to clients
 public record MessageResponse(
     UUID id,
-    Long channelId,
+    UUID channelId,
     UUID directConversationId,
     UUID senderUserId,
     String content,

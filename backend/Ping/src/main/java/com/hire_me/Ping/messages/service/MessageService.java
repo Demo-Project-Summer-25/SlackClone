@@ -32,7 +32,7 @@ public class MessageService {
   // CHANNEL MESSAGE OPERATIONS
   // ===============================
 
-  public List<MessageResponse> listChannel(Long channelId, PageParams params) {
+  public List<MessageResponse> listChannel(UUID channelId, PageParams params) {
     List<Message> messages;
     
     if (params.after() != null) {
@@ -48,7 +48,7 @@ public class MessageService {
         .toList();
   }
 
-  public MessageResponse postToChannel(Long channelId, MessageCreateRequest req) {
+  public MessageResponse postToChannel(UUID channelId, MessageCreateRequest req) {
     if (req.senderUserId() == null) {
       throw new IllegalArgumentException("Sender user ID cannot be null");
     }

@@ -60,8 +60,8 @@ public class User {
     @Enumerated(EnumType.STRING)
     private AccountStatus accountStatus = AccountStatus.ACTIVE;
 
-    @Column(nullable = false)
-    private String password;
+    // @Column(nullable = false)
+    // private String password;
 
     public User() {
     }
@@ -145,11 +145,11 @@ public class User {
         SUSPENDED
     }
 
-    public String getPassword() {
-        return password;
-    }
+    // public String getPassword() {
+    //     return password;
+    // }
 
-    public void setPassword(String password) {
-        this.password = password;
-    }
+    // public void setPassword(String password) {
+    //     this.password = password;
+    // }
 }
