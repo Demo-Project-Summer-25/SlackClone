@@ -244,16 +244,8 @@ function AppContent() {
   );
 }
 
-// ✅ FIX: Proper Router structure
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="ping-theme">
-      <Router>
-        <Routes>
-          <Route path="/canvas" element={<CanvasPage />} />
-          <Route path="/*" element={<AppContent />} />
-        </Routes>
-      </Router>
     <ThemeProvider>
       <AppContent />
     </ThemeProvider>
