@@ -32,7 +32,7 @@ public class Message {
     private UUID senderUserId;  // Should already be UUID
     
     @Column(name = "channel_id")
-    private Long channelId;  // Keep as Long for channels
+    private UUID channelId;  // Keep as Long for channels
     
     @Column(name = "direct_conversation_id")
     private UUID directConversationId;  // Changed from Long to UUID
@@ -68,8 +68,8 @@ public class Message {
     public UUID getSenderUserId() { return senderUserId; }
     public void setSenderUserId(UUID senderUserId) { this.senderUserId = senderUserId; }
     
-    public Long getChannelId() { return channelId; }
-    public void setChannelId(Long channelId) { this.channelId = channelId; }
+    public UUID getChannelId() { return channelId; }
+    public void setChannelId(UUID channelId) { this.channelId = channelId; }
     
     public UUID getDirectConversationId() { return directConversationId; }
     public void setDirectConversationId(UUID directConversationId) { this.directConversationId = directConversationId; }

@@ -12,9 +12,9 @@ import java.util.UUID;
 public interface MessageRepository extends JpaRepository<Message, UUID> {
 
   // Channel message queries
-  List<Message> findByChannelIdOrderByCreatedAtDesc(Long channelId, Pageable pageable);
+  List<Message> findByChannelIdOrderByCreatedAtDesc(UUID channelId, Pageable pageable);
   
-  List<Message> findByChannelIdAndIdAfterOrderByCreatedAtDesc(Long channelId, UUID afterId, Pageable pageable);
+  List<Message> findByChannelIdAndIdAfterOrderByCreatedAtDesc(UUID channelId, UUID afterId, Pageable pageable);
 
   // DM message queries  
   List<Message> findByDirectConversationIdOrderByCreatedAtDesc(UUID directConversationId, Pageable pageable);
@@ -25,6 +25,6 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
   List<Message> findBySenderUserIdOrderByCreatedAtDesc(UUID senderUserId, Pageable pageable);
   
   // Additional useful queries
-  List<Message> findByChannelIdAndDeletedFalseOrderByCreatedAtDesc(Long channelId, Pageable pageable);
+  List<Message> findByChannelIdAndDeletedFalseOrderByCreatedAtDesc(UUID channelId, Pageable pageable);
   List<Message> findByDirectConversationIdAndDeletedFalseOrderByCreatedAtDesc(UUID directConversationId, Pageable pageable);
 }

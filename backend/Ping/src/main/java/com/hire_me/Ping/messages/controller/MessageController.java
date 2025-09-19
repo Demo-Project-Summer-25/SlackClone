@@ -26,7 +26,7 @@ public class MessageController {
 
   // List messages in a channel
   @GetMapping("/channels/{channelId}/messages")
-  public ResponseEntity<?> listChannel(@PathVariable Long channelId,
+  public ResponseEntity<?> listChannel(@PathVariable UUID channelId,
                                        @RequestParam(required = false) UUID after,
                                        @RequestParam(defaultValue = "50") int limit) {
     return ResponseEntity.ok(service.listChannel(channelId, new PageParams(after, limit)));
@@ -34,7 +34,7 @@ public class MessageController {
 
   // Post a new message to a channel
   @PostMapping("/channels/{channelId}/messages")
-  public ResponseEntity<?> postChannel(@PathVariable Long channelId,
+  public ResponseEntity<?> postChannel(@PathVariable UUID channelId,
                                        @RequestBody MessageCreateRequest req) {
     // default to TEXT if client omitted
     if (req.contentType() == null) {
