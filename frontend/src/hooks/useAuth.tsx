@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserService } from '../services/userService';
+import { userService } from '../services/userService';
 import { User } from '../types/user';
 
 // The shape of our authentication context
@@ -26,9 +26,9 @@ export const AuthProvider = ({ children }: AuthProviderProps): React.ReactElemen
       try {
         // Demo UUID from your seed file (Alice)
         const demoUserId = '68973614-94db-4f98-9729-0712e0c5c0fa';
-        const user = await UserService.getUserById(demoUserId);
-        console.log("Fetched user from API:", user);
-        setCurrentUser(user);
+        const userData = await userService.getUserById(demoUserId);
+        console.log("Fetched user from API:", userData);
+        setCurrentUser(userData);
 
       } catch (error) {
         console.error('Failed to fetch demo user:', error);

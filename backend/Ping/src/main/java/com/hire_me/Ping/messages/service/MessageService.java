@@ -57,7 +57,6 @@ public class MessageService {
     }
     
     Message message = new Message();
-    message.setId(UUID.randomUUID());
     message.setChannelId(channelId);
     message.setSenderUserId(req.senderUserId());
     message.setContent(req.content().trim());
@@ -98,7 +97,6 @@ public class MessageService {
     }
     
     Message message = new Message();
-    message.setId(UUID.randomUUID());
     message.setDirectConversationId(dmId);
     message.setSenderUserId(req.senderUserId());
     message.setContent(req.content().trim());

@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
-import { ArrowLeft, Save, Edit } from 'lucide-react';
+import { ArrowLeft, Save, Edit, Calendar, User } from 'lucide-react';
 import { canvasService, Canvas } from '../../services/canvasService';
 import { toast } from 'sonner';
+import { VisualCanvas } from './VisualCanvas';
 
 interface CanvasViewerProps {
   canvasId: string;              
@@ -20,7 +21,7 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    name: '',
+    title: '',
     description: '',
     canvasData: ''
   });
@@ -39,7 +40,7 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
       const data = await canvasService.getCanvas(canvasId);
       setCanvas(data);
       setFormData({
-        name: data.name,
+        title: data.title,
         description: data.description || '',
         canvasData: JSON.stringify(data.canvasData, null, 2)    
       });
@@ -52,8 +53,8 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
   };
 
   const handleSave = async () => {
-    if (!canvas || !formData.name.trim()) {
-      toast.error('Canvas name is required');
+    if (!canvas || !formData.title.trim()) {
+      toast.error('Canvas title is required');
       return;
     }
 
@@ -67,7 +68,7 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
       }
 
       const updatedCanvas = await canvasService.updateCanvas(canvas.id, {
-        name: formData.name,
+        title: formData.title,
         description: formData.description || undefined,
         canvasData: parsedCanvasData                            
       });
@@ -85,7 +86,7 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
     if (isEditing) {
       if (canvas) {
         setFormData({
-          name: canvas.name,
+          title: canvas.title,
           description: canvas.description || '',
           canvasData: JSON.stringify(canvas.canvasData, null, 2)  
         });
@@ -96,128 +97,151 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="h-full flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+          <p className="text-sm text-muted-foreground">Loading canvas...</p>
+        </div>
       </div>
     );
   }
 
   if (!canvas) {
     return (
-      <div className="text-center p-8">
-        <p className="text-gray-500">Canvas not found</p>
-        <Button onClick={onBack} className="mt-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to List
-        </Button>
+      <div className="h-full flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="rounded-full bg-muted p-4 mx-auto mb-4 w-fit">
+            <ArrowLeft className="h-8 w-8 text-muted-foreground" />
+          </div>
+          <h3 className="text-lg font-semibold text-foreground mb-2">Canvas not found</h3>
+          <p className="text-muted-foreground mb-4">
+            The canvas you're looking for doesn't exist or has been deleted.
+          </p>
+          <Button onClick={onBack} variant="outline">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to List
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <h2 className="text-2xl font-bold">
-            {isEditing ? 'Edit Canvas' : 'View Canvas'}
-          </h2>
-        </div>
-        <div className="flex gap-2">
-          {isEditing ? (
-            <>
-              <Button onClick={handleSave}>
-                <Save className="h-4 w-4 mr-2" />
-                Save
-              </Button>
-              <Button variant="outline" onClick={toggleEdit}>
-                Cancel
-              </Button>
-            </>
-          ) : (
-            <Button onClick={toggleEdit}>
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
+    <div className="h-full flex flex-col bg-background">
+      {/* ✅ Header - Removed Edit Button */}
+      <div className="flex-shrink-0 border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+        <div className="flex justify-between items-center p-4">
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={onBack} className="gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back
             </Button>
-          )}
+            <div>
+              <h1 className="text-xl font-semibold text-foreground">
+                {canvas.title}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                Visual workspace editor
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Canvas Details */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Canvas Details</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {isEditing ? (
-            <>
-              <div>
-                <label className="block text-sm font-medium mb-2">Name</label>
-                <Input
-                  value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                  placeholder="Canvas name"
-                />
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-6">
+          
+          {/* ✅ Visual Canvas Editor - Now at the top */}
+          <Card className="bg-card/60 backdrop-blur border-border">
+            <CardContent className="p-0">
+              <div className="rounded-lg overflow-hidden">
+                <VisualCanvas />
               </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Description</label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Description (optional)"
-                  rows={3}
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              <div>
-                <h3 className="font-semibold text-lg">{canvas.name}</h3>
-                {canvas.description && (
-                  <p className="text-gray-600 mt-1">{canvas.description}</p>
-                )}
-              </div>
-              <div className="text-sm text-gray-500">
-                <p>Created: {new Date(canvas.createdTimestamp).toLocaleString()}</p>   
-                <p>Updated: {new Date(canvas.updatedTimestamp).toLocaleString()}</p>   
-              </div>
-            </>
-          )}
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      {/* Canvas Data */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Canvas Data</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isEditing ? (
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Canvas Data (JSON)
-              </label>
-              <Textarea
-                value={formData.canvasData}
-                onChange={(e) => setFormData(prev => ({ ...prev, canvasData: e.target.value }))}
-                className="font-mono text-sm"
-                rows={15}
-                placeholder="Enter canvas data as JSON"
-              />
-            </div>
-          ) : (
-            <div>
-              <pre className="bg-gray-50 p-4 rounded-lg overflow-auto text-sm">
-                {JSON.stringify(canvas.canvasData, null, 2)}                          
-              </pre>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          {/* ✅ Canvas Details - Edit button moved here */}
+          <Card className="bg-card/60 backdrop-blur border-border">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg text-foreground flex items-center justify-between">
+                Canvas Information
+                <div className="flex gap-2">
+                  {/* ✅ Edit button moved to this section */}
+                  <Button onClick={toggleEdit} variant="outline" size="sm" className="gap-2">
+                    <Edit className="h-4 w-4" />
+                    {isEditing ? 'Cancel' : 'Edit Info'}
+                  </Button>
+                  {isEditing && (
+                    <Button onClick={handleSave} size="sm" className="gap-2">
+                      <Save className="h-4 w-4" />
+                      Save Changes
+                    </Button>
+                  )}
+                </div>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isEditing ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Title</label>
+                    <Input
+                      value={formData.title}
+                      onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="Canvas title"
+                      className="bg-background"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">Description</label>
+                    <Textarea
+                      value={formData.description}
+                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                      placeholder="Add a description for this canvas..."
+                      rows={3}
+                      className="bg-background resize-none"
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <h3 className="font-semibold text-lg text-foreground">{canvas.title}</h3>
+                    {canvas.description ? (
+                      <p className="text-muted-foreground mt-1">{canvas.description}</p>
+                    ) : (
+                      <p className="text-muted-foreground mt-1 italic">No description provided</p>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-4 text-sm text-muted-foreground pt-2 border-t border-border">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      <span>Created {new Date(canvas.createdTimestamp).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4" />
+                      <span>Updated {new Date(canvas.updatedTimestamp).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}</span>
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
   );
 };
