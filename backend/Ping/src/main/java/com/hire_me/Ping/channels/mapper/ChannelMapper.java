@@ -13,7 +13,6 @@ import org.mapstruct.factory.Mappers;
 import java.util.List;
 
 @Mapper(
-    uses = {UserMapper.class},
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
 )
 public interface ChannelMapper {
@@ -22,6 +21,8 @@ public interface ChannelMapper {
 
     Channel toEntity(ChannelCreateRequest dto);
 
+    // ✅ Use UserMapper.toPublicDto for createdBy
+    @Mapping(target = "createdBy", expression = "java(UserMapper.toPublicDto(channel.getCreatedBy()))")
     ChannelResponse toResponse(Channel channel);
 
     void updateFromDto(ChannelUpdateRequest dto, @MappingTarget Channel entity);

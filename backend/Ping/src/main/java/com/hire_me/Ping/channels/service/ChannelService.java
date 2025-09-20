@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -71,4 +72,21 @@ public class ChannelService {
         return channelRepository.findById(channelId)
                 .orElseThrow(() -> new RuntimeException("Channel not found with id: " + channelId));
     }
+
+     public List<Channel> getChannelsForUser(UUID userId) {
+        return channelRepository.findByMembersUserId(userId);
+    }
+
+    public List<ChannelResponse> getUserChannels(UUID userId) {
+        User user = userService.findById(userId)
+            .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Find all channels where this user is a member
+        List<Channel> channels = channelRepository.findByMembersUserId(userId);
+
+        return channels.stream()
+            .map(ChannelMapper.INSTANCE::toResponse)
+            .toList();
+    }
+
 }

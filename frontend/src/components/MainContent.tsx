@@ -1,10 +1,5 @@
 // frontend/src/components/MainContent.tsx
 import {
-  Terminal,
-  Folder,
-  MessageCircle,
-  User,
-  Bell,
   Hash,
   Lock,
   Settings,
@@ -17,7 +12,8 @@ import { Button } from "./ui/button";
 import { DirectoryView } from "./DirectoryView";
 import { ProfilePage } from "./ProfilePage";
 import { useEffect, useState } from "react";
-import { useAuth } from "../hooks/useAuth"; // ✅ Auth hook
+import { useAuth } from "../hooks/useAuth";
+import { channelService, Channel } from "../services/channelService";
 
 interface MainContentProps {
   activeTab: string;
@@ -50,11 +46,11 @@ export function MainContent({
   onOpenProfilePage,
   onCloseProfilePage,
 }: MainContentProps) {
-  const { currentUser, isLoading } = useAuth(); // ✅ real user
-  const [directories, setDirectories] = useState<any[]>([]);
+  const { currentUser, isLoading } = useAuth();
+  const [directories, setDirectories] = useState<Channel[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  // Fetch directories and notifications
+  // ✅ Fetch directories (channels for the current user) and notifications
   useEffect(() => {
     // Try different endpoint that might exist
     fetch("http://localhost:8080/api/direct-conversations")
@@ -104,7 +100,7 @@ export function MainContent({
         console.error('Error fetching notifications:', error);
         setNotifications([]);
       });
-  }, []);
+  }, [currentUser]);
 
   // If we're showing the full profile page
   if (showProfilePage && onCloseProfilePage) {
@@ -113,59 +109,10 @@ export function MainContent({
 
   // If we're in a directory view
   if (activeDirectory && onCloseDirectory) {
-    return <DirectoryView directory={activeDirectory} onBack={onCloseDirectory} />;
+    return (
+      <DirectoryView directory={activeDirectory} onBack={onCloseDirectory} />
+    );
   }
-
-  const renderTerminals = () => (
-    <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl mb-2">Channels</h2>
-        <p className="text-muted-foreground">Team channels and discussions</p>
-      </div>
-
-      <div className="space-y-3">
-        {/* Zip Code Channel - Active */}
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                  <Hash className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium">Zip Code</h4>
-                  <p className="text-xs text-muted-foreground">Main development channel</p>
-                </div>
-              </div>
-              <Badge variant="default" className="bg-green-500">
-                Active
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Mock Channel - Inactive */}
-        <Card className="border-gray-200 bg-gray-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-400 rounded-lg flex items-center justify-center">
-                  <Hash className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium">Mock Channel</h4>
-                  <p className="text-xs text-muted-foreground">Test channel for development</p>
-                </div>
-              </div>
-              <Badge variant="secondary" className="bg-gray-400">
-                Inactive
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
 
   // Fix the renderDirectories function to be more defensive
   const renderDirectories = () => {
@@ -332,11 +279,10 @@ export function MainContent({
         {notifications.map((notification, index) => (
           <div
             key={notification.id || index}
-            className={`p-3 rounded-lg border transition-colors ${
-              notification.unread
+            className={`p-3 rounded-lg border transition-colors ${notification.unread
                 ? "bg-accent/50 border-accent"
                 : "bg-card border-border"
-            }`}
+              }`}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
@@ -363,6 +309,6 @@ export function MainContent({
     case "notifications":
       return renderNotifications();
     default:
-      return renderDirectories(); // Default to directories instead of terminals
+      return renderDirectories();
   }
 }
