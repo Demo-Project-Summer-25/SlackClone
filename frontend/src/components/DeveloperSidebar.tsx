@@ -29,7 +29,6 @@ export function DeveloperSidebar({ activeTool, onToolChange }: DeveloperSidebarP
   const tools = [
     { id: "kanban", label: "BackLog", icon: Kanban },
     { id: "canvas", label: "WireFrame", icon: Network },
-    { id: "ide", label: "IDE Sandbox", icon: Code2 },
     { id: "calendar", label: "Calendar", icon: Calendar },
     { id: "ai", label: "PingBot AI", icon: Bot },
     

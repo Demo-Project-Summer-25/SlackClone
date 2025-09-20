@@ -3,25 +3,27 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
-import { Plus, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Calendar } from 'lucide-react';
 import { canvasService, Canvas } from '../../services/canvasService';
-import { toast } from 'sonner'; // Changed from react-hot-toast
+import { toast } from 'sonner';
 
 interface CanvasListProps {
   onSelectCanvas?: (canvas: Canvas) => void;
   onCreateCanvas?: () => void;
+  currentUserId: string;
 }
 
 export const CanvasList: React.FC<CanvasListProps> = ({
   onSelectCanvas,
-  onCreateCanvas
+  onCreateCanvas,
+  currentUserId
 }) => {
   const [canvases, setCanvases] = useState<Canvas[]>([]);
   const [loading, setLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
+    title: '',
     description: ''
   });
 
@@ -43,19 +45,20 @@ export const CanvasList: React.FC<CanvasListProps> = ({
   };
 
   const handleCreate = async () => {
-    if (!formData.name.trim()) {
-      toast.error('Canvas name is required');
+    if (!formData.title.trim()) {
+      toast.error('Canvas title is required');
       return;
     }
 
     try {
       const newCanvas = await canvasService.createCanvas({
-        name: formData.name,
+        title: formData.title,
         description: formData.description || undefined,
         canvasData: {}
-      });
+      }, currentUserId); // This will now be "demo-user"
+      
       setCanvases(prev => [newCanvas, ...prev]);
-      setFormData({ name: '', description: '' });
+      setFormData({ title: '', description: '' });
       setIsCreating(false);
       toast.success('Canvas created');
 
@@ -69,21 +72,21 @@ export const CanvasList: React.FC<CanvasListProps> = ({
   };
 
   const handleUpdate = async (id: string) => {
-    if (!formData.name.trim()) {
-      toast.error('Canvas name is required');
+    if (!formData.title.trim()) {
+      toast.error('Canvas title is required');
       return;
     }
 
     try {
       const updatedCanvas = await canvasService.updateCanvas(id, {
-        name: formData.name,
+        title: formData.title,
         description: formData.description || undefined
       });
       setCanvases(prev => prev.map(canvas =>
         canvas.id === id ? updatedCanvas : canvas
       ));
       setEditingId(null);
-      setFormData({ name: '', description: '' });
+      setFormData({ title: '', description: '' });
       toast.success('Canvas updated');
     } catch (error) {
       toast.error('Failed to update canvas');
@@ -91,8 +94,8 @@ export const CanvasList: React.FC<CanvasListProps> = ({
     }
   };
 
-  const handleDelete = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}"?`)) {
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Are you sure you want to delete "${title}"?`)) {
       return;
     }
 
@@ -109,7 +112,7 @@ export const CanvasList: React.FC<CanvasListProps> = ({
   const startEdit = (canvas: Canvas) => {
     setEditingId(canvas.id);
     setFormData({
-      name: canvas.name,
+      title: canvas.title,
       description: canvas.description || ''
     });
     setIsCreating(false);
@@ -118,142 +121,223 @@ export const CanvasList: React.FC<CanvasListProps> = ({
   const startCreate = () => {
     setIsCreating(true);
     setEditingId(null);
-    setFormData({ name: '', description: '' });
+    setFormData({ title: '', description: '' });
   };
 
   const cancelEdit = () => {
     setEditingId(null);
     setIsCreating(false);
-    setFormData({ name: '', description: '' });
+    setFormData({ title: '', description: '' });
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      <div className="flex items-center justify-center h-full">
+        <div className="flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
+          <p className="text-sm text-muted-foreground">Loading canvases...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">Canvases</h2>
-        <Button
-          onClick={startCreate}
-          className="flex items-center gap-2"
-          disabled={isCreating}
-        >
-          <Plus className="h-4 w-4" />
-          Create Canvas
-        </Button>
+    <div className="h-full flex flex-col bg-background">
+      {/* Header */}
+      <div className="flex-shrink-0 border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+        <div className="flex items-center justify-between p-4">
+          <div>
+            <h1 className="text-xl font-semibold text-foreground">Canvases</h1>
+            <p className="text-sm text-muted-foreground">
+              Create and manage your visual workspaces
+            </p>
+          </div>
+          <Button
+            onClick={startCreate}
+            className="gap-2"
+            disabled={isCreating}
+          >
+            <Plus className="h-4 w-4" />
+            New Canvas
+          </Button>
+        </div>
       </div>
 
-      {/* Create Form */}
-      {isCreating && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Create New Canvas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <Input
-              placeholder="Canvas name"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-            />
-            <Textarea
-              placeholder="Description (optional)"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              rows={3}
-            />
-            <div className="flex gap-2">
-              <Button onClick={handleCreate}>Create</Button>
-              <Button variant="outline" onClick={cancelEdit}>Cancel</Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Canvas List */}
-      <div className="space-y-3">
-        {canvases.map((canvas) => (
-          <Card key={canvas.id} className="hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              {editingId === canvas.id ? (
-                <div className="space-y-4">
+      {/* Content */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-4 space-y-4">
+          {/* Create Form */}
+          {isCreating && (
+            <Card className="border-primary/20 bg-card/60 backdrop-blur">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Create New Canvas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
                   <Input
-                    value={formData.name}
-                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                    placeholder="Canvas name"
+                    placeholder="Enter canvas title..."
+                    value={formData.title}
+                    onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                    className="bg-background"
                   />
+                </div>
+                <div>
                   <Textarea
+                    placeholder="Add a description (optional)..."
                     value={formData.description}
                     onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                    placeholder="Description (optional)"
                     rows={3}
+                    className="bg-background resize-none"
                   />
-                  <div className="flex gap-2">
-                    <Button size="sm" onClick={() => handleUpdate(canvas.id)}>
-                      Save
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={cancelEdit}>
-                      Cancel
-                    </Button>
-                  </div>
                 </div>
-              ) : (
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-lg">{canvas.name}</h3>
-                    {canvas.description && (
-                      <p className="text-gray-600 mt-1">{canvas.description}</p>
-                    )}
-                    <p className="text-sm text-gray-500 mt-2">
-                      Created: {new Date(canvas.createdTimestamp).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    {onSelectCanvas && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onSelectCanvas(canvas)}
-                      >
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    )}
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => startEdit(canvas)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleDelete(canvas.id, canvas.name)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+                <div className="flex gap-2 pt-2">
+                  <Button onClick={handleCreate} className="gap-2">
+                    <Plus className="h-4 w-4" />
+                    Create Canvas
+                  </Button>
+                  <Button variant="outline" onClick={cancelEdit}>
+                    Cancel
+                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+              </CardContent>
+            </Card>
+          )}
 
-      {canvases.length === 0 && !isCreating && (
-        <Card>
-          <CardContent className="text-center py-8">
-            <p className="text-gray-500 mb-4">No canvases found</p>
-            <Button onClick={startCreate}>Create your first canvas</Button>
-          </CardContent>
-        </Card>
-      )}
+          {/* Canvas Grid */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {canvases.map((canvas) => (
+              <Card 
+                key={canvas.id} 
+                className="group hover:shadow-lg hover:border-primary/20 transition-all duration-200 bg-card/60 backdrop-blur cursor-pointer"
+              >
+                <CardContent className="p-0">
+                  {editingId === canvas.id ? (
+                    <div className="p-4 space-y-4">
+                      <Input
+                        value={formData.title}
+                        onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
+                        placeholder="Canvas title"
+                        className="bg-background"
+                      />
+                      <Textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                        placeholder="Description (optional)"
+                        rows={2}
+                        className="bg-background resize-none"
+                      />
+                      <div className="flex gap-2">
+                        <Button size="sm" onClick={() => handleUpdate(canvas.id)}>
+                          Save
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={cancelEdit}>
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="relative">
+                      {/* Canvas Preview Area */}
+                      <div 
+                        className="h-32 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-t-lg border-b border-border flex items-center justify-center"
+                        onClick={() => onSelectCanvas?.(canvas)}
+                      >
+                        <div className="text-muted-foreground">
+                          <Eye className="h-8 w-8" />
+                        </div>
+                      </div>
+
+                      {/* Canvas Info */}
+                      <div className="p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-semibold text-foreground line-clamp-1 flex-1">
+                            {canvas.title}
+                          </h3>
+                          
+                          {/* Action Buttons */}
+                          <div className="flex gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {onSelectCanvas && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onSelectCanvas(canvas);
+                                }}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startEdit(canvas);
+                              }}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(canvas.id, canvas.title);
+                              }}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {canvas.description && (
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                            {canvas.description}
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          <span>
+                            {new Date(canvas.createdTimestamp).toLocaleDateString('en-US', {
+                              month: 'short',
+                              day: 'numeric',
+                              year: 'numeric'
+                            })}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Empty State */}
+          {canvases.length === 0 && !isCreating && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="rounded-full bg-muted p-4 mb-4">
+                <Plus className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                No canvases yet
+              </h3>
+              <p className="text-muted-foreground mb-4 max-w-sm">
+                Create your first canvas to start visualizing and organizing your ideas
+              </p>
+              <Button onClick={startCreate} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Create your first canvas
+              </Button>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

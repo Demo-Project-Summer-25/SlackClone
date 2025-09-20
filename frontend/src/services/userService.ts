@@ -1,19 +1,24 @@
 import { User, UserUpdateRequest } from '../types/user';
-import { ApiService } from './api';
+import { api } from './api';  // Use named import since we also export named
 
-export class UserService {
+export const userService = {
   // GET /api/users/{id}
-  static async getUserById(id: string): Promise<User> {
-    return ApiService.get<User>(`/users/${id}`);
-  }
+  async getUserById(id: string): Promise<User> {
+    return api.get<User>(`/users/${id}`);
+  },
 
   // GET /api/users/
-  static async getAllUsers(): Promise<User[]> {
-    return ApiService.get<User[]>(`users`);
-  }
+  async getAllUsers(): Promise<User[]> {
+    return api.get<User[]>('/users');
+  },
 
   // PUT /api/users/{id}
-  static async updateUser(id: string, updates: UserUpdateRequest): Promise<User> {
-    return ApiService.put<User>(`users/${id}`, updates);
+  async updateUser(id: string, updates: UserUpdateRequest): Promise<User> {
+    return api.put<User>(`/users/${id}`, updates);
+  },
+
+  // DELETE /api/users/{id}
+  async deleteUser(id: string): Promise<void> {
+    return api.delete<void>(`/users/${id}`);
   }
-}
+};
