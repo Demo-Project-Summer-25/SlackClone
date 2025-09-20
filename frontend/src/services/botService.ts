@@ -1,98 +1,69 @@
-import { Bot, BotCreateRequest, BotUpdateRequest } from '../types/bot';
+import { ApiService } from './api';
 
-const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8080';
-
-class BotService {
-  private async fetchWithAuth(url: string, options: RequestInit = {}): Promise<Response> {
-    const token = localStorage.getItem('authToken');
-    
-    return fetch(`${API_BASE}${url}`, {
-      ...options,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token && { 'Authorization': `Bearer ${token}` }),
-        ...options.headers,
-      },
-    });
-  }
-
-  // POST /api/bots/users/{userId}  (not /api/bots)
-  async createBot(userId: string, request: BotCreateRequest): Promise<Bot> {
-    const response = await this.fetchWithAuth(`/api/bots/users/${userId}`, {
-      method: 'POST',
-      body: JSON.stringify(request),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to create bot: ${response.statusText}`);
-    }
-    
-    return response.json();
-  }
-
-  // GET /api/bots/{botId}
-  async getBotById(botId: string): Promise<Bot> {
-    const response = await this.fetchWithAuth(`/api/bots/${botId}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch bot: ${response.statusText}`);
-    }
-    
-    return response.json();
-  }
-
-  // GET /api/bots/users/{userId}  (not /api/users/{userId}/bots)
-  async getUserBots(userId: string): Promise<Bot[]> {
-    const response = await this.fetchWithAuth(`/api/bots/users/${userId}`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch user bots: ${response.statusText}`);
-    }
-    
-    return response.json();
-  }
-
-  // GET /api/bots/users/{userId}/active
-  async getUserActiveBots(userId: string): Promise<Bot[]> {
-    const response = await this.fetchWithAuth(`/api/bots/users/${userId}/active`);
-    
-    if (!response.ok) {
-      throw new Error(`Failed to fetch active bots: ${response.statusText}`);
-    }
-    
-    return response.json();
-  }
-
-  // PUT /api/bots/{botId}
-  async updateBot(botId: string, request: BotUpdateRequest): Promise<Bot> {
-    const response = await this.fetchWithAuth(`/api/bots/${botId}`, {
-      method: 'PUT',
-      body: JSON.stringify(request),
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to update bot: ${response.statusText}`);
-    }
-    
-    return response.json();
-  }
-
-  // DELETE /api/bots/{botId}
-  async deleteBot(botId: string): Promise<void> {
-    const response = await this.fetchWithAuth(`/api/bots/${botId}`, {
-      method: 'DELETE',
-    });
-    
-    if (!response.ok) {
-      throw new Error(`Failed to delete bot: ${response.statusText}`);
-    }
-  }
-
-  // Helper method for bot count (derived from getUserBots)
-  async getUserBotCount(userId: string): Promise<number> {
-    const bots = await this.getUserBots(userId);
-    return bots.length;
-  }
+export interface ChatRequest {
+  message: string;
 }
 
-export const botService = new BotService();
+export interface ChatResponse {
+  response: string;
+  timestamp: number;
+}
+
+export const botService = {
+  // Send message to PingBot AI
+  chatWithBot: async (message: string, userId?: string): Promise<string> => {
+    try {
+      console.log(' Sending to API:', { message, userId });
+      
+      const requestBody = {
+        message: message,
+        ...(userId && { userId })
+      };
+      
+      const response = await ApiService.post<ChatResponse>(`/bots/chat`, requestBody);
+      
+      console.log(' API Response:', response);
+      
+      // Handle case where response might be null or undefined
+      if (!response || !response.response) {
+        console.warn(' Empty response from API');
+        return 'Sorry, I received an empty response. Please try again.';
+      }
+      
+      return response.response;
+    } catch (error) {
+      console.error(' API Error:', error);
+      
+      // More specific error handling
+      if (error instanceof Error) {
+        throw new Error(`Bot service error: ${error.message}`);
+      }
+      
+      throw new Error('Failed to communicate with PingBot AI');
+    }
+  },
+
+  // Check bot status
+  getBotStatus: async (): Promise<string> => {
+    try {
+      const status = await ApiService.get<string>('/bots/status');
+      console.log(' Bot Status:', status);
+      return status;
+    } catch (error) {
+      console.error(' Status Error:', error);
+      throw new Error('Failed to get bot status');
+    }
+  },
+
+  // Test bot connection
+  testBot: async (): Promise<string> => {
+    try {
+      const result = await ApiService.get<string>('/bots/test');
+      console.log(' Bot Test:', result);
+      return result;
+    } catch (error) {
+      console.error(' Test Error:', error);
+      throw new Error('Failed to test bot connection');
+    }
+  }
+};

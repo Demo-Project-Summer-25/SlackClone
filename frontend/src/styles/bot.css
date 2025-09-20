@@ -1,0 +1,59 @@
+.ping-bot-ai {
+  color: var(--foreground);
+  background-color: var(--background);
+}
+
+.ping-bot-ai * {
+  color: inherit;
+}
+
+.bot-message {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+}
+
+.user-message {
+  background-color: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.bot-input {
+  background-color: var(--background);
+  color: var(--foreground);
+  border: 1px solid var(--border);
+}
+
+.bot-input::placeholder {
+  color: var(--muted-foreground);
+}
+
+/* Force text visibility in case theme variables aren't working */
+.ping-bot-ai {
+  color: #000000 !important; /* Black text for light mode */
+}
+
+[data-theme="dark"] .ping-bot-ai {
+  color: #ffffff !important; /* WHITE text for dark mode */
+}
+
+/* Also fix for all child elements */
+.ping-bot-ai * {
+  color: inherit !important;
+}
+
+/* Specific fixes for message content */
+.ping-bot-ai .text-sm {
+  color: inherit !important;
+}
+
+/* Input field fixes */
+.ping-bot-ai input {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+[data-theme="dark"] .ping-bot-ai input {
+  background-color: #1f2937 !important;
+  color: #ffffff !important;
+}

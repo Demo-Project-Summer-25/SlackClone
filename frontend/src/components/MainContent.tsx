@@ -18,6 +18,13 @@ import { DirectoryView } from "./DirectoryView";
 import { ProfilePage } from "./ProfilePage";
 import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth"; // ✅ Auth hook
+import React from 'react';
+
+interface Directory {
+  id: string;
+  name: string;
+  // Add other properties as needed
+}
 
 interface MainContentProps {
   activeTab: string;
@@ -38,6 +45,7 @@ interface MainContentProps {
   showProfilePage?: boolean;
   onOpenProfilePage?: () => void;
   onCloseProfilePage?: () => void;
+  directories?: Directory[]; // Make it optional with default
 }
 
 export function MainContent({
@@ -49,59 +57,26 @@ export function MainContent({
   showProfilePage,
   onOpenProfilePage,
   onCloseProfilePage,
+  directories = [],
 }: MainContentProps) {
   const { currentUser, isLoading } = useAuth(); // ✅ real user
-  const [directories, setDirectories] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  // Fetch directories and notifications
+  // Fetch notifications
   useEffect(() => {
-    // Try different endpoint that might exist
-    fetch("http://localhost:8080/api/direct-conversations")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        console.log('Fetched conversations:', data);
-        // Map conversations to directories format
-        const mappedData = Array.isArray(data) ? data.map(conv => ({
-          id: conv.id,
-          name: conv.title || 'Direct Message',
-          description: `${conv.participants?.length || 0} participants`,
-          memberCount: conv.participants?.length || 0,
-          isPrivate: !conv.isGroup
-        })) : [];
-        setDirectories(mappedData);
-      })
-      .catch((error) => { 
-        console.error('Error fetching conversations:', error);
+    fetch("/api/channels")
+      .then((res) => res.json())
+      .then(setDirectories)
+      .catch(() => { 
+        // No mock data - just empty array
         setDirectories([]);
       });
 
-    // This should work with your NotificationController
-    fetch("http://localhost:8080/api/notifications")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        console.log('Fetched notifications:', data);
-        // Map notifications to the format your UI expects
-        const mappedNotifications = Array.isArray(data) ? data.map(notif => ({
-          id: notif.id,
-          message: notif.text || 'New notification',
-          time: new Date(notif.createdAt).toLocaleString(),
-          unread: !notif.isRead
-        })) : [];
-        setNotifications(mappedNotifications);
-      })
-      .catch((error) => {
-        console.error('Error fetching notifications:', error);
+    fetch("/api/notifications")
+      .then((res) => res.json())
+      .then(setNotifications)
+      .catch(() => {
+        // No mock notifications - just empty array
         setNotifications([]);
       });
   }, []);
@@ -354,6 +329,9 @@ export function MainContent({
       </div>
     </div>
   );
+
+  // Add safety check
+  const safeDirectories = Array.isArray(directories) ? directories : [];
 
   switch (activeTab) {
     case "directories":

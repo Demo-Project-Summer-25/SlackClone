@@ -1,5 +1,9 @@
 import { config } from '../config/environment';
 
+
+
+const BASE_URL = 'http://localhost:8080/api';
+
 // Make sure your API_BASE_URL is correct
 
 const API_BASE_URL = 'http://localhost:8080/api';
@@ -27,57 +31,31 @@ class ApiService {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${BASE_URL}${endpoint}`;
     
-    const config: RequestInit = {
+    console.log(' Making request to:', url);
+    console.log(' Request options:', options);
+    
+    const response = await fetch(url, {
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
       },
       ...options,
-    };
+    });
 
-    // Add auth token if available
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      config.headers = {
-        ...config.headers,
-        'Authorization': `Bearer ${token}`,
-      };
+    console.log(' Response status:', response.status);
+    console.log(' Response headers:', response.headers);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(' API Error:', errorText);
+      throw new Error(`HTTP error! status: ${response.status}, body: ${errorText}`);
     }
 
-    try {
-      const response = await fetch(url, config);
-
-      if (!response.ok) {
-        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-        
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData.error || errorMessage;
-        } catch {
-          // If response is not JSON, use status text
-        }
-        
-        throw new Error(errorMessage);
-      }
-
-      // Handle empty responses (like DELETE requests)
-      if (response.status === 204 || response.headers.get('content-length') === '0') {
-        return {} as T;
-      }
-
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        return await response.json();
-      }
-
-      // For non-JSON responses, return the text
-      return (await response.text()) as unknown as T;
-    } catch (error) {
-      console.error(`API request failed: ${url}`, error);
-      throw error;
-    }
+    const data = await response.json();
+    console.log(' Response data:', data);
+    return data;
   }
 
   // HTTP method helpers
@@ -85,10 +63,10 @@ class ApiService {
     return this.request<T>(endpoint, { method: 'GET' });
   }
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  static async post<T>(endpoint: string, data: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      body: JSON.stringify(data),
     });
   }
 
@@ -107,7 +85,7 @@ class ApiService {
 
   // Special method for file uploads
   static async uploadFile<T>(endpoint: string, formData: FormData): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${this.BASE_URL}${endpoint}`;
     
     const config: RequestInit = {
       method: 'POST',
