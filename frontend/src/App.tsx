@@ -1,5 +1,4 @@
-import { useState } from "react";
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useState } from 'react';
 import { TopNavigation } from "./components/TopNavigation";
 import { DeveloperSidebar } from "./components/DeveloperSidebar";
 import { MainContent } from "./components/MainContent";
@@ -9,14 +8,13 @@ import { Button } from "./components/ui/button";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "./components/ui/resizable";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
-import { CanvasPage } from './components/Canvas/CanvasPage';
-import {
-  X,
-  Terminal,
+import { 
+  X, 
+  Terminal, 
   Kanban,
   PanelLeftOpen
 } from "lucide-react";
-import React from 'react';
+import React from 'react'; 
 import { DmPage } from './pages/DmPage';
 import './styles/dm.css';
 
@@ -44,19 +42,14 @@ function AppContent() {
   // Handle split screen mode toggle
   const handleSplitScreenToggle = (enabled: boolean) => {
     setSplitScreenMode(enabled);
-
+    
     if (enabled) {
+      // When enabling split screen, show both panels
       setShowDevTools(true);
+      setShowMainContent(true);
       setActiveTool("ai");
-
-      if (!showMainContent) {
-        setShowMainContent(true);
-      }
-    } else {
-      if (showMainContent && showDevTools) {
-        // Keep both open but remove split mode
-      }
     }
+    // When disabling split screen, keep current state but they'll be mutually exclusive
   };
 
   // Handle terminal selection - just show a toast notification for now
@@ -67,7 +60,7 @@ function AppContent() {
   // Handle tab changes - close DM conversations when switching tabs
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-
+    
     // Clear any active states when switching tabs
     if (tab !== "directories") {
       setActiveDirectory(null);
@@ -75,10 +68,31 @@ function AppContent() {
     if (tab !== "profile") {
       setShowProfilePage(false);
     }
-
-    // Auto-open main content when switching tabs
-    if (!showMainContent) {
+    
+    // When changing tabs, show main content
+    if (splitScreenMode) {
+      // In split mode, show both
       setShowMainContent(true);
+      setShowDevTools(true);
+    } else {
+      // In non-split mode, show main content and hide dev tools
+      setShowMainContent(true);
+      setShowDevTools(false);
+    }
+  };
+
+  // Handle tool changes from developer sidebar
+  const handleToolChange = (tool: string) => {
+    setActiveTool(tool);
+    
+    if (splitScreenMode) {
+      // In split mode, show both panels
+      setShowMainContent(true);
+      setShowDevTools(true);
+    } else {
+      // In non-split mode, show only dev tools when selecting a tool
+      setShowMainContent(false);
+      setShowDevTools(true);
     }
   };
 
@@ -89,13 +103,27 @@ function AppContent() {
 
   // Handle panel closing with split screen mode considerations
   const handleCloseMainContent = () => {
-    setShowMainContent(false);
+    if (splitScreenMode) {
+      // In split mode, just hide main content
+      setShowMainContent(false);
+    } else {
+      // In non-split mode, show dev tools when closing main content
+      setShowMainContent(false);
+      setShowDevTools(true);
+    }
     setActiveDirectory(null);
     setShowProfilePage(false);
   };
 
   const handleCloseDevTools = () => {
-    setShowDevTools(false);
+    if (splitScreenMode) {
+      // In split mode, just hide dev tools
+      setShowDevTools(false);
+    } else {
+      // In non-split mode, show main content when closing dev tools
+      setShowDevTools(false);
+      setShowMainContent(true);
+    }
   };
 
   // Use Alice's actual ID from import.sql
@@ -115,14 +143,14 @@ function AppContent() {
         </Button>
       )}
 
-      <TopNavigation
-        activeTab={activeTab}
+      <TopNavigation 
+        activeTab={activeTab} 
         onTabChange={handleTabChange}
         splitScreenMode={splitScreenMode}
         onSplitScreenToggle={handleSplitScreenToggle}
         onTerminalSelect={handleTerminalSelect}
       />
-
+      
       <div className="flex flex-1 overflow-hidden">
         {/* Main content area - now comes FIRST (left side) */}
         <div className="flex-1 flex overflow-hidden">
@@ -138,13 +166,13 @@ function AppContent() {
                   >
                     <X className="w-4 h-4" />
                   </Button>
-
+                  
                   {/* Show DM Page when dms tab is active */}
                   {activeTab === "dms" ? (
                     <DmPage currentUserId={currentUserId} />
                   ) : (
-                    <MainContent
-                      activeTab={activeTab}
+                    <MainContent 
+                      activeTab={activeTab} 
                       isInSplitMode={bothPanelsVisible}
                       activeDirectory={activeDirectory}
                       onOpenDirectory={setActiveDirectory}
@@ -156,9 +184,9 @@ function AppContent() {
                   )}
                 </div>
               </ResizablePanel>
-
+              
               <ResizableHandle withHandle />
-
+              
               <ResizablePanel defaultSize={40} minSize={25}>
                 <div className="h-full overflow-auto relative">
                   <Button
@@ -183,13 +211,13 @@ function AppContent() {
               >
                 <X className="w-4 h-4" />
               </Button>
-
+              
               {/* Show DM Page when dms tab is active */}
               {activeTab === "dms" ? (
                 <DmPage currentUserId={currentUserId} />
               ) : (
-                <MainContent
-                  activeTab={activeTab}
+                <MainContent 
+                  activeTab={activeTab} 
                   isInSplitMode={false}
                   activeDirectory={activeDirectory}
                   onOpenDirectory={setActiveDirectory}
@@ -232,14 +260,14 @@ function AppContent() {
 
         {/* Developer Sidebar - now comes SECOND (right side) */}
         {showDeveloperSidebar && (
-          <DeveloperSidebar
+          <DeveloperSidebar 
             activeTool={activeTool}
-            onToolChange={setActiveTool}
+            onToolChange={handleToolChange}
             onClose={() => setShowDeveloperSidebar(false)}
           />
         )}
       </div>
-
+      
       <Toaster />
     </div>
   );

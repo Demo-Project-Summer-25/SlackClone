@@ -56,19 +56,52 @@ export function MainContent({
 
   // Fetch directories and notifications
   useEffect(() => {
-    fetch("/api/channels")
-      .then((res) => res.json())
-      .then(setDirectories)
-      .catch(() => { 
-        // No mock data - just empty array
+    // Try different endpoint that might exist
+    fetch("http://localhost:8080/api/direct-conversations")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        console.log('Fetched conversations:', data);
+        // Map conversations to directories format
+        const mappedData = Array.isArray(data) ? data.map(conv => ({
+          id: conv.id,
+          name: conv.title || 'Direct Message',
+          description: `${conv.participants?.length || 0} participants`,
+          memberCount: conv.participants?.length || 0,
+          isPrivate: !conv.isGroup
+        })) : [];
+        setDirectories(mappedData);
+      })
+      .catch((error) => { 
+        console.error('Error fetching conversations:', error);
         setDirectories([]);
       });
 
-    fetch("/api/notifications")
-      .then((res) => res.json())
-      .then(setNotifications)
-      .catch(() => {
-        // No mock notifications - just empty array
+    // This should work with your NotificationController
+    fetch("http://localhost:8080/api/notifications")
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        return res.json();
+      })
+      .then((data) => {
+        console.log('Fetched notifications:', data);
+        // Map notifications to the format your UI expects
+        const mappedNotifications = Array.isArray(data) ? data.map(notif => ({
+          id: notif.id,
+          message: notif.text || 'New notification',
+          time: new Date(notif.createdAt).toLocaleString(),
+          unread: !notif.isRead
+        })) : [];
+        setNotifications(mappedNotifications);
+      })
+      .catch((error) => {
+        console.error('Error fetching notifications:', error);
         setNotifications([]);
       });
   }, []);
@@ -134,54 +167,33 @@ export function MainContent({
     </div>
   );
 
-  const renderDirectories = () => (
-    <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl mb-2">Directories</h2>
-        <p className="text-muted-foreground">Project channels and discussions</p>
-      </div>
-      <div className="space-y-2">
-        {directories.map((directory) => (
-          <div
+  // Fix the renderDirectories function to be more defensive
+  const renderDirectories = () => {
+    // Ensure directories is always an array
+    const directoriesArray = Array.isArray(directories) ? directories : [];
+    
+    if (directoriesArray.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">No directories found</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+        {directoriesArray.map((directory: any) => (
+          <Card
             key={directory.id || directory.name}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors cursor-pointer"
-            onClick={() =>
-              onOpenDirectory?.({
-                name: directory.name,
-                description: directory.description,
-                memberCount: directory.memberCount,
-                isPrivate: directory.isPrivate,
-              })
-            }
+            className="cursor-pointer hover:shadow-md transition-shadow"
+            onClick={() => onOpenDirectory?.(directory)}
           >
-            {directory.isPrivate ? (
-              <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
-            ) : (
-              <Hash className="w-4 h-4 text-muted-foreground shrink-0" />
-            )}
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-xs sm:text-sm truncate">
-                  {directory.name}
-                </span>
-                {directory.unread > 0 && (
-                  <Badge
-                    variant="destructive"
-                    className="text-xs px-1.5 py-0 shrink-0"
-                  >
-                    {directory.unread}
-                  </Badge>
-                )}
-              </div>
-              <p className="text-xs text-muted-foreground truncate">
-                {directory.description}
-              </p>
-            </div>
-          </div>
+            {/* ...rest of your card content... */}
+          </Card>
         ))}
       </div>
-    </div>
-  );
+    );
+  };
 
   const renderProfile = () => {
     if (isLoading) {

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { MessageService } from '../services/messageService';
-import { DmService } from '../services/dmService';
+import { dmService } from '../services/dmService';
 import { MessageResponse, MessageCreateRequest, DmResponse } from '../types/api'; // Fixed imports
 
 export interface FormattedMessage extends MessageResponse {
@@ -86,7 +86,7 @@ export function useDmMessages(dmId: string, currentUserId: string) {
       
       try {
         // Load DM conversation details
-        const dm = await DmService.getDm(dmId);
+        const dm = await dmService.getDm(dmId);
         
         // Find the other user (for 1-on-1 DMs)
         const otherParticipant = dm.participants.find(p => p.userId !== currentUserId);
