@@ -67,15 +67,34 @@ export function MainContent({
   directories = [],
   onDirectoriesChange,
 }: MainContentProps) {
-  const { currentUser, isLoading } = useAuth();
-  const [directories, setDirectories] = useState<DirectoryItem[]>([]);
-  const [dirsLoading, setDirsLoading] = useState(false);
+
+  const { currentUser, isLoading } = useAuth(); // ✅ real user
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  // ✅ Load channels for the signed-in user
+  // Fetch notifications
   useEffect(() => {
-    if (!currentUser) return;
-    let cancelled = false;
+    fetch("/api/channels")
+      .then((res) => res.json())
+      .then((dirs) => {
+        if (onDirectoriesChange) {
+          onDirectoriesChange(dirs);
+        }
+      })
+      .catch(() => { 
+        if (onDirectoriesChange) {
+          onDirectoriesChange([]);
+        }
+      });
+
+    fetch("/api/notifications")
+      .then((res) => res.json())
+      .then(setNotifications)
+      .catch(() => {
+        // No mock notifications - just empty array
+        setNotifications([]);
+      });
+  }, [onDirectoriesChange]);
+
 
     const load = async () => {
       setDirsLoading(true);
@@ -337,7 +356,7 @@ export function MainContent({
   // Add safety check
   const safeDirectories = Array.isArray(directories) ? directories : [];
 
-  // ✅ Tabs
+
   switch (activeTab) {
     case "directories":
       return renderDirectories();
