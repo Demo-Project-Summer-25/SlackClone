@@ -18,13 +18,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+
             .authorizeHttpRequests(authorize -> authorize
                 .anyRequest().permitAll()
-            )
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(csrf -> csrf.disable())
-            .formLogin(form -> form.disable())
-            .httpBasic(basic -> basic.disable());
+
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))  // Enable CORS
+            .csrf(csrf -> csrf.disable())  // Disable CSRF for API
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/ws/**").permitAll()
+                .anyRequest().permitAll() 
+                 // Allow all requests for now
+
             
         return http.build();
     }
