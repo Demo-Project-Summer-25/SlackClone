@@ -12,8 +12,16 @@ import { Button } from "./ui/button";
 import { DirectoryView } from "./DirectoryView";
 import { ProfilePage } from "./ProfilePage";
 import { useEffect, useState } from "react";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../hooks/useAuth"; // ✅ Auth hook
+import React from 'react';
 import { channelService } from "../services/channelService";
+
+interface Directory {
+  id: string;
+  name: string;
+  // Add other properties as needed
+}
+
 
 interface MainContentProps {
   activeTab: string;
@@ -36,6 +44,8 @@ interface MainContentProps {
   showProfilePage?: boolean;
   onOpenProfilePage?: () => void;
   onCloseProfilePage?: () => void;
+  directories?: any[];
+  onDirectoriesChange?: (directories: any[]) => void; // Add this prop
 }
 
 type DirectoryItem = {
@@ -54,16 +64,37 @@ export function MainContent({
   showProfilePage,
   onOpenProfilePage,
   onCloseProfilePage,
+  directories = [],
+  onDirectoriesChange,
 }: MainContentProps) {
-  const { currentUser, isLoading } = useAuth();
-  const [directories, setDirectories] = useState<DirectoryItem[]>([]);
-  const [dirsLoading, setDirsLoading] = useState(false);
+
+  const { currentUser, isLoading } = useAuth(); // ✅ real user
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  // ✅ Load channels for the signed-in user
+  // Fetch notifications
   useEffect(() => {
-    if (!currentUser) return;
-    let cancelled = false;
+    fetch("/api/channels")
+      .then((res) => res.json())
+      .then((dirs) => {
+        if (onDirectoriesChange) {
+          onDirectoriesChange(dirs);
+        }
+      })
+      .catch(() => { 
+        if (onDirectoriesChange) {
+          onDirectoriesChange([]);
+        }
+      });
+
+    fetch("/api/notifications")
+      .then((res) => res.json())
+      .then(setNotifications)
+      .catch(() => {
+        // No mock notifications - just empty array
+        setNotifications([]);
+      });
+  }, [onDirectoriesChange]);
+
 
     const load = async () => {
       setDirsLoading(true);
@@ -322,7 +353,10 @@ export function MainContent({
     </div>
   );
 
-  // ✅ Tabs
+  // Add safety check
+  const safeDirectories = Array.isArray(directories) ? directories : [];
+
+
   switch (activeTab) {
     case "directories":
       return renderDirectories();

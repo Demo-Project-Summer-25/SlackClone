@@ -17,6 +17,7 @@ import {
 import React from 'react'; 
 import { DmPage } from './pages/DmPage';
 import './styles/dm.css';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function AppContent() {
   // Default to directories tab
@@ -275,9 +276,11 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="ping-theme">
-      <AppContent />
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider defaultTheme="system" storageKey="ping-theme">
+        <AppContent />
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 
