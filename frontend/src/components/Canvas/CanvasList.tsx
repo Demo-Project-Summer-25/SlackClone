@@ -55,8 +55,7 @@ export const CanvasList: React.FC<CanvasListProps> = ({
         title: formData.title,
         description: formData.description || undefined,
         canvasData: {}
-      }, currentUserId); // This will now be "demo-user"
-      
+      }, currentUserId);
       setCanvases(prev => [newCanvas, ...prev]);
       setFormData({ title: '', description: '' });
       setIsCreating(false);
@@ -238,14 +237,6 @@ export const CanvasList: React.FC<CanvasListProps> = ({
                   ) : (
                     <div className="relative">
                       {/* Canvas Preview Area */}
-                      <div 
-                        className="h-32 bg-gradient-to-br from-primary/5 to-secondary/5 rounded-t-lg border-b border-border flex items-center justify-center"
-                        onClick={() => onSelectCanvas?.(canvas)}
-                      >
-                        <div className="text-muted-foreground">
-                          <Eye className="h-8 w-8" />
-                        </div>
-                      </div>
 
                       {/* Canvas Info */}
                       <div className="p-4">
