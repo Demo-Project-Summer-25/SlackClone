@@ -13,18 +13,20 @@ import { DirectoryView } from "./DirectoryView";
 import { ProfilePage } from "./ProfilePage";
 import { useEffect, useState } from "react";
 import { useAuth } from "../hooks/useAuth";
-import { channelService, Channel } from "../services/channelService";
+import { channelService } from "../services/channelService";
 
 interface MainContentProps {
   activeTab: string;
   isInSplitMode?: boolean;
   activeDirectory?: {
+    id: string; // ✅ added
     name: string;
     description: string;
     memberCount: number;
     isPrivate: boolean;
   } | null;
   onOpenDirectory?: (directory: {
+    id: string; // ✅ added
     name: string;
     description: string;
     memberCount: number;
@@ -35,6 +37,13 @@ interface MainContentProps {
   onOpenProfilePage?: () => void;
   onCloseProfilePage?: () => void;
 }
+
+type DirectoryItem = {
+  id: string;
+  name: string;
+  description: string;
+  isPrivate: boolean;
+};
 
 export function MainContent({
   activeTab,
@@ -47,116 +56,144 @@ export function MainContent({
   onCloseProfilePage,
 }: MainContentProps) {
   const { currentUser, isLoading } = useAuth();
-  const [directories, setDirectories] = useState<Channel[]>([]);
+  const [directories, setDirectories] = useState<DirectoryItem[]>([]);
+  const [dirsLoading, setDirsLoading] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  // ✅ Fetch directories (channels for the current user) and notifications
+  // ✅ Load channels for the signed-in user
   useEffect(() => {
-    // Try different endpoint that might exist
-    fetch("http://localhost:8080/api/direct-conversations")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        console.log('Fetched conversations:', data);
-        // Map conversations to directories format
-        const mappedData = Array.isArray(data) ? data.map(conv => ({
-          id: conv.id,
-          name: conv.title || 'Direct Message',
-          description: `${conv.participants?.length || 0} participants`,
-          memberCount: conv.participants?.length || 0,
-          isPrivate: !conv.isGroup
-        })) : [];
-        setDirectories(mappedData);
-      })
-      .catch((error) => { 
-        console.error('Error fetching conversations:', error);
-        setDirectories([]);
-      });
+    if (!currentUser) return;
+    let cancelled = false;
 
-    // This should work with your NotificationController
-    fetch("http://localhost:8080/api/notifications")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        return res.json();
-      })
-      .then((data) => {
-        console.log('Fetched notifications:', data);
-        // Map notifications to the format your UI expects
-        const mappedNotifications = Array.isArray(data) ? data.map(notif => ({
-          id: notif.id,
-          message: notif.text || 'New notification',
-          time: new Date(notif.createdAt).toLocaleString(),
-          unread: !notif.isRead
-        })) : [];
-        setNotifications(mappedNotifications);
-      })
-      .catch((error) => {
-        console.error('Error fetching notifications:', error);
-        setNotifications([]);
-      });
+    const load = async () => {
+      setDirsLoading(true);
+      try {
+        const channels = await channelService.getUserChannels(currentUser.id);
+        const mapped: DirectoryItem[] = (channels || []).map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          description: c.description || "",
+          isPrivate:
+            typeof c.isPrivate === "boolean"
+              ? c.isPrivate
+              : typeof c.isPublic === "boolean"
+              ? !c.isPublic
+              : true,
+        }));
+        if (!cancelled) setDirectories(mapped);
+      } catch (e) {
+        console.error("Failed to fetch user channels", e);
+        if (!cancelled) setDirectories([]);
+      } finally {
+        if (!cancelled) setDirsLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [currentUser]);
 
-  // If we're showing the full profile page
+  // Notifications (safe to ignore failures)
+  useEffect(() => {
+    fetch("/api/notifications")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) =>
+        setNotifications(
+          Array.isArray(data)
+            ? data.map((n: any) => ({
+                id: n.id,
+                message: n.text || "New notification",
+                time: n.createdAt ? new Date(n.createdAt).toLocaleString() : "",
+                unread: n.isRead === false,
+              }))
+            : []
+        )
+      )
+      .catch(() => setNotifications([]));
+  }, []);
+
+  // ✅ Full Profile Page
   if (showProfilePage && onCloseProfilePage) {
     return <ProfilePage onClose={onCloseProfilePage} />;
   }
 
-  // If we're in a directory view
+  // ✅ Directory View
   if (activeDirectory && onCloseDirectory) {
-    return (
-      <DirectoryView directory={activeDirectory} onBack={onCloseDirectory} />
-    );
+    return <DirectoryView directory={activeDirectory} onBack={onCloseDirectory} />;
   }
 
-  // Fix the renderDirectories function to be more defensive
+  // ✅ Directories (channels) list
   const renderDirectories = () => {
-    // Ensure directories is always an array
-    const directoriesArray = Array.isArray(directories) ? directories : [];
-    
-    if (directoriesArray.length === 0) {
+    if (isLoading || dirsLoading) {
+      return <div className="p-6 text-sm text-muted-foreground">Loading channels…</div>;
+    }
+    if (!currentUser) {
+      return <div className="p-6 text-sm text-muted-foreground">No profile found</div>;
+    }
+    if (!directories.length) {
       return (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">No directories found</p>
+        <div className="p-6">
+          <h2 className="text-2xl mb-2">Directories</h2>
+          <p className="text-muted-foreground mb-4">Project channels and discussions</p>
+          <div className="text-sm text-muted-foreground">You’re not in any channels yet.</div>
         </div>
       );
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
-        {directoriesArray.map((directory: any) => (
-          <Card
-            key={directory.id || directory.name}
-            className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => onOpenDirectory?.(directory)}
-          >
-            {/* ...rest of your card content... */}
-          </Card>
-        ))}
+      <div className="p-4 sm:p-6">
+        <div className="mb-6">
+          <h2 className="text-2xl mb-2">Directories</h2>
+          <p className="text-muted-foreground">Project channels and discussions</p>
+        </div>
+
+        <div className="space-y-2">
+          {directories.map((d) => (
+            <div
+              key={d.id}
+              className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors cursor-pointer"
+              onClick={() =>
+                onOpenDirectory?.({
+                  id: d.id,
+                  name: d.name,
+                  description: d.description,
+                  memberCount: 0,
+                  isPrivate: d.isPrivate,
+                })
+              }
+            >
+              {d.isPrivate ? (
+                <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
+              ) : (
+                <Hash className="w-4 h-4 text-muted-foreground shrink-0" />
+              )}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs sm:text-sm truncate">{d.name}</span>
+                </div>
+                {d.description && (
+                  <p className="text-xs text-muted-foreground truncate">{d.description}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   };
 
+  // ✅ Profile summary (clickable to full profile)
   const renderProfile = () => {
-    if (isLoading) {
-      return <div className="p-4">Loading...</div>;
-    }
-    if (!currentUser) {
-      return <div className="p-4">No profile found</div>;
-    }
+    if (isLoading) return <div className="p-4">Loading...</div>;
+    if (!currentUser) return <div className="p-4">No profile found</div>;
 
     return (
       <div className="p-4 sm:p-6">
         <div className="mb-6">
           <h2 className="text-2xl mb-2">Profile</h2>
-          <p className="text-muted-foreground">
-            Manage your account and preferences
-          </p>
+          <p className="text-muted-foreground">Manage your account and preferences</p>
         </div>
 
         {/* Profile Header */}
@@ -179,9 +216,7 @@ export function MainContent({
                 <p className="text-muted-foreground">@{currentUser.username}</p>
                 <Badge
                   variant={
-                    currentUser.accountStatus === "ACTIVE"
-                      ? "default"
-                      : "destructive"
+                    currentUser.accountStatus === "ACTIVE" ? "default" : "destructive"
                   }
                   className="mt-2"
                 >
@@ -195,14 +230,13 @@ export function MainContent({
           </CardContent>
         </Card>
 
-        {/* Profile Sections */}
+        {/* Extra sections */}
         <div className="space-y-3">
           {[
             {
               icon: Settings,
               title: "Account Settings",
-              description:
-                "Update your personal information and account preferences",
+              description: "Update your personal information and account preferences",
               action: "Edit Profile",
             },
             {
@@ -214,10 +248,7 @@ export function MainContent({
           ].map((item) => {
             const Icon = item.icon;
             return (
-              <Card
-                key={item.title}
-                className="hover:shadow-md transition-shadow cursor-pointer"
-              >
+              <Card key={item.title} className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -226,9 +257,7 @@ export function MainContent({
                       </div>
                       <div>
                         <h4 className="text-sm font-medium">{item.title}</h4>
-                        <p className="text-xs text-muted-foreground">
-                          {item.description}
-                        </p>
+                        <p className="text-xs text-muted-foreground">{item.description}</p>
                       </div>
                     </div>
                     <Badge variant="outline" className="text-xs">
@@ -252,14 +281,10 @@ export function MainContent({
                   </div>
                   <div>
                     <h4 className="text-sm font-medium">Sign Out</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Log out of your Ping account
-                    </p>
+                    <p className="text-xs text-muted-foreground">Log out of your Ping account</p>
                   </div>
                 </div>
-                <Button variant="destructive" size="sm">
-                  Log Out
-                </Button>
+                <Button variant="destructive" size="sm">Log Out</Button>
               </div>
             </CardContent>
           </Card>
@@ -268,6 +293,7 @@ export function MainContent({
     );
   };
 
+  // ✅ Notifications
   const renderNotifications = () => (
     <div className="p-4 sm:p-6">
       <div className="mb-6">
@@ -276,24 +302,19 @@ export function MainContent({
       </div>
 
       <div className="space-y-3">
-        {notifications.map((notification, index) => (
+        {notifications.map((n, index) => (
           <div
-            key={notification.id || index}
-            className={`p-3 rounded-lg border transition-colors ${notification.unread
-                ? "bg-accent/50 border-accent"
-                : "bg-card border-border"
-              }`}
+            key={n.id || index}
+            className={`p-3 rounded-lg border transition-colors ${
+              n.unread ? "bg-accent/50 border-accent" : "bg-card border-border"
+            }`}
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-xs sm:text-sm">{notification.message}</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {notification.time}
-                </p>
+                <p className="text-xs sm:text-sm">{n.message}</p>
+                <p className="text-xs text-muted-foreground mt-1">{n.time}</p>
               </div>
-              {notification.unread && (
-                <div className="w-2 h-2 bg-primary rounded-full mt-1 shrink-0" />
-              )}
+              {n.unread && <div className="w-2 h-2 bg-primary rounded-full mt-1 shrink-0" />}
             </div>
           </div>
         ))}
@@ -301,6 +322,7 @@ export function MainContent({
     </div>
   );
 
+  // ✅ Tabs
   switch (activeTab) {
     case "directories":
       return renderDirectories();

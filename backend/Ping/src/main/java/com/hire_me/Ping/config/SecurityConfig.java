@@ -71,7 +71,9 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))  // Enable CORS
             .csrf(csrf -> csrf.disable())  // Disable CSRF for API
             .authorizeHttpRequests(auth -> auth
-                .anyRequest().permitAll()  // Allow all requests for now
+                .requestMatchers("/ws/**").permitAll()
+                .anyRequest().permitAll() 
+                 // Allow all requests for now
             )
             .formLogin(form -> form.disable())  // Disable form login
             .httpBasic(basic -> basic.disable());  // Disable basic auth

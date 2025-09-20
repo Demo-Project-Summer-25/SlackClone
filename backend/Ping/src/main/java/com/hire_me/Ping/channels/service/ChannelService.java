@@ -78,15 +78,12 @@ public class ChannelService {
     }
 
     public List<ChannelResponse> getUserChannels(UUID userId) {
-        User user = userService.findById(userId)
-            .orElseThrow(() -> new RuntimeException("User not found"));
+    List<Channel> channels = channelRepository.findChannelsByUserIdWithCreator(userId);
 
-        // Find all channels where this user is a member
-        List<Channel> channels = channelRepository.findByMembersUserId(userId);
+    return channels.stream()
+        .map(ChannelMapper.INSTANCE::toResponse)
+        .toList();
+}
 
-        return channels.stream()
-            .map(ChannelMapper.INSTANCE::toResponse)
-            .toList();
-    }
 
 }
