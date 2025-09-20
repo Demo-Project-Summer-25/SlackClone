@@ -1,8 +1,4 @@
-import { ApiService } from './api';
-
-export interface ChatRequest {
-  message: string;
-}
+import { apiService } from './api';
 
 export interface ChatResponse {
   response: string;
@@ -20,7 +16,8 @@ export const botService = {
         ...(userId && { userId })
       };
       
-      const response = await ApiService.post<ChatResponse>(`/bots/chat`, requestBody);
+      // Use the singleton apiService instance
+      const response = await apiService.post<ChatResponse>(`/bots/chat`, requestBody);
       
       console.log(' API Response:', response);
       
@@ -33,37 +30,32 @@ export const botService = {
       return response.response;
     } catch (error) {
       console.error(' API Error:', error);
-      
-      // More specific error handling
+      // Return a more specific error message
       if (error instanceof Error) {
-        throw new Error(`Bot service error: ${error.message}`);
+        if (error.message.includes('Failed to fetch')) {
+          return 'Cannot connect to the bot server. Please check if the backend is running.';
+        }
+        return `Connection error: ${error.message}`;
       }
-      
-      throw new Error('Failed to communicate with PingBot AI');
+      return 'Sorry, I encountered an unexpected error. Please try again.';
     }
   },
 
-  // Check bot status
   getBotStatus: async (): Promise<string> => {
     try {
-      const status = await ApiService.get<string>('/bots/status');
-      console.log(' Bot Status:', status);
-      return status;
+      return await apiService.get<string>('/bots/status');
     } catch (error) {
       console.error(' Status Error:', error);
-      throw new Error('Failed to get bot status');
+      return 'Offline';
     }
   },
 
-  // Test bot connection
   testBot: async (): Promise<string> => {
     try {
-      const result = await ApiService.get<string>('/bots/test');
-      console.log(' Bot Test:', result);
-      return result;
+      return await apiService.get<string>('/bots/test');
     } catch (error) {
       console.error(' Test Error:', error);
-      throw new Error('Failed to test bot connection');
+      return 'Test failed';
     }
   }
 };

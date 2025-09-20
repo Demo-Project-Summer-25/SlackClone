@@ -6,7 +6,7 @@ import { ScrollArea } from './ui/scroll-area';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { botService } from '../services/botService';
 import { toast } from 'sonner';
-import '../styles/bot.css'; // Add this import
+import '../styles/bot.css';
 
 interface Message {
   id: string;
@@ -133,7 +133,7 @@ export const PingBotAI: React.FC = () => {
                           color: message.isUser 
                             ? '#ffffff' 
                             : document.documentElement.classList.contains('dark') 
-                              ? '#dsadds' 
+                              ? '#f9fafb' 
                               : '#111827'
                         }}
                       >

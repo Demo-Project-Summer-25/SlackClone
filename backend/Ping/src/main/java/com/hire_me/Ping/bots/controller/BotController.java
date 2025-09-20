@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/bots")
-@CrossOrigin(origins = "*")
 public class BotController {
 
     @Autowired

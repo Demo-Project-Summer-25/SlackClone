@@ -45,7 +45,8 @@ interface MainContentProps {
   showProfilePage?: boolean;
   onOpenProfilePage?: () => void;
   onCloseProfilePage?: () => void;
-  directories?: Directory[]; // Make it optional with default
+  directories?: any[];
+  onDirectoriesChange?: (directories: any[]) => void; // Add this prop
 }
 
 export function MainContent({
@@ -58,6 +59,7 @@ export function MainContent({
   onOpenProfilePage,
   onCloseProfilePage,
   directories = [],
+  onDirectoriesChange,
 }: MainContentProps) {
   const { currentUser, isLoading } = useAuth(); // ✅ real user
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -66,10 +68,15 @@ export function MainContent({
   useEffect(() => {
     fetch("/api/channels")
       .then((res) => res.json())
-      .then(setDirectories)
+      .then((dirs) => {
+        if (onDirectoriesChange) {
+          onDirectoriesChange(dirs);
+        }
+      })
       .catch(() => { 
-        // No mock data - just empty array
-        setDirectories([]);
+        if (onDirectoriesChange) {
+          onDirectoriesChange([]);
+        }
       });
 
     fetch("/api/notifications")
@@ -79,7 +86,7 @@ export function MainContent({
         // No mock notifications - just empty array
         setNotifications([]);
       });
-  }, []);
+  }, [onDirectoriesChange]);
 
   // If we're showing the full profile page
   if (showProfilePage && onCloseProfilePage) {
