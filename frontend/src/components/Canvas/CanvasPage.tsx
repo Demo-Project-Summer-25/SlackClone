@@ -4,7 +4,7 @@ import { CanvasViewer } from './CanvasViewer';
 import { Canvas } from '../../services/canvasService';
 
 export const CanvasPage: React.FC = () => {
-  const [selectedCanvasId, setSelectedCanvasId] = useState<string | null>(null);  
+  const [selectedCanvasId, setSelectedCanvasId] = useState<string | null>(null);
 
   const handleSelectCanvas = (canvas: Canvas) => {
     setSelectedCanvasId(canvas.id);
@@ -19,7 +19,7 @@ export const CanvasPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto p-6">
+    <div className="h-full bg-background">
       {selectedCanvasId ? (
         <CanvasViewer 
           canvasId={selectedCanvasId} 
@@ -29,6 +29,7 @@ export const CanvasPage: React.FC = () => {
         <CanvasList 
           onSelectCanvas={handleSelectCanvas}
           onCreateCanvas={handleCreateCanvas}
+          currentUserId="demo-user"
         />
       )}
     </div>

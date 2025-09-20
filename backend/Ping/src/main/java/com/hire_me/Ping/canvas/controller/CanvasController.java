@@ -15,7 +15,6 @@ import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/canvases")
-@CrossOrigin(origins = "*")
 public class CanvasController {
 
     @Autowired
