@@ -1,9 +1,11 @@
 import { config } from '../config/environment';
 
-// Base API service for making HTTP requests
-export class ApiService {
-  private static readonly BASE_URL = '/api';
+// Make sure your API_BASE_URL is correct
 
+const API_BASE_URL = 'http://localhost:8080/api';
+
+// And ensure all endpoints are properly formatted
+class ApiService {
   // Build query string from params object
   static buildQueryString(params: Record<string, any>): string {
     const filtered = Object.entries(params).filter(([_, value]) => value !== undefined && value !== null);
@@ -21,11 +23,11 @@ export class ApiService {
   }
 
   // Generic request method
-  private static async request<T>(
+  private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${this.BASE_URL}${endpoint}`;
+    const url = `${API_BASE_URL}${endpoint}`;
     
     const config: RequestInit = {
       headers: {
@@ -79,38 +81,33 @@ export class ApiService {
   }
 
   // HTTP method helpers
-  static async get<T>(endpoint: string): Promise<T> {
+  async get<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, { method: 'GET' });
   }
 
-  static async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  static async put<T>(endpoint: string, data?: any): Promise<T> {
+  async put<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: data ? JSON.stringify(data) : undefined,
     });
   }
 
-  static async patch<T>(endpoint: string, data?: any): Promise<T> {
+  async delete<T>(endpoint: string): Promise<T> {
     return this.request<T>(endpoint, {
-      method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
+      method: 'DELETE',
     });
-  }
-
-  static async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'DELETE' });
   }
 
   // Special method for file uploads
   static async uploadFile<T>(endpoint: string, formData: FormData): Promise<T> {
-    const url = `${this.BASE_URL}${endpoint}`;
+    const url = `${API_BASE_URL}${endpoint}`;
     
     const config: RequestInit = {
       method: 'POST',
@@ -162,10 +159,9 @@ export class ApiService {
     return localStorage.getItem('authToken');
   }
 
-  // Health check
-  static async healthCheck(): Promise<{ status: string; timestamp: string }> {
-    return this.get('/health');
-  }
 }
 
-export default ApiService;
+// Create and export the instance
+export const api = new ApiService();
+export { ApiService };  // Export the class itself
+export default new ApiService();  // Export an instance

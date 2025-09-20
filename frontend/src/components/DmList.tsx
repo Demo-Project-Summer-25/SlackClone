@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { DmService } from '../services/dmService';
-import { UserService } from '../services/userService';
+import { dmService } from '../services/dmService';
+import { userService } from '../services/userService';
 import { DmResponse } from '../types/api';
 import { User } from '../types/user';
 
@@ -24,8 +24,8 @@ export function DmList({ currentUserId, onSelectDm, selectedDmId }: DmListProps)
         
         // Load both DMs and users in parallel
         const [dmsData, usersData] = await Promise.all([
-          DmService.getDmsForUser(currentUserId),
-          UserService.getAllUsers()
+          dmService.getDmsForUser(currentUserId),
+          userService.getAllUsers()
         ]);
         
         setDms(dmsData);

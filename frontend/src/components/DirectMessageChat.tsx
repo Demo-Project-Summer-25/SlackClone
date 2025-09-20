@@ -3,7 +3,7 @@ import { ArrowLeft, Send, Paperclip, Smile, MoreVertical } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Card } from "./ui/card";
-import { DmService } from "../services/dmService";
+import { dmService } from "../services/dmService";
 import { MessageService } from "../services/messageService";
 import { DmResponse, MessageResponse, MessageCreateRequest } from "../types/api";
 
@@ -27,7 +27,7 @@ export function DirectMessageChat({ dmId, currentUserId, onBack }: DirectMessage
       
       try {
         // Load DM conversation details
-        const dm = await DmService.getDm(dmId);
+        const dm = await dmService.getDm(dmId);
         setDmData(dm);
 
         // Load messages for this DM

@@ -560,10 +560,7 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
     case "ai":
       return renderAI();
     case "calendar":
-      return renderCalendar();
-    case "ide":
-      return renderIDE();
-    
+      return renderCalendar();    
     default:
       return (
         <div className="p-6 text-center">
