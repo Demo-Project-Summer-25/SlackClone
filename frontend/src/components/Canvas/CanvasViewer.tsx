@@ -6,6 +6,7 @@ import { Textarea } from '../ui/textarea';
 import { ArrowLeft, Save, Edit } from 'lucide-react';
 import { canvasService, Canvas } from '../../services/canvasService';
 import { toast } from 'sonner';
+import { VisualCanvas } from './VisualCanvas';
 
 interface CanvasViewerProps {
   canvasId: string;              
@@ -193,29 +194,10 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
       {/* Canvas Data */}
       <Card>
         <CardHeader>
-          <CardTitle>Canvas Data</CardTitle>
+          <CardTitle>Visual Canvas Editor</CardTitle>
         </CardHeader>
-        <CardContent>
-          {isEditing ? (
-            <div>
-              <label className="block text-sm font-medium mb-2">
-                Canvas Data (JSON)
-              </label>
-              <Textarea
-                value={formData.canvasData}
-                onChange={(e) => setFormData(prev => ({ ...prev, canvasData: e.target.value }))}
-                className="font-mono text-sm"
-                rows={15}
-                placeholder="Enter canvas data as JSON"
-              />
-            </div>
-          ) : (
-            <div>
-              <pre className="bg-gray-50 p-4 rounded-lg overflow-auto text-sm">
-                {JSON.stringify(canvas.canvasData, null, 2)}                          
-              </pre>
-            </div>
-          )}
+        <CardContent className="p-0">
+          <VisualCanvas />
         </CardContent>
       </Card>
     </div>
