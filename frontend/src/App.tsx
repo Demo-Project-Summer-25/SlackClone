@@ -267,7 +267,7 @@ function AppContent() {
                   >
                     <X className="w-4 h-4" />
                   </Button>
-                  <DeveloperToolsContent activeTool={activeTool} isInSplitMode={bothPanelsVisible} />
+                  <DeveloperToolsContent activeTool={activeTool} isInSplitMode={bothPanelsVisible} currentUserId={currentUserId} />
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
@@ -315,7 +315,7 @@ function AppContent() {
               >
                 <X className="w-4 h-4" />
               </Button>
-              <DeveloperToolsContent activeTool={activeTool} isInSplitMode={false} />
+              <DeveloperToolsContent activeTool={activeTool} isInSplitMode={false} currentUserId={currentUserId} />
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center">
@@ -362,4 +362,3 @@ export default function App() {
     </ErrorBoundary>
   );
 }
-
