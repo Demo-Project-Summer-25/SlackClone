@@ -19,7 +19,7 @@ export const CanvasList: React.FC<CanvasListProps> = ({
   onSelectCanvas,
   onCreateCanvas,
   currentUserId,
-  isInSplitMode = false // ✅ Default to false
+  isInSplitMode = false
 }) => {
   const [canvases, setCanvases] = useState<Canvas[]>([]);
   const [loading, setLoading] = useState(true);
@@ -155,7 +155,7 @@ export const CanvasList: React.FC<CanvasListProps> = ({
   }
 
   return (
-    <div className="p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8 max-w-4xl mx-auto">
+    <div className="p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8">
       <div className="mb-4 sm:mb-6 lg:mb-8">
         <div className="flex items-center justify-between">
           <div>
@@ -212,8 +212,8 @@ export const CanvasList: React.FC<CanvasListProps> = ({
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
             <Plus className="h-8 w-8 text-muted-foreground" />
           </div>
-          <h3 className="text-lg font-medium text-foreground mb-2">No canvases yet</h3>
-          <p className="text-sm text-muted-foreground mb-4">Create your first canvas to start visualizing your ideas</p>
+          <h3 className="text-lg font-medium text-foreground mb-2">No wireframes yet</h3>
+          <p className="text-sm text-muted-foreground mb-4">Create your first wirefram to start visualizing your ideas</p>
           <Button onClick={startCreate} className="gap-2" size="sm">
             <Plus className="h-4 w-4" />
             Create your first canvas

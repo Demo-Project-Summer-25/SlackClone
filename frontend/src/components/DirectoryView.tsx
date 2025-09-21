@@ -39,15 +39,16 @@ interface DirectoryViewProps {
   onSelectDirectory?: (id: string) => void;
 }
 
-
-export function DirectoryView({ directory, onBack }: DirectoryViewProps) {
-  const { theme } = useTheme();
-
-  directory,
-  onBack,
-  availableDirectories = [],
-  onSelectDirectory,
+// ✅ Correct single function declaration
+export function DirectoryView({ 
+  directory, 
+  onBack, 
+  availableDirectories = [], 
+  onSelectDirectory 
 }: DirectoryViewProps) {
+  const { theme } = useTheme();
+  
+  // ✅ All your state declarations can stay
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
   const [userMap, setUserMap] = useState<Record<string, any>>({});
