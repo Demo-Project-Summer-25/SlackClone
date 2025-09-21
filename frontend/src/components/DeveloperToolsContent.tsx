@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -29,7 +29,21 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
   // Fix the IDE layout logic: when in split mode (narrow), use stacked; when full screen (wide), use horizontal
   const [ideLayout, setIdeLayout] = useState<"stacked" | "horizontal">(isInSplitMode ? "stacked" : "horizontal");
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
-  const [currentMonth, setCurrentMonth] = useState("December 2024");
+
+  const today = useMemo(() => new Date(), []);
+  const [monthDate, setMonthDate] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
+  const monthLabel = monthDate.toLocaleString(undefined, { month: "long", year: "numeric" });
+  const monthShort = monthDate.toLocaleString(undefined, { month: "short" });
+  const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
+  const daysArray = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1), [daysInMonth]);
+  useEffect(() => {
+    if (selectedDate && selectedDate > daysInMonth) {
+      setSelectedDate(null);
+    }
+  }, [selectedDate, daysInMonth]);
+  const shiftMonth = (delta: number) => {
+    setMonthDate(prev => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
+  };
   const [draggedTask, setDraggedTask] = useState<{ columnId: string; taskIndex: number } | null>(null);
 
   // WireFrame boards state
@@ -64,29 +78,70 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
   // Current kanban data for selected board
   const [kanbanData, setKanbanData] = useState(backlogBoardData["1"]);
 
-  const eventsData = {
-    5: [
-      { title: "Mock", time: "9:00 AM", type: "meeting" },
-      { title: "Mock", time: "2:00 PM", type: "review" },
-    ],
-    12: [
-      { title: "Mock", time: "10:00 AM", type: "planning" },
-    ],
-    16: [
-      { title: "Mock", time: "10:00 AM", type: "discussion" },
-      { title: "Mock", time: "2:00 PM", type: "demo" },
-    ],
-    18: [
-      { title: "Mock", time: "11:00 AM", type: "review" }
-    ],
-    22: [
-      { title: "Mock", time: "Mock", type: "meeting" },
-    ]
+  type MockEvent = {
+    title: string;
+    time: string;
+    type: string;
   };
 
-  const upcomingEvents = [
-    { title: "Mock", time: "10:00 AM", date: "Today", day: 16 },
-  ];
+  const formatKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
+
+  const prevReference = useMemo(() => new Date(today.getFullYear(), today.getMonth() - 1, 1), [today]);
+  const nextReference = useMemo(() => new Date(today.getFullYear(), today.getMonth() + 1, 1), [today]);
+  const prevKey = formatKey(prevReference);
+  const currentKey = formatKey(today);
+  const nextKey = formatKey(nextReference);
+
+  const calendarMocks = useMemo<Record<string, Record<number, MockEvent[]>>>(() => ({
+    [prevKey]: {
+      3: [{ title: "Bug Bash Prep", time: "9:30 AM", type: "prep" }],
+      18: [{ title: "Legacy Audit", time: "4:00 PM", type: "audit" }],
+    },
+    [currentKey]: {
+      2: [
+        { title: "Sprint Planning", time: "10:00 AM", type: "planning" },
+        { title: "Architecture Sync", time: "3:00 PM", type: "planning" },
+      ],
+      5: [{ title: "Frontend Pairing", time: "2:00 PM", type: "pairing" }],
+      9: [{ title: "API Contract Review", time: "11:00 AM", type: "review" }],
+      14: [{ title: "Release Dry Run", time: "4:30 PM", type: "release" }],
+      21: [
+        { title: "Team Retrospective", time: "1:30 PM", type: "retro" },
+        { title: "1:1 Coaching", time: "4:00 PM", type: "coaching" },
+      ],
+      28: [{ title: "Hackathon Demo", time: "12:00 PM", type: "demo" }],
+    },
+    [nextKey]: {
+      4: [{ title: "Quarter Kickoff", time: "9:00 AM", type: "kickoff" }],
+      12: [{ title: "Design Systems Deep Dive", time: "2:00 PM", type: "deep-dive" }],
+      19: [
+        { title: "Ops Load Test", time: "1:00 PM", type: "ops" },
+        { title: "Mentorship Circle", time: "5:00 PM", type: "mentoring" },
+      ],
+    },
+  }), [prevKey, currentKey, nextKey]);
+
+  const eventsData = useMemo<Record<number, MockEvent[]>>(() => {
+    const mapped = calendarMocks[formatKey(monthDate)];
+    return mapped ? mapped : {};
+  }, [calendarMocks, monthDate]);
+
+  const upcomingEvents = useMemo(() => {
+    const flattened = Object.entries(eventsData)
+      .flatMap(([day, events]) =>
+        events.map(event => ({
+          ...event,
+          day: Number(day),
+          dateLabel: new Date(monthDate.getFullYear(), monthDate.getMonth(), Number(day)).toLocaleDateString(undefined, {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+          }),
+        }))
+      )
+      .sort((a, b) => a.day - b.day);
+    return flattened.slice(0, 4);
+  }, [eventsData, monthDate]);
 
   const handleDragStart = (e: React.DragEvent, columnId: string, taskIndex: number) => {
     setDraggedTask({ columnId, taskIndex });
@@ -375,7 +430,6 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
 
   const renderCalendar = () => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-    const daysInMonth = Array.from({ length: 31 }, (_, i) => i + 1);
 
     const getEventTypeColor = (type: string) => {
       switch (type) {
@@ -407,10 +461,24 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>{currentMonth}</span>
+                  <span>{monthLabel}</span>
                   <div className="flex gap-2">
-                    <Button variant="outline" size="sm">‹</Button>
-                    <Button variant="outline" size="sm">›</Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => shiftMonth(-1)}
+                      aria-label="Previous month"
+                    >
+                      ‹
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => shiftMonth(1)}
+                      aria-label="Next month"
+                    >
+                      ›
+                    </Button>
                   </div>
                 </CardTitle>
               </CardHeader>
@@ -424,18 +492,27 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
                 </div>
 
                 <div className="grid grid-cols-7 gap-1">
-                  {daysInMonth.map(day => {
+                  {daysArray.map(day => {
                     const events = eventsData[day] || [];
                     const isSelected = selectedDate === day;
+                    const isToday =
+                      monthDate.getFullYear() === today.getFullYear() &&
+                      monthDate.getMonth() === today.getMonth() &&
+                      day === today.getDate();
+
+                    const cellClasses = [
+                      "min-h-[60px] p-1 border border-black rounded cursor-pointer transition-colors",
+                      isSelected ? "bg-primary/10" : "hover:bg-muted/50",
+                      isToday ? "ring-2 ring-primary/60" : "",
+                    ].join(" ");
 
                     return (
                       <div
                         key={day}
-                        className={`min-h-[60px] p-1 border rounded cursor-pointer transition-colors ${isSelected ? 'bg-primary/10 border-primary' : 'hover:bg-muted/50'
-                          }`}
+                        className={cellClasses}
                         onClick={() => setSelectedDate(day)}
                       >
-                        <div className="text-sm">{day}</div>
+                        <div className={`text-sm ${isToday ? 'font-semibold text-primary' : ''}`}>{day}</div>
                         <div className="space-y-1">
                           {events.slice(0, 2).map((event, i) => (
                             <div
@@ -460,7 +537,7 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
             {selectedDate && eventsData[selectedDate] ? (
               <Card>
                 <CardHeader>
-                  <CardTitle>Events for {selectedDate} Dec</CardTitle>
+                  <CardTitle>Events for {selectedDate} {monthShort}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {eventsData[selectedDate].map((event, i) => (
@@ -488,7 +565,7 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
                         <div className="flex items-center gap-2 text-xs text-muted-foreground">
                           <span>{event.time}</span>
                           <span>•</span>
-                          <span>{event.date}</span>
+                          <span>{event.dateLabel}</span>
                         </div>
                       </div>
                     </div>
