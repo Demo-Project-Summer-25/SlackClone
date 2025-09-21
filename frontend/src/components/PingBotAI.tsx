@@ -90,9 +90,9 @@ export const PingBotAI: React.FC = () => {
   };
 
   return (
-<div className="h-full flex flex-col">
-      {/* ✅ Header with its own padding */}
-      <div className="p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8 max-w-4xl mx-auto">
+    <div className="h-full flex flex-col">
+      {/* Header - Remove max-w and mx-auto centering */}
+      <div className="p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8">
         <div className="mb-4 sm:mb-6 lg:mb-8">
           <h2 className="text-xl sm:text-2xl lg:text-3xl mb-2">PingBot AI</h2>
           <p className="text-sm sm:text-base text-muted-foreground">
@@ -101,8 +101,8 @@ export const PingBotAI: React.FC = () => {
         </div>
       </div>
 
-      {/* ✅ Chat Messages Area with theme-aware styling */}
-      <div className="flex-1 space-y-3 sm:space-y-4 overflow-auto">
+      {/* Chat Messages Area - Add padding here instead */}
+      <div className="flex-1 space-y-3 sm:space-y-4 overflow-auto px-3 sm:px-4 md:px-5 lg:px-6 xl:px-8">
         <ScrollArea className="h-full pr-2">
           <div className="space-y-3 sm:space-y-4">
             {messages.map((message) => (
@@ -112,7 +112,6 @@ export const PingBotAI: React.FC = () => {
               >
                 {!message.isUser && (
                   <div className="flex-shrink-0">
-                    {/* ✅ Theme-aware bot avatar */}
                     <img
                       src={theme === 'dark' ? '/botwhite.png' : '/bot.png'}
                       alt="PingBot"
@@ -122,7 +121,6 @@ export const PingBotAI: React.FC = () => {
                 )}
 
                 <div className={`max-w-[80%] ${message.isUser ? 'order-first' : ''}`}>
-                  {/* ✅ Message bubble with theme-aware styling */}
                   <div className={`p-3 sm:p-4 rounded-lg ${message.isUser
                       ? 'bg-primary text-primary-foreground ml-auto max-w-xs'
                       : 'bg-muted text-foreground'
@@ -149,7 +147,6 @@ export const PingBotAI: React.FC = () => {
               </div>
             ))}
 
-            {/* ✅ Loading indicator with theme-aware bot avatar */}
             {isLoading && (
               <div className="flex gap-3 justify-start">
                 <div className="flex-shrink-0">
@@ -170,15 +167,16 @@ export const PingBotAI: React.FC = () => {
         </ScrollArea>
       </div>
 
-      {/* ✅ Input Area - Remove extra wrapper div */}
-      <MessageInput
-        message={inputMessage}
-        onMessageChange={setInputMessage}
-        onSendMessage={sendMessage}
-        placeholder="Ask PingBot anything about your code..."
-        disabled={isLoading}
-        className="" // ✅ Remove conflicting className
-      />
+      {/* Input Area - Add padding here */}
+      <div className="px-3 sm:px-4 md:px-5 lg:px-6 xl:px-8 pb-3 sm:pb-4 md:pb-5 lg:pb-6 xl:pb-8">
+        <MessageInput
+          message={inputMessage}
+          onMessageChange={setInputMessage}
+          onSendMessage={sendMessage}
+          placeholder="Ask PingBot anything about your code..."
+          disabled={isLoading}
+        />
+      </div>
     </div>
   );
 };
