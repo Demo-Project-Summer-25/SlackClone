@@ -6,9 +6,15 @@ import { Button } from '../components/ui/button';
 
 interface DmPageProps {
   currentUserId: string;
+  notifications?: any[];
+  onNotificationsChange?: () => void;
 }
 
-export function DmPage({ currentUserId }: DmPageProps) {
+export function DmPage({ 
+  currentUserId, 
+  notifications = [], 
+  onNotificationsChange 
+}: DmPageProps) {
   const [selectedDmId, setSelectedDmId] = useState<string | null>(null);
 
   const handleSelectDm = (dmId: string) => {
@@ -17,6 +23,13 @@ export function DmPage({ currentUserId }: DmPageProps) {
 
   const handleBackToDmList = () => {
     setSelectedDmId(null);
+  };
+
+  const getUnreadNotificationCount = (dmId: string): number => {
+    return notifications.filter(notification => 
+      notification.directConversationId === dmId && 
+      notification.status === 'UNREAD'
+    ).length;
   };
 
   return (
@@ -28,6 +41,8 @@ export function DmPage({ currentUserId }: DmPageProps) {
             currentUserId={currentUserId}
             onSelectDm={handleSelectDm}
             selectedDmId={undefined}
+            notifications={notifications}
+            onNotificationsChange={onNotificationsChange}
           />
         </div>
       ) : (

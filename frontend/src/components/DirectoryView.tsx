@@ -1,16 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import {
   ArrowLeft,
-  Send,
   MoreVertical,
   Hash,
   Users,
 } from "lucide-react";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
+import { MessageInput } from "./ui/MessageInput";
 import { useAuth } from "../hooks/useAuth";
 import { Client } from "@stomp/stompjs";
+
+import { useTheme } from "./ThemeProvider";
+import { toast } from 'sonner';
+import '../styles/bot.css';
 import {
   Select,
   SelectContent,
@@ -36,7 +39,10 @@ interface DirectoryViewProps {
   onSelectDirectory?: (id: string) => void;
 }
 
-export function DirectoryView({
+
+export function DirectoryView({ directory, onBack }: DirectoryViewProps) {
+  const { theme } = useTheme();
+
   directory,
   onBack,
   availableDirectories = [],
@@ -45,6 +51,9 @@ export function DirectoryView({
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
   const [userMap, setUserMap] = useState<Record<string, any>>({});
+  const [inputMessage, setInputMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { currentUser } = useAuth();
 
   // Load channel members
@@ -117,26 +126,34 @@ export function DirectoryView({
     }
   };
 
-  const handleSendMessage = () => {
-    if (message.trim() && currentUser?.id) {
-      fetch(`/api/channels/${directory.id}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: message,
-          senderUserId: currentUser.id,
-        }),
-      }).then(() => {
-        setMessage("");
-      });
-    }
-  };
+  const sendMessage = async () => {
+    if (!inputMessage.trim() || isLoading) return;
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
+    const userMessage: any = {
+      id: Date.now().toString(),
+      content: inputMessage,
+      senderUserId: currentUser?.id,
+      timestamp: Date.now(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInputMessage('');
+    setIsLoading(true);
+
+    fetch(`/api/channels/${directory.id}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: inputMessage,
+        senderUserId: currentUser?.id,
+      }),
+    }).then(() => {
+      setMessage("");
+      setIsLoading(false);
+    }).catch(() => {
+      setIsLoading(false);
+      toast.error("Failed to send message");
+    });
   };
 
   return (
@@ -215,64 +232,96 @@ export function DirectoryView({
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-auto p-4 space-y-4">
-        {messages.map((msg) => {
-          const sender = userMap[msg.senderUserId];
-          if (!sender) fetchUserIfMissing(msg.senderUserId);
+      <div className="flex-1 overflow-auto px-6 py-8 space-y-6">
+        {messages.length === 0 ? (
+          <div className="text-center text-muted-foreground py-12">
+            <p className="text-lg">No messages yet. Start the conversation!</p>
+          </div>
+        ) : (
+          <>
+            {messages.map((msg) => {
+              const sender = userMap[msg.senderUserId];
+              if (!sender) fetchUserIfMissing(msg.senderUserId);
+              const isOwn = msg.senderUserId === currentUser?.id;
 
-          return (
-            <div key={msg.id} className="flex gap-3">
-              <div className="w-8 h-8 bg-secondary rounded-full flex items-center justify-center shrink-0">
-                <span className="text-secondary-foreground text-sm">
-                  {sender
-                    ? sender.displayName?.[0] || sender.username?.[0]
-                    : "?"}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-sm font-medium">
-                    {sender
-                      ? sender.displayName || sender.username
-                      : msg.senderUserId}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(msg.createdAt).toLocaleTimeString()}
-                  </span>
+              return (
+                <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[70%] ${isOwn ? "order-2" : "order-1"}`}>
+                    {/* Show sender name for other people's messages */}
+                    {!isOwn && (
+                      <p className="text-sm font-medium text-muted-foreground mb-1 px-1">
+                        {sender ? sender.displayName || sender.username : msg.senderUserId}
+                      </p>
+                    )}
+
+                    <div
+                      className={`p-4 rounded-lg relative transition-all duration-200 hover:shadow-md ${
+                        isOwn
+                          ? // ✅ Own messages: Black background in light mode, white background in dark mode
+                            theme === 'dark' 
+                              ? "bg-white text-black shadow-md border border-gray-200/80" 
+                              : "bg-black text-white shadow-md border border-gray-800/80"
+                          : // ✅ Other messages: Styled differently
+                            theme === 'dark'
+                              ? "bg-gray-800 text-gray-100 shadow-md border border-gray-700/50"
+                              : "bg-gray-50 text-gray-900 shadow-md border border-gray-200/80 hover:bg-gray-100"
+                      }`}
+                      style={{
+                        boxShadow: isOwn 
+                          ? // ✅ Simple shadows for own messages
+                            theme === 'dark' 
+                              ? '0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1)'
+                              : '0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1)'
+                          : // ✅ Shadows for other messages
+                            theme === 'dark'
+                              ? '0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2)'
+                              : '0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05)'
+                      }}
+                    >
+                      <p 
+                        className="text-base leading-relaxed"
+                        style={{
+                          color: isOwn 
+                            ? theme === 'dark' ? '#000000' : '#ffffff'  // ✅ Force proper contrast
+                            : theme === 'dark' ? '#f3f4f6' : '#111827'
+                        }}
+                      >
+                        {msg.content}
+                      </p>
+                      
+                      {/* ✅ Status indicator for own messages */}
+                      {isOwn && (
+                        <div className={`absolute -bottom-1 -right-1 w-2 h-2 rounded-full opacity-60 ${
+                          theme === 'dark' ? 'bg-black/30' : 'bg-white/30'
+                        }`}></div>
+                      )}
+                    </div>
+                    
+                    <p className={`text-sm mt-2 px-1 transition-colors ${
+                      theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
+                    }`}>
+                      {new Date(msg.createdAt).toLocaleTimeString([], {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
                 </div>
-                <div
-                  className={`p-3 rounded-lg ${msg.senderUserId === currentUser?.id
-                      ? "bg-primary text-primary-foreground ml-8"
-                      : "bg-muted text-muted-foreground"
-                    }`}
-                >
-                  <p className="text-sm">{msg.content}</p>
-                </div>
-              </div>
-            </div>
-          );
-        })}
+              );
+            })}
+          </>
+        )}
       </div>
 
       {/* Message Input */}
-      <div className="p-2 sm:p-4 border-t border-border">
-        <div className="flex items-center gap-2">
-          <Input
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder={`Message #${directory.name}...`}
-            className="pr-10 text-sm"
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!message.trim()}
-            size="sm"
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        </div>
-      </div>
+      <MessageInput
+        message={inputMessage}
+        onMessageChange={setInputMessage}
+        onSendMessage={sendMessage}
+        placeholder={`Message #${directory.name}...`}
+        disabled={isLoading}
+        className=""
+      />
     </div>
   );
 }

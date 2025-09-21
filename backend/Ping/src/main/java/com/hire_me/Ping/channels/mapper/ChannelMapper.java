@@ -13,18 +13,28 @@ import org.mapstruct.factory.Mappers;
 import java.util.List;
 
 @Mapper(
-    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
+    nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE,
+    uses = {UserMapper.class}
 )
 public interface ChannelMapper {
 
     ChannelMapper INSTANCE = Mappers.getMapper(ChannelMapper.class);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "members", ignore = true)
     Channel toEntity(ChannelCreateRequest dto);
 
-    // ✅ Use UserMapper.toPublicDto for createdBy
-    @Mapping(target = "createdBy", expression = "java(UserMapper.toPublicDto(channel.getCreatedBy()))")
+    // Use UserMapper.toPublicDto for createdBy
+    @Mapping(target = "createdBy", expression = "java(com.hire_me.Ping.users.mapper.UserMapper.toPublicDto(channel.getCreatedBy()))")
+    @Mapping(target = "isPublic", source = "public")
     ChannelResponse toResponse(Channel channel);
 
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "members", ignore = true)
     void updateFromDto(ChannelUpdateRequest dto, @MappingTarget Channel entity);
 
     @Mapping(source = "user", target = "user")

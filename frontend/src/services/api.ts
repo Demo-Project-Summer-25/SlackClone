@@ -1,9 +1,7 @@
 import { config } from '../config/environment';
 
 // Make sure your API_BASE_URL is correct
-
 const API_BASE_URL = 'http://localhost:8080/api';
-
 // And ensure all endpoints are properly formatted
 class ApiService {
   // Build query string from params object
@@ -82,21 +80,39 @@ class ApiService {
 
   // HTTP method helpers
   async get<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, { method: 'GET' });
+    const response = await fetch(`${this.baseURL}${endpoint}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
   }
 
   async post<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
-      body: data ? JSON.stringify(data) : undefined,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
     });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
   }
 
   async put<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
     });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
   }
 
   async patch<T>(endpoint: string, data?: any): Promise<T> {
@@ -107,7 +123,7 @@ class ApiService {
   }
 
   async delete<T>(endpoint: string): Promise<T> {
-    return this.request<T>(endpoint, {
+    const response = await fetch(`${this.baseURL}${endpoint}`, {
       method: 'DELETE',
     });
   }
