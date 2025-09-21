@@ -5,12 +5,19 @@ import { Switch } from "./ui/switch";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "./ui/dropdown-menu";
 import { useTheme } from "./ThemeProvider";
 
+interface NotificationCounts {
+  total: number;
+  directories: number;
+  pings: number;
+}
+
 interface TopNavigationProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   splitScreenMode: boolean;
   onSplitScreenToggle: (enabled: boolean) => void;
   onTerminalSelect?: (terminal: { id: string; name: string; type: string; status: "Active" | "Inactive" }) => void;
+  notificationCounts?: NotificationCounts;
 }
 
 export function TopNavigation({ 
@@ -18,21 +25,41 @@ export function TopNavigation({
   onTabChange, 
   splitScreenMode, 
   onSplitScreenToggle,
-  onTerminalSelect
+  onTerminalSelect,
+  notificationCounts = { total: 0, directories: 0, pings: 0 }
 }: TopNavigationProps) {
   const { theme } = useTheme();
 
-  // Mock terminals data
   const terminals = [
     { id: "1", name: "Zip Code Wilmington", type:"10.1", status: "Active" as const },
     { id: "2", name: "JP Morgan", type: "New Job", status: "Inactive" as const },
   ];
   
   const tabs = [
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "directories", label: "Directories", icon: Folder },
-    { id: "dms", label: "Pings", icon: MessageCircle },
-    { id: "profile", label: "Profile", icon: User },
+    { 
+      id: "notifications", 
+      label: "Notifications", 
+      icon: Bell, 
+      count: notificationCounts.total 
+    },
+    { 
+      id: "directories", 
+      label: "Directories", 
+      icon: Folder, 
+      count: notificationCounts.directories 
+    },
+    { 
+      id: "dms", 
+      label: "Pings", 
+      icon: MessageCircle, 
+      count: notificationCounts.pings 
+    },
+    { 
+      id: "profile", 
+      label: "Profile", 
+      icon: User, 
+      count: 0 
+    },
   ];
 
   return (
@@ -48,12 +75,10 @@ export function TopNavigation({
             />
           </div>
         
-          {/* Terminals Dropdown - doesn't change activeTab */}
+          {/* Terminals Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button
-                className="relative flex items-center space-x-1 px-3 py-1.5 rounded-md transition-colors text-muted-foreground hover:text-foreground hover:bg-accent/50"
-              >
+              <button className="relative flex items-center space-x-1 px-3 py-1.5 rounded-md transition-colors text-muted-foreground hover:text-foreground hover:bg-accent/50">
                 <Terminal className="w-4 h-4" />
                 <span className="text-sm hidden sm:inline">Terminals</span>
                 <ChevronDown className="w-3 h-3" />
@@ -94,9 +119,11 @@ export function TopNavigation({
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* Updated tabs with notification badges */}
           {tabs.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
+            const hasNotifications = tab.count > 0;
             
             return (
               <button
@@ -112,7 +139,13 @@ export function TopNavigation({
               >
                 <Icon className="w-4 h-4" />
                 <span className="text-sm hidden sm:inline">{tab.label}</span>
-                {/* Removed all notification badges */}
+                
+                {/* Red notification badge */}
+                {hasNotifications && (
+                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium border-2 border-background">
+                    {tab.count > 99 ? '99+' : tab.count}
+                  </div>
+                )}
               </button>
             );
           })}

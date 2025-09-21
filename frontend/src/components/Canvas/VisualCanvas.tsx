@@ -104,7 +104,7 @@ const RELATIONSHIP_TYPES = {
   },
 };
 
-// ✅ Updated Custom Edge Component - single label only
+// ✅ Updated Custom Edge Component with connection indicators and proper text colors
 const CustomEdge: React.FC<EdgeProps> = ({
   id,
   sourceX,
@@ -157,8 +157,8 @@ const CustomEdge: React.FC<EdgeProps> = ({
       case 'many-to-many': return 'M ↔ M';
       case 'inheritance': return 'extends';
       case 'composition': return 'has';
-      case 'custom': return data?.label || 'custom'; // ✅ Use custom label for custom type
-      default: return ''; // ✅ Use custom label for basic connections
+      case 'custom': return data?.label || 'custom';
+      default: return '';
     }
   };
 
@@ -180,7 +180,28 @@ const CustomEdge: React.FC<EdgeProps> = ({
         d={edgePath}
       />
       
-      {/* ✅ Single relationship label - rounded pill style */}
+      {/* ✅ Connection direction indicators */}
+      {/* Large circle at source (where connection starts) */}
+      <circle
+        cx={sourceX}
+        cy={sourceY}
+        r="8"
+        fill={strokeColor}
+        strokeWidth="2"
+        opacity="1"
+      />
+      
+      {/* Small circle at target (where connection ends) */}
+      <circle
+        cx={targetX}
+        cy={targetY}
+        r="4"
+        fill={strokeColor}
+        strokeWidth="1.5"
+        opacity="1"
+      />
+      
+      {/* ✅ Relationship label with proper text colors */}
       {relationshipText && (
         <>
           <rect
@@ -200,7 +221,7 @@ const CustomEdge: React.FC<EdgeProps> = ({
             y={labelY}
             textAnchor="middle"
             dominantBaseline="middle"
-            fill={strokeColor}
+            fill={isDark ? '#ffffff' : '#000000'} // ✅ Fixed: black text in light mode, white in dark mode
             style={{ fontSize: '11px', fontWeight: 'bold' }}
           >
             {relationshipText}
@@ -660,6 +681,12 @@ const CanvasFlow: React.FC = () => {
           nodeColor="#000000"
           maskColor="rgba(255, 255, 255, 0.8)"
           className="bg-card border border-border rounded-lg dark:[&_.react-flow__minimap-node]:!fill-white dark:[&_.react-flow__minimap-mask]:!fill-black/80"
+          style={{
+            width: 120,        // ✅ Set custom width (default is ~200px)
+            height: 80,        // ✅ Set custom height (default is ~150px)
+          }}
+          pannable={true}      // ✅ Allow clicking to pan
+          zoomable={true}      // ✅ Allow zooming
         />
         <Background 
           variant={BackgroundVariant.Dots}
