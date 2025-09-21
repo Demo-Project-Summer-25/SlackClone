@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TopNavigation } from "./components/TopNavigation";
 import { DeveloperSidebar } from "./components/DeveloperSidebar";
 import { MainContent } from "./components/MainContent";
@@ -16,7 +16,14 @@ import {
 } from "lucide-react";
 import React from 'react'; 
 import { DmPage } from './pages/DmPage';
+import { ProfilePage } from './components/ProfilePage';
 import './styles/dm.css';
+
+interface NotificationCounts {
+  total: number;
+  directories: number;
+  pings: number;
+}
 
 function AppContent() {
   // Default to directories tab
@@ -38,6 +45,16 @@ function AppContent() {
   } | null>(null);
 
   const [showProfilePage, setShowProfilePage] = useState(false);
+
+  // Add this state
+  const [notificationCounts, setNotificationCounts] = useState<NotificationCounts>({
+    total: 0,
+    directories: 0,
+    pings: 0
+  });
+
+  // ✅ Add notifications state to App level
+  const [notifications, setNotifications] = useState<any[]>([]);
 
   // Handle split screen mode toggle
   const handleSplitScreenToggle = (enabled: boolean) => {
@@ -129,6 +146,51 @@ function AppContent() {
   // Use Alice's actual ID from import.sql
   const currentUserId = '68973614-94db-4f98-9729-0712e0c5c0fa';
 
+  // ✅ Add function to fetch notifications at App level
+  const fetchNotifications = () => {
+    fetch("http://localhost:8080/api/notifications")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        const mappedNotifications = Array.isArray(data) ? data.map(notif => ({
+          id: notif.id,
+          text: notif.text,
+          message: notif.text,
+          status: notif.status,
+          type: notif.type,
+          createdAt: notif.createdAt,
+          readAt: notif.readAt,
+          messageId: notif.messageId,
+          directConversationId: notif.directConversationId,
+          channelId: notif.channelId,
+          unread: notif.status === 'UNREAD'
+        })) : [];
+        setNotifications(mappedNotifications);
+        
+        // ✅ Calculate and update notification counts
+        const unreadNotifications = mappedNotifications.filter(n => n.status === 'UNREAD');
+        setNotificationCounts({
+          total: unreadNotifications.length,
+          directories: unreadNotifications.filter(n => n.channelId).length,
+          pings: unreadNotifications.filter(n => n.directConversationId).length
+        });
+      })
+      .catch((error) => {
+        console.error('Error fetching notifications:', error);
+        setNotifications([]);
+      });
+  };
+
+  // ✅ Fetch notifications on app load
+  useEffect(() => {
+    fetchNotifications();
+    // Optionally set up polling for real-time updates
+    const interval = setInterval(fetchNotifications, 30000); // every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Show toggle button on the RIGHT when sidebar is hidden */}
@@ -149,117 +211,140 @@ function AppContent() {
         splitScreenMode={splitScreenMode}
         onSplitScreenToggle={handleSplitScreenToggle}
         onTerminalSelect={handleTerminalSelect}
+        notificationCounts={notificationCounts}
       />
       
       <div className="flex flex-1 overflow-hidden">
-        {/* Main content area - now comes FIRST (left side) */}
-        <div className="flex-1 flex overflow-hidden">
-          {bothPanelsVisible ? (
-            <ResizablePanelGroup direction="horizontal" className="flex-1">
-              <ResizablePanel defaultSize={60} minSize={25}>
-                <div className="h-full overflow-auto relative">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleCloseMainContent}
-                    className="absolute top-2 right-2 z-10 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                  
-                  {/* Show DM Page when dms tab is active */}
-                  {activeTab === "dms" ? (
-                    <DmPage currentUserId={currentUserId} />
-                  ) : (
-                    <MainContent 
-                      activeTab={activeTab} 
-                      isInSplitMode={bothPanelsVisible}
-                      activeDirectory={activeDirectory}
-                      onOpenDirectory={setActiveDirectory}
-                      onCloseDirectory={() => setActiveDirectory(null)}
-                      showProfilePage={showProfilePage}
-                      onOpenProfilePage={() => setShowProfilePage(true)}
-                      onCloseProfilePage={() => setShowProfilePage(false)}
-                    />
-                  )}
-                </div>
-              </ResizablePanel>
-              
-              <ResizableHandle withHandle />
-              
-              <ResizablePanel defaultSize={40} minSize={25}>
-                <div className="h-full overflow-auto relative">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleCloseDevTools}
-                    className="absolute top-2 right-2 z-10 text-muted-foreground hover:text-foreground"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                  <DeveloperToolsContent activeTool={activeTool} isInSplitMode={bothPanelsVisible} />
-                </div>
-              </ResizablePanel>
-            </ResizablePanelGroup>
-          ) : onlyMainVisible ? (
-            <div className="flex-1 overflow-auto relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCloseMainContent}
-                className="absolute top-2 right-2 z-10 text-muted-foreground hover:text-foreground"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-              
-              {/* Show DM Page when dms tab is active */}
-              {activeTab === "dms" ? (
-                <DmPage currentUserId={currentUserId} />
-              ) : (
-                <MainContent 
-                  activeTab={activeTab} 
-                  isInSplitMode={false}
-                  activeDirectory={activeDirectory}
-                  onOpenDirectory={setActiveDirectory}
-                  onCloseDirectory={() => setActiveDirectory(null)}
-                  showProfilePage={showProfilePage}
-                  onOpenProfilePage={() => setShowProfilePage(true)}
-                  onCloseProfilePage={() => setShowProfilePage(false)}
-                />
-              )}
-            </div>
-          ) : onlyDevToolsVisible ? (
-            <div className="flex-1 overflow-auto relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleCloseDevTools}
-                className="absolute top-2 right-2 z-10 text-muted-foreground hover:text-foreground"
-              >
-                <X className="w-4 h-4" />
-              </Button>
-              <DeveloperToolsContent activeTool={activeTool} isInSplitMode={false} />
-            </div>
-          ) : (
-            <div className="flex-1 flex items-center justify-center">
-              <div className="text-center">
-                <h3 className="text-lg font-medium mb-2">No panels open</h3>
-                <p className="text-muted-foreground mb-4">Select a tab or open a tool to get started</p>
-                <div className="space-x-2">
-                  <Button onClick={() => setShowMainContent(true)}>
-                    Open Main Content
-                  </Button>
-                  <Button variant="outline" onClick={() => setShowDevTools(true)}>
-                    Open Dev Tools
-                  </Button>
+        {/* ✅ Profile page gets full screen - render outside of panel logic */}
+        {showProfilePage ? (
+          <div className="flex-1">
+            <ProfilePage
+              onClose={() => setShowProfilePage(false)}
+            />
+          </div>
+        ) : (
+          <div className="flex-1 flex overflow-hidden">
+            {bothPanelsVisible ? (
+              <ResizablePanelGroup direction="horizontal" className="flex-1">
+                <ResizablePanel defaultSize={60} minSize={25}>
+                  <div className="h-full overflow-auto relative">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCloseMainContent}
+                      className="absolute top-2 right-2 z-10 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                    
+                    {activeTab === "dms" ? (
+                      <DmPage 
+                        currentUserId={currentUserId} 
+                        notifications={notifications}
+                        onNotificationsChange={fetchNotifications}
+                      />
+                    ) : (
+                      <MainContent 
+                        activeTab={activeTab} 
+                        isInSplitMode={bothPanelsVisible}
+                        activeDirectory={activeDirectory}
+                        onOpenDirectory={setActiveDirectory}
+                        onCloseDirectory={() => setActiveDirectory(null)}
+                        showProfilePage={false} // ✅ Always false since we handle it at App level
+                        onOpenProfilePage={() => setShowProfilePage(true)}
+                        onCloseProfilePage={() => setShowProfilePage(false)}
+                        onNavigateToTab={setActiveTab}
+                        notifications={notifications}
+                        onNotificationsChange={fetchNotifications}
+                        onNotificationCountsChange={setNotificationCounts}
+                      />
+                    )}
+                  </div>
+                </ResizablePanel>
+                
+                <ResizableHandle withHandle />
+                
+                <ResizablePanel defaultSize={40} minSize={25}>
+                  <div className="h-full overflow-auto relative">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCloseDevTools}
+                      className="absolute top-2 right-2 z-10 text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                    <DeveloperToolsContent activeTool={activeTool} isInSplitMode={bothPanelsVisible} />
+                  </div>
+                </ResizablePanel>
+              </ResizablePanelGroup>
+            ) : onlyMainVisible ? (
+              <div className="flex-1 overflow-auto relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCloseMainContent}
+                  className="absolute top-2 right-2 z-10 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+                
+                {activeTab === "dms" ? (
+                  <DmPage 
+                    currentUserId={currentUserId}
+                    notifications={notifications}
+                    onNotificationsChange={fetchNotifications}
+                  />
+                ) : (
+                  <MainContent 
+                    activeTab={activeTab} 
+                    isInSplitMode={false}
+                    activeDirectory={activeDirectory}
+                    onOpenDirectory={setActiveDirectory}
+                    onCloseDirectory={() => setActiveDirectory(null)}
+                    showProfilePage={false} // ✅ Always false since we handle it at App level
+                    onOpenProfilePage={() => setShowProfilePage(true)}
+                    onCloseProfilePage={() => setShowProfilePage(false)}
+                    onNavigateToTab={setActiveTab}
+                    notifications={notifications}
+                    onNotificationsChange={fetchNotifications}
+                    onNotificationCountsChange={setNotificationCounts}
+                  />
+                )}
+              </div>
+            ) : onlyDevToolsVisible ? (
+              <div className="flex-1 overflow-auto relative">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCloseDevTools}
+                  className="absolute top-2 right-2 z-10 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+                <DeveloperToolsContent activeTool={activeTool} isInSplitMode={false} />
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <h3 className="text-lg font-medium mb-2">No panels open</h3>
+                  <p className="text-muted-foreground mb-4">Select a tab or open a tool to get started</p>
+                  <div className="space-x-2">
+                    <Button onClick={() => setShowMainContent(true)}>
+                      Open Main Content
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowDevTools(true)}>
+                      Open Dev Tools
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
-        {/* Developer Sidebar - now comes SECOND (right side) */}
-        {showDeveloperSidebar && (
+        {/* ✅ Developer sidebar only shows when profile page is not open */}
+        {!showProfilePage && showDeveloperSidebar && (
           <DeveloperSidebar 
             activeTool={activeTool}
             onToolChange={handleToolChange}
@@ -274,6 +359,9 @@ function AppContent() {
 }
 
 export default function App() {
+  // ✅ CHANGED: Set default tab to notifications
+  const [activeTab, setActiveTab] = useState('notifications');
+
   return (
     <ThemeProvider defaultTheme="system" storageKey="ping-theme">
       <AppContent />

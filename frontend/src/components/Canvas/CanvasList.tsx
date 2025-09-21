@@ -11,12 +11,15 @@ interface CanvasListProps {
   onSelectCanvas?: (canvas: Canvas) => void;
   onCreateCanvas?: () => void;
   currentUserId: string;
+  // ✅ Add prop to detect split screen mode
+  isInSplitMode?: boolean;
 }
 
 export const CanvasList: React.FC<CanvasListProps> = ({
   onSelectCanvas,
   onCreateCanvas,
-  currentUserId
+  currentUserId,
+  isInSplitMode = false // ✅ Default to false
 }) => {
   const [canvases, setCanvases] = useState<Canvas[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +64,10 @@ export const CanvasList: React.FC<CanvasListProps> = ({
       setIsCreating(false);
       toast.success('Canvas created');
 
-      if (onCreateCanvas) {
+      // ✅ Auto-open newly created canvas
+      if (onSelectCanvas) {
+        onSelectCanvas(newCanvas);
+      } else if (onCreateCanvas) {
         onCreateCanvas();
       }
     } catch (error) {
@@ -127,6 +133,14 @@ export const CanvasList: React.FC<CanvasListProps> = ({
     setEditingId(null);
     setIsCreating(false);
     setFormData({ title: '', description: '' });
+  };
+
+  // ✅ Handle canvas card click - auto-open canvas
+  const handleCanvasClick = (canvas: Canvas) => {
+    if (editingId === canvas.id) return; // Don't open if editing
+    if (onSelectCanvas) {
+      onSelectCanvas(canvas);
+    }
   };
 
   if (loading) {
@@ -202,16 +216,20 @@ export const CanvasList: React.FC<CanvasListProps> = ({
             </Card>
           )}
 
-          {/* Canvas Grid */}
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {/* ✅ Canvas Grid - responsive layout with top-down in split mode */}
+          <div className="grid grid-cols-1 gap-4">
             {canvases.map((canvas) => (
               <Card 
                 key={canvas.id} 
                 className="group hover:shadow-lg hover:border-primary/20 transition-all duration-200 bg-card/60 backdrop-blur cursor-pointer"
+                onClick={() => handleCanvasClick(canvas)} // ✅ Auto-open on click
               >
                 <CardContent className="p-0">
                   {editingId === canvas.id ? (
-                    <div className="p-4 space-y-4">
+                    <div 
+                      className="p-4 space-y-4"
+                      onClick={(e) => e.stopPropagation()} // ✅ Prevent opening while editing
+                    >
                       <Input
                         value={formData.title}
                         onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
@@ -236,7 +254,10 @@ export const CanvasList: React.FC<CanvasListProps> = ({
                     </div>
                   ) : (
                     <div className="relative">
-                      {/* Canvas Preview Area */}
+                      {/* ✅ Canvas Preview Area - adjust height for split mode */}
+                      <div className={`bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-950 dark:to-purple-950 border-b border-border/50`}>
+                        <div className="absolute inset-2 border border-dashed border-muted-foreground/30 rounded"></div>
+                      </div>
 
                       {/* Canvas Info */}
                       <div className="p-4">
@@ -245,7 +266,7 @@ export const CanvasList: React.FC<CanvasListProps> = ({
                             {canvas.title}
                           </h3>
                           
-                          {/* Action Buttons */}
+                          {/* ✅ Action Buttons - prevent card click when clicked */}
                           <div className="flex gap-1 ml-2 opacity-0 group-hover:opacity-100 transition-opacity">
                             {onSelectCanvas && (
                               <Button
@@ -256,6 +277,7 @@ export const CanvasList: React.FC<CanvasListProps> = ({
                                   onSelectCanvas(canvas);
                                 }}
                                 className="h-8 w-8 p-0"
+                                title="Open Canvas"
                               >
                                 <Eye className="h-4 w-4" />
                               </Button>
@@ -268,6 +290,7 @@ export const CanvasList: React.FC<CanvasListProps> = ({
                                 startEdit(canvas);
                               }}
                               className="h-8 w-8 p-0"
+                              title="Edit Canvas"
                             >
                               <Edit className="h-4 w-4" />
                             </Button>
@@ -279,6 +302,7 @@ export const CanvasList: React.FC<CanvasListProps> = ({
                                 handleDelete(canvas.id, canvas.title);
                               }}
                               className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                              title="Delete Canvas"
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
