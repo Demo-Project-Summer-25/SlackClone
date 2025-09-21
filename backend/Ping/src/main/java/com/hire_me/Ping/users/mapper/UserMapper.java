@@ -1,9 +1,13 @@
 package com.hire_me.Ping.users.mapper;
 
 import com.hire_me.Ping.users.entity.User;
+
+import org.mapstruct.Mapper;
+import org.springframework.stereotype.Component;
+
 import com.hire_me.Ping.users.dto.UserPublicDto;
 import com.hire_me.Ping.users.dto.UserUpdateRequest;
-
+@Component
 public class UserMapper {
     public static UserPublicDto toPublicDto(User user) {
         if (user == null) {

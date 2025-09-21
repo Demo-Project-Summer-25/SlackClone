@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
-import { createPortal } from "react-dom";
-import { ArrowLeft, Send, Paperclip, Smile, MoreVertical } from "lucide-react";
+import { ArrowLeft, MoreVertical } from "lucide-react";
 import { Button } from "./ui/button";
-import { Input } from "./ui/input";
 import { Card } from "./ui/card";
+import { MessageInput } from "./ui/MessageInput";
 import { dmService } from "../services/dmService";
 import { MessageService } from "../services/messageService";
 import { userService } from "../services/userService";
@@ -17,176 +16,6 @@ interface DirectMessageChatProps {
   onBack: () => void;
 }
 
-type PickerPos = { top: number; left: number; arrowX: number };
-
-const SimpleEmojiPicker = ({
-  anchorRef,
-  onEmojiSelect,
-  onClose,
-  forceAbove = true,
-}: {
-  anchorRef: React.RefObject<HTMLElement | null>;
-  onEmojiSelect: (emoji: string) => void;
-  onClose: () => void;
-  forceAbove?: boolean;
-}) => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const [pos, setPos] = useState<PickerPos>({ top: 0, left: 0, arrowX: 12 });
-  const { theme } = useTheme();
-
-  const emojis = [
-    "😀","😃","😄","😁","😅","😂","🤣","😊","😇","🙂",
-    "🙃","😉","😌","😍","🥰","😘","😗","😙","😚","😋",
-    "😛","😝","😜","🤪","🤨","🧐","🤓","😎","🤩","🥳",
-    "👍","👎","👌","✌️","🤞","🤟","🤘","🤙","👈","👉",
-    "👆","👇","☝️","👋","🤚","🖐️","✋","🖖","👏","🙌",
-    "❤️","🧡","💛","💚","💙","💜","🖤","🤍","💖","💔",
-    "💻","🖥️","⌨️","🖱️","🧠","🔌","🔗","⚙️","💿","💾",
-    "💯","⭐","🌟","💫","✨","🎉","🎁","🔥","👩‍💻","👨‍💻"
-  ];
-
-  const PICKER_W = 360;
-  const PICKER_H = 360;
-  const GAP = 8;
-
-  const isDarkMode = 
-    theme === 'dark' || 
-    (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-  const computePosition = () => {
-    const anchor = anchorRef.current;
-    if (!anchor) return;
-
-    const rect = anchor.getBoundingClientRect();
-    const bodyW = window.innerWidth;
-    const bodyH = window.innerHeight;
-
-    let left = rect.left + rect.width / 2 - PICKER_W / 2;
-    let top = rect.top - PICKER_H - GAP;
-
-    const minL = 8;
-    const maxL = bodyW - PICKER_W - 8;
-    if (left < minL) left = minL;
-    if (left > maxL) left = maxL;
-
-    let arrowX = rect.left + rect.width / 2 - left;
-    arrowX = Math.min(Math.max(arrowX, 12), PICKER_W - 12);
-
-    if (!forceAbove) {
-      const spaceBelow = bodyH - rect.bottom;
-      const spaceAbove = rect.top;
-      if (spaceBelow > spaceAbove && spaceBelow > PICKER_H + GAP) {
-        top = rect.bottom + GAP;
-      }
-    }
-
-    top = Math.min(Math.max(top, 8), bodyH - PICKER_H - 8);
-    setPos({ top, left, arrowX });
-  };
-
-  useEffect(() => {
-    computePosition();
-    const handle = () => computePosition();
-    window.addEventListener("resize", handle);
-    window.addEventListener("scroll", handle, true);
-    return () => {
-      window.removeEventListener("resize", handle);
-      window.removeEventListener("scroll", handle, true);
-    };
-  }, []);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  useEffect(() => {
-    const onDocClick = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (!containerRef.current?.contains(t) && !anchorRef.current?.contains(t)) {
-        onClose();
-      }
-    };
-    document.addEventListener("mousedown", onDocClick);
-    return () => document.removeEventListener("mousedown", onDocClick);
-  }, [onClose, anchorRef]);
-
-  const popup = (
-    <div
-      ref={containerRef}
-      data-emoji-picker
-      className="fixed z-[9999] border rounded-lg shadow-xl p-3 w-[360px] select-none"
-      style={{
-        top: pos.top,
-        left: pos.left,
-        backgroundColor: isDarkMode ? '#000000' : '#ffffff',
-        color: isDarkMode ? '#ffffff' : '#000000',
-        borderColor: isDarkMode ? '#374151' : '#d1d5db',
-        opacity: 1,
-      }}
-    >
-      <div className="flex justify-between items-center mb-2">
-        <span 
-          className="text-sm font-medium"
-          style={{ color: isDarkMode ? '#ffffff' : '#000000' }}
-        >
-          Pick an emoji
-        </span>
-        <button
-          onClick={onClose}
-          className="text-sm font-bold w-5 h-5 flex items-center justify-center rounded transition-colors"
-          style={{
-            color: isDarkMode ? '#9ca3af' : '#6b7280',
-            backgroundColor: 'transparent',
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor = isDarkMode ? '#374151' : '#f3f4f6';
-            e.currentTarget.style.color = isDarkMode ? '#ffffff' : '#000000';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.backgroundColor = 'transparent';
-            e.currentTarget.style.color = isDarkMode ? '#9ca3af' : '#6b7280';
-          }}
-          aria-label="Close emoji picker"
-        >
-          ✕
-        </button>
-      </div>
-
-      <div
-        className="mt-1"
-        style={{ display: "grid", gridTemplateColumns: "repeat(10, 1fr)", gap: 4 }}
-      >
-        {emojis.map((emoji, i) => (
-          <button
-            key={i}
-            onClick={() => {
-              onEmojiSelect(emoji);
-              onClose();
-            }}
-            className="inline-flex items-center justify-center w-8 h-8 text-xl rounded transition-colors"
-            style={{ backgroundColor: 'transparent' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = isDarkMode ? '#374151' : '#f3f4f6';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-            aria-label={`Insert ${emoji}`}
-          >
-            {emoji}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-
-  return createPortal(popup, document.body);
-};
-
 export function DirectMessageChat({ dmId, currentUserId, onBack }: DirectMessageChatProps) {
   const { theme } = useTheme();
   const [message, setMessage] = useState("");
@@ -195,9 +24,7 @@ export function DirectMessageChat({ dmId, currentUserId, onBack }: DirectMessage
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-  const smileyAnchorRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const isDarkMode = 
@@ -430,65 +257,13 @@ export function DirectMessageChat({ dmId, currentUserId, onBack }: DirectMessage
         )}
       </div>
 
-      {/* Message Input */}
-      <div className="px-6 py-6 border-t border-border bg-background/80 backdrop-blur-sm">
-        <div className="flex items-center gap-3">
-          {/* ✅ Removed paperclip button */}
-          
-          <div className="flex-1 relative">
-            <Input
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              onKeyPress={handleKeyPress}
-              placeholder={`Message ${getDisplayName()}...`}
-              className={`pr-12 text-base py-3 transition-all duration-200 ${
-                isDarkMode 
-                  ? 'bg-gray-800/50 border-gray-700/50 focus:border-blue-500/50 focus:bg-gray-800' 
-                  : 'bg-gray-50/50 border-gray-200/80 focus:border-blue-400/50 focus:bg-white'
-              }`}
-            />
-
-            <div
-              ref={smileyAnchorRef}
-              className="absolute right-2 top-1/2 -translate-y-1/2"
-            >
-              <div
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className={`p-1.5 cursor-pointer rounded-md transition-all duration-200 ${
-                  showEmojiPicker 
-                    ? isDarkMode ? "bg-gray-700 text-yellow-400" : "bg-gray-200 text-yellow-500"
-                    : isDarkMode ? "hover:bg-gray-700 text-gray-400" : "hover:bg-gray-200 text-gray-500"
-                }`}
-                aria-label="Open emoji picker"
-              >
-                <Smile className="w-5 h-5" />
-              </div>
-            </div>
-          </div>
-
-          <Button 
-            onClick={handleSendMessage} 
-            disabled={!message.trim()} 
-            size="sm" 
-            className={`px-4 py-3 transition-all duration-200 ${
-              message.trim() 
-                ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md' 
-                : 'opacity-50'
-            }`}
-          >
-            <Send className="w-5 h-5" />
-          </Button>
-        </div>
-      </div>
-
-      {showEmojiPicker && (
-        <SimpleEmojiPicker
-          anchorRef={smileyAnchorRef}
-          onEmojiSelect={(emoji) => setMessage((prev) => prev + emoji)}
-          onClose={() => setShowEmojiPicker(false)}
-          forceAbove
-        />
-      )}
+      <MessageInput
+        message={message}
+        onMessageChange={setMessage}
+        onSendMessage={handleSendMessage}
+        placeholder={`Message ${getDisplayName()}...`}
+        disabled={loading}
+      />
     </div>
   );
 }

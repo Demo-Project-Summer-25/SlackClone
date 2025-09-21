@@ -19,6 +19,7 @@ import {
   Layout
 } from "lucide-react";
 import { CanvasPage } from './Canvas/CanvasPage';
+import { PingBotAI } from './PingBotAI';
 
 interface DeveloperToolsContentProps {
   activeTool: string;
@@ -502,63 +503,79 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
     );
   };
 
-  const renderAI = () => {
+  const renderIDE = () => {
     return (
-      <div className="p-4 sm:p-6 h-full flex flex-col">
-        <div className="flex items-center justify-between mb-6">
+      <div className="p-4 sm:p-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
           <div>
-            <h2 className="text-2xl mb-2">PingBot AI</h2>
-            <p className="text-muted-foreground">Hello! I'm Pingbot. Your personal coding assistant. What are we working on today?</p>
+            <h2 className="text-2xl mb-2">IDE</h2>
+            <p className="text-muted-foreground">Write and edit your code</p>
+          </div>
+          <Button size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            New File
+          </Button>
+        </div>
+
+        <div className="bg-muted/20 rounded-lg p-4 sm:p-6">
+          <p className="text-sm text-muted-foreground mb-4">File structure</p>
+          <div className="flex gap-4">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground mb-2">src/</p>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <FileCode className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm">index.tsx</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileCode className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm">App.tsx</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileCode className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm">components/</span>
+                </div>
+              </div>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground mb-2">public/</p>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <FileCode className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm">favicon.ico</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <FileCode className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm">index.html</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Chat Messages */}
-        <div className="flex-1 space-y-8 mb-4">
-          <div className="flex gap-3">
-            <div className="w-10 h-10 rounded-full border-2 border-black bg-white flex items-center justify-center">
-              <img
-                src="/bot.png"
-                alt="PingBot"
-                className="w-8 h-8 object-contain"
-                style={{ display: "block" }}
-              />
-            </div>
-            <div className="flex-1 bg-muted p-3 rounded-lg">
-              <p className="text-sm">I'm ready to help you with your development tasks. I can assist with:</p>
-              <ul className="text-sm mt-2 space-y-1 text-muted-foreground">
-                <li>• Code debugging</li>
-                <li>• File structure recommendations</li>
-                <li>• Task planning and estimation</li>
-                <li>• Keywords, functions and APIs</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-
-        {/* Input Area */}
-        <div className="border-t pt-4">
+        <div className="mt-4">
           <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Ask PingBot anything about your code..."
-              className="flex-1 px-3 py-2 border rounded-lg bg-background text-sm"
-            />
-            <Button size="sm">
-              <MessageSquare className="w-4 h-4 mr-2" />
-              Send
+            <Button variant="outline" size="sm" className="flex-1">
+              <Play className="w-4 h-4 mr-2" />
+              Run
+            </Button>
+            <Button variant="outline" size="sm" className="flex-1">
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
             </Button>
           </div>
         </div>
       </div>
     );
   };
+
   switch (activeTool) {
     case "kanban":
       return renderKanban();
     case "canvas":
       return <CanvasPage />;
     case "ai":
-      return renderAI();
+      return <PingBotAI />;  
     case "calendar":
       return renderCalendar();    
     default:

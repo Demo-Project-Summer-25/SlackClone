@@ -4,12 +4,12 @@ import {
   MessageCircle,
   User,
   Bell,
-  Hash, // ✅ Add this
+  Hash,
   Lock,
   Settings,
   Shield,
   LogOut,
-  MessageSquare, // ✅ Add this
+  MessageSquare,
 } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
@@ -17,44 +17,44 @@ import { Button } from "./ui/button";
 import { DirectoryView } from "./DirectoryView";
 import { ProfilePage } from "./ProfilePage";
 import { useEffect, useState } from "react";
-import { useAuth } from "../hooks/useAuth"; // ✅ Auth hook
+import { useAuth } from "../hooks/useAuth";
 import { useTheme } from "./ThemeProvider";
+import React from 'react';
+import { ChannelService } from "../services/channelService";
+
+// ✅ Clean interfaces
+interface Directory {
+  id: string;
+  name: string;
+  description: string;
+  memberCount: number;
+  isPrivate: boolean;
+}
+
+interface NotificationCounts {
+  total: number;
+  directories: number;
+  pings: number;
+}
 
 interface MainContentProps {
   activeTab: string;
   isInSplitMode?: boolean;
-  activeDirectory?: {
-    name: string;
-    description: string;
-    memberCount: number;
-    isPrivate: boolean;
-  } | null;
-  onOpenDirectory?: (directory: {
-    name: string;
-    description: string;
-    memberCount: number;
-    isPrivate: boolean;
-  }) => void;
+  activeDirectory?: Directory | null;
+  onOpenDirectory?: (directory: Directory) => void;
   onCloseDirectory?: () => void;
   showProfilePage?: boolean;
   onOpenProfilePage?: () => void;
   onCloseProfilePage?: () => void;
-  // ✅ Add navigation prop for switching tabs
   onNavigateToTab?: (tab: string) => void;
-  // ✅ Add notification props
   notifications?: any[];
   onNotificationsChange?: () => void;
   onNotificationCountsChange?: (counts: NotificationCounts) => void;
+  directories?: any[];
+  onDirectoriesChange?: (directories: any[]) => void;
 }
 
-// Add this interface near the top
-interface NotificationCounts {
-  total: number;
-  directories: number; // channel notifications
-  pings: number;      // DM notifications
-}
-
-// ✅ Move the types and exported function OUTSIDE the component
+// ✅ Helper types and functions (moved outside component)
 type IconType = React.ComponentType<React.SVGProps<SVGSVGElement>>;
 
 type NotificationContext = {
@@ -62,17 +62,20 @@ type NotificationContext = {
   icon: IconType;
 };
 
-// ✅ Move this function outside the component and remove 'export'
 const getNotificationContextWithIcon = (notification: any): NotificationContext => {
   if (notification.directConversationId) {
-    // DMs
     return { label: "Ping", icon: MessageSquare };
   } else if (notification.channelId) {
-    // Channel posts
     return { label: "Channel", icon: Hash };
   }
-  // General notifications
   return { label: "Notification", icon: Bell };
+};
+
+type DirectoryItem = {
+  id: string;
+  name: string;
+  description: string;
+  isPrivate: boolean;
 };
 
 export function MainContent({
@@ -87,27 +90,29 @@ export function MainContent({
   onNavigateToTab,
   notifications: propNotifications,
   onNotificationsChange,
-  onNotificationCountsChange, // ✅ Add this
+  onNotificationCountsChange,
+  directories: propDirectories = [],
+  onDirectoriesChange,
 }: MainContentProps) {
-  const { theme } = useTheme(); // ✅ Add theme hook
+  const { theme } = useTheme();
   const { currentUser, isLoading } = useAuth();
-  const [directories, setDirectories] = useState<any[]>([]);
   
-  // ✅ Use notifications from props if available, otherwise local state
+  // ✅ State management
+  const [localDirectories, setLocalDirectories] = useState<DirectoryItem[]>([]);
   const [localNotifications, setLocalNotifications] = useState<any[]>([]);
+  const [dirsLoading, setDirsLoading] = useState(false);
+  
+  // ✅ Use props if available, otherwise local state
+  const directories = propDirectories.length > 0 ? propDirectories : localDirectories;
   const notifications = propNotifications || localNotifications;
 
-  // Move these functions INSIDE the component
+  // ✅ Notification handlers
   const handleNotificationClick = async (notification: any) => {
-    // Mark notification as read first
     await markNotificationAsRead(notification.id);
     
-    // Navigate to the appropriate tab
     if (notification.directConversationId) {
-      // Navigate to Pings tab (DM notifications)
       onNavigateToTab?.('dms');
     } else if (notification.channelId) {
-      // Navigate to Directories tab (channel notifications) 
       onNavigateToTab?.('directories');
     }
   };
@@ -117,7 +122,7 @@ export function MainContent({
       await fetch(`http://localhost:8080/api/notifications/${notificationId}/read`, {
         method: 'POST',
       });
-      // Use the appropriate notification refresh handler
+      
       if (propNotifications) {
         onNotificationsChange?.();
       } else {
@@ -130,12 +135,10 @@ export function MainContent({
 
   const fetchNotifications = () => {
     if (propNotifications) {
-      // If notifications are passed as props, use the parent's handler
       onNotificationsChange?.();
       return;
     }
     
-    // Original fetch logic for when MainContent manages its own notifications
     fetch("http://localhost:8080/api/notifications")
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
@@ -163,7 +166,7 @@ export function MainContent({
       });
   };
 
-  // Move helper functions inside component too
+  // ✅ Helper functions
   const formatNotificationTitle = (notification: any) => {
     const text = notification.text || notification.message || '';
     const parts = text.split(':');
@@ -176,22 +179,14 @@ export function MainContent({
     return colonIndex !== -1 ? text.substring(colonIndex + 1).trim() : null;
   };
 
-  // ✅ Update your existing getNotificationContext function
   const getNotificationContext = (notification: any) => {
     const context = getNotificationContextWithIcon(notification);
-    return context.label; // Return just the label for backward compatibility
+    return context.label;
   };
 
-  // ✅ Add new function to get the icon component
   const getNotificationIcon = (notification: any) => {
     const context = getNotificationContextWithIcon(notification);
     return context.icon;
-  };
-
-  const getNotificationInitials = (notification: any) => {
-    const text = notification.text || notification.message || '';
-    const firstWord = text.split(' ')[0];
-    return firstWord.charAt(0).toUpperCase();
   };
 
   const formatTimeAgo = (timestamp: string) => {
@@ -208,183 +203,203 @@ export function MainContent({
     return `${diffDays}d ago`;
   };
 
-  // Update the useEffect to use the new fetchNotifications function
-  useEffect(() => {
-    // Fetch directories
-    fetch("http://localhost:8080/api/direct-conversations")
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        return res.json();
-      })
-      .then((data) => {
-        const mappedData = Array.isArray(data) ? data.map(conv => ({
-          id: conv.id,
-          name: conv.title || 'Direct Message',
-          description: `${conv.participants?.length || 0} participants`,
-          memberCount: conv.participants?.length || 0,
-          isPrivate: !conv.isGroup
-        })) : [];
-        setDirectories(mappedData);
-      })
-      .catch((error) => { 
-        console.error('Error fetching conversations:', error);
-        setDirectories([]);
-      });
+  const calculateNotificationCounts = (): NotificationCounts => {
+    const unreadNotifications = notifications.filter(n => n.status === 'UNREAD');
 
-    // Fetch notifications
+    return {
+      total: unreadNotifications.length,
+      directories: unreadNotifications.filter(n => n.channelId).length,
+      pings: unreadNotifications.filter(n => n.directConversationId).length
+    };
+  };
+
+  // ✅ Effects
+  useEffect(() => {
+    if (!currentUser?.id) return;
+
+    let cancelled = false;
+    setDirsLoading(true);
+
+    const loadChannels = async () => {
+      try {
+        const channels = await ChannelService.getUserChannels(currentUser.id);
+        console.log("Loaded channels:", channels); // Debug log
+        const channelArray = Array.isArray(channels) ? channels : [];
+        const mapped: DirectoryItem[] = channelArray.map((c: any) => ({
+          id: c.id,
+          name: c.name,
+          description: c.description || "",
+          isPrivate: typeof c.isPrivate === "boolean" ? c.isPrivate : !c.isPublic,
+        }));
+        
+        if (!cancelled) {
+          setLocalDirectories(mapped);
+          if (onDirectoriesChange) {
+            onDirectoriesChange(mapped);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to fetch user channels", e);
+        if (!cancelled) {
+          setLocalDirectories([]);
+          if (onDirectoriesChange) {
+            onDirectoriesChange([]);
+          }
+        }
+      } finally {
+        if (!cancelled) setDirsLoading(false);
+      }
+    };
+
+    loadChannels();
+    return () => { cancelled = true; };
+  }, [currentUser?.id, onDirectoriesChange]);
+
+  useEffect(() => {
     fetchNotifications();
   }, []);
 
-  // If we're showing the full profile page
-  if (showProfilePage && onCloseProfilePage) {
-    return <ProfilePage onClose={onCloseProfilePage} />;
-  }
+  useEffect(() => {
+    const counts = calculateNotificationCounts();
+    onNotificationCountsChange?.(counts);
+  }, [notifications]);
 
-  // If we're in a directory view
+  // ✅ Page renders
   if (activeDirectory && onCloseDirectory) {
     return <DirectoryView directory={activeDirectory} onBack={onCloseDirectory} />;
   }
 
-  const renderTerminals = () => (
-    <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        <h2 className="text-2xl mb-2">Channels</h2>
-        <p className="text-muted-foreground">Team channels and discussions</p>
-      </div>
-
-      <div className="space-y-3">
-        {/* Zip Code Channel - Active */}
-        <Card className="border-green-200 bg-green-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                  <Hash className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium">Zip Code</h4>
-                  <p className="text-xs text-muted-foreground">Main development channel</p>
-                </div>
-              </div>
-              <Badge variant="default" className="bg-green-500">
-                Active
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Mock Channel - Inactive */}
-        <Card className="border-gray-200 bg-gray-50">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gray-400 rounded-lg flex items-center justify-center">
-                  <Hash className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h4 className="text-sm font-medium">Mock Channel</h4>
-                  <p className="text-xs text-muted-foreground">Test channel for development</p>
-                </div>
-              </div>
-              <Badge variant="secondary" className="bg-gray-400">
-                Inactive
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
-
-  // Fix the renderDirectories function to be more defensive
+  // ✅ Render functions
   const renderDirectories = () => {
-    // Ensure directories is always an array
-    const directoriesArray = Array.isArray(directories) ? directories : [];
+    if (isLoading || dirsLoading) {
+      return <div className="p-3 sm:p-4 lg:p-6 text-sm text-muted-foreground">Loading channels…</div>;
+    }
     
-    if (directoriesArray.length === 0) {
+    if (!currentUser) {
+      return <div className="p-3 sm:p-4 lg:p-6 text-sm text-muted-foreground">No profile found</div>;
+    }
+    
+    if (!directories.length) {
       return (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">No directories found</p>
+        <div className={`p-3 sm:p-4 lg:p-6 ${isInSplitMode ? 'max-w-4xl mx-auto' : ''}`}>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl mb-2">Directories</h2>
+          <p className="text-sm sm:text-base text-muted-foreground mb-4">Project channels and discussions</p>
+          <div className="text-sm sm:text-base text-muted-foreground">You're not in any channels yet.</div>
         </div>
       );
     }
 
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
-        {directoriesArray.map((directory: any) => (
-          <Card
-            key={directory.id || directory.name}
-            className="cursor-pointer hover:shadow-md transition-shadow"
-            onClick={() => onOpenDirectory?.(directory)}
-          >
-            {/* ...rest of your card content... */}
-          </Card>
-        ))}
+      <div className={`p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8 ${isInSplitMode ? 'max-w-4xl mx-auto' : ''}`}>
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl mb-2">Directories</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">Project channels and discussions</p>
+        </div>
+
+        <div className="space-y-2 sm:space-y-3">
+          {directories.map((d) => (
+            <div
+              key={d.id}
+              className="flex items-center gap-3 p-3 sm:p-4 rounded-lg hover:bg-accent transition-colors cursor-pointer"
+              onClick={() => onOpenDirectory?.(d)}
+            >
+              {/* ✅ Hash icon with theme-aware background circle - matching notification size */}
+              <div className="relative w-6 h-6 sm:w-8 sm:h-8 shrink-0">
+                {/* Background circle - white in dark mode, black in light mode */}
+                <div className={`absolute inset-0 rounded-full ${
+                  theme === 'dark' 
+                    ? 'bg-white' 
+                    : 'bg-black'
+                }`} />
+                {/* Hash icon - same size as notification icons */}
+                <Hash 
+                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4"
+                  style={{
+                    color: theme === 'dark' ? '#000000' : '#ffffff',
+                    fill: theme === 'dark' ? '#000000' : '#ffffff'
+                  }}
+                />
+              </div>
+
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm sm:text-base lg:text-lg font-medium truncate">{d.name}</span>
+                </div>
+                {d.description && (
+                  <p className="text-xs sm:text-sm text-muted-foreground truncate mt-1">{d.description}</p>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   };
 
+  // ✅ Update renderProfile in MainContent.tsx
   const renderProfile = () => {
-    if (isLoading) {
-      return <div className="p-4">Loading...</div>;
-    }
-    if (!currentUser) {
-      return <div className="p-4">No profile found</div>;
+    if (isLoading) return <div className="p-3 sm:p-4 lg:p-6">Loading...</div>;
+    if (!currentUser) return <div className="p-3 sm:p-4 lg:p-6">No profile found</div>;
+
+    // ✅ Show detailed profile page within the layout when showProfilePage is true
+    if (showProfilePage) {
+      return (
+        <div className="h-full">
+          <ProfilePage onClose={onCloseProfilePage} />
+        </div>
+      );
     }
 
+    // ✅ Show profile summary (existing code)
     return (
-      <div className="p-4 sm:p-6">
-        <div className="mb-6">
-          <h2 className="text-2xl mb-2">Profile</h2>
-          <p className="text-muted-foreground">
-            Manage your account and preferences
-          </p>
+      <div className={`p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8 ${isInSplitMode ? 'max-w-4xl mx-auto' : ''}`}>
+        <div className="mb-4 sm:mb-6 lg:mb-8">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl mb-2">Profile</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">Manage your account and preferences</p>
         </div>
 
-        {/* Profile Header */}
         <Card
-          className="mb-6 cursor-pointer hover:shadow-md transition-shadow"
+          className="mb-4 sm:mb-6 cursor-pointer hover:shadow-md transition-shadow"
           onClick={onOpenProfilePage}
         >
-          <CardContent className="p-6">
-            <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center">
-                <span className="text-primary-foreground text-xl">
-                  {currentUser.displayName?.[0] ||
-                    currentUser.username[0].toUpperCase()}
+          <CardContent className="p-4 sm:p-5 lg:p-6">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              {/* Responsive avatar */}
+              <div className="w-12 h-12 sm:w-14 sm:h-14 lg:w-16 lg:h-16 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-primary-foreground text-lg sm:text-xl lg:text-2xl font-medium">
+                  {currentUser.displayName?.[0] || currentUser.username[0].toUpperCase()}
                 </span>
               </div>
-              <div className="flex-1">
-                <h3 className="text-lg">
+              
+              {/* User info - flexible layout */}
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base sm:text-lg lg:text-xl font-medium truncate">
                   {currentUser.displayName || currentUser.username}
                 </h3>
-                <p className="text-muted-foreground">@{currentUser.username}</p>
+                <p className="text-sm sm:text-base text-muted-foreground truncate">@{currentUser.username}</p>
                 <Badge
-                  variant={
-                    currentUser.accountStatus === "ACTIVE"
-                      ? "default"
-                      : "destructive"
-                  }
-                  className="mt-2"
+                  variant={currentUser.accountStatus === "ACTIVE" ? "default" : "destructive"}
+                  className="mt-2 text-xs sm:text-sm"
                 >
                   {currentUser.accountStatus}
                 </Badge>
               </div>
-              <div className="text-muted-foreground">
-                <span className="text-sm">Click to view profile</span>
+              
+              {/* Action hint - hide on very small screens */}
+              <div className="hidden sm:flex text-muted-foreground self-start sm:self-center">
+                <span className="text-xs lg:text-sm">Click to view profile</span>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Profile Sections */}
-        <div className="space-y-3">
+        {/* Settings grid - responsive layout */}
+        <div className="grid gap-3 sm:gap-4 mb-4 sm:mb-6">
           {[
             {
               icon: Settings,
               title: "Account Settings",
-              description:
-                "Update your personal information and account preferences",
+              description: "Update your personal information and account preferences",
               action: "Edit Profile",
             },
             {
@@ -396,24 +411,20 @@ export function MainContent({
           ].map((item) => {
             const Icon = item.icon;
             return (
-              <Card
-                key={item.title}
-                className="hover:shadow-md transition-shadow cursor-pointer"
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-accent rounded-lg flex items-center justify-center">
-                        <Icon className="w-5 h-5 text-accent-foreground" />
+              <Card key={item.title} className="hover:shadow-md transition-shadow cursor-pointer">
+                <CardContent className="p-3 sm:p-4 lg:p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      {/* Responsive icon */}
+                      <div className="w-8 h-8 sm:w-10 sm:h-10 bg-accent rounded-lg flex items-center justify-center flex-shrink-0">
+                        <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-accent-foreground" />
                       </div>
-                      <div>
-                        <h4 className="text-sm font-medium">{item.title}</h4>
-                        <p className="text-xs text-muted-foreground">
-                          {item.description}
-                        </p>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="text-sm sm:text-base font-medium truncate">{item.title}</h4>
+                        <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">{item.description}</p>
                       </div>
                     </div>
-                    <Badge variant="outline" className="text-xs">
+                    <Badge variant="outline" className="text-xs sm:text-sm flex-shrink-0">
                       {item.action}
                     </Badge>
                   </div>
@@ -423,24 +434,23 @@ export function MainContent({
           })}
         </div>
 
-        {/* Logout Section */}
-        <div className="mt-6">
+        {/* Sign out section */}
+        <div className="mt-4 sm:mt-6">
           <Card className="border-destructive/20">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
-                    <LogOut className="w-5 h-5 text-destructive" />
+            <CardContent className="p-3 sm:p-4 lg:p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-destructive/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <LogOut className="w-4 h-4 sm:w-5 sm:h-5 text-destructive" />
                   </div>
-                  <div>
-                    <h4 className="text-sm font-medium">Sign Out</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Log out of your Ping account
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-sm sm:text-base font-medium">Sign Out</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground">Log out of your Ping account</p>
                   </div>
                 </div>
-                <Button variant="destructive" size="sm">
-                  Log Out
+                <Button variant="destructive" size="sm" className="flex-shrink-0">
+                  <span className="hidden sm:inline">Log Out</span>
+                  <span className="sm:hidden">Out</span>
                 </Button>
               </div>
             </CardContent>
@@ -450,127 +460,59 @@ export function MainContent({
     );
   };
 
-  // ✅ Update the notification icons in the renderNotifications function
+  // ✅ Update renderNotifications in MainContent.tsx  
   const renderNotifications = () => (
-    <div className="p-4 sm:p-6">
-      <div className="mb-6">
-        <h2 className="text-3xl mb-3">Notifications</h2>
-        <p className="text-muted-foreground text-base">Stay updated with your team's activity</p>
+    <div className={`p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8 ${isInSplitMode ? 'max-w-4xl mx-auto' : ''}`}>
+      <div className="mb-4 sm:mb-6 lg:mb-8">
+        <h2 className="text-xl sm:text-2xl lg:text-3xl mb-2">Notifications</h2>
+        <p className="text-sm sm:text-base text-muted-foreground">Stay updated with your team's activity</p>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {notifications.map((notification, index) => {
           const isUnread = notification.status === 'UNREAD';
           const timeAgo = formatTimeAgo(notification.createdAt);
           const NotificationIcon = getNotificationIcon(notification);
 
-          // Theme detection
-          const isDarkMode =
-            theme === 'dark' ||
-            (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-          // Surfaces + text (no border utilities here)
-          let cardClasses: string;
-          let titleColor: string;
-          let subtitleColor: string;
-          let metaColor: string;
-
-          if (isUnread) {
-            // Unread → slightly stronger, same hover recipe as DMs
-            cardClasses = isDarkMode
-              ? 'bg-white/10 shadow-sm hover:shadow-md hover:bg-white/15 transition-colors transition-shadow'
-              : 'bg-black/5 shadow-sm hover:shadow-md hover:bg-black/10 transition-colors transition-shadow';
-            titleColor = 'text-foreground';
-            subtitleColor = 'text-muted-foreground';
-            metaColor = 'text-muted-foreground';
-          } else {
-            // Read → subtle, same hover recipe as DMs
-            cardClasses = isDarkMode
-              ? 'bg-card shadow-sm hover:shadow-md hover:bg-white/5 transition-colors transition-shadow'
-              : 'bg-white shadow-sm hover:shadow-md hover:bg-black/5 transition-colors transition-shadow';
-            titleColor = 'text-foreground';
-            subtitleColor = 'text-muted-foreground';
-            metaColor = 'text-muted-foreground';
-          }
-
-          // ✅ Avatar circle rule: dark mode → white bg + black icon; light mode → black bg + white icon
-          const avatarBg = isDarkMode ? 'bg-white' : 'bg-black';
-          const iconColor = isDarkMode ? 'text-black' : 'text-white';
-
-          // Small unread cue
-          const unreadDot = 'bg-blue-500';
-
-          // ✅ Hairline border (alpha-toned & inline so it overrides stray CSS)
-          const hairlineStyle: React.CSSProperties = {
-            borderWidth: '0.7px',
-            borderStyle: 'solid',
-            borderColor: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.4)',
-          };
-
           return (
             <div
               key={notification.id || index}
-              style={hairlineStyle}
               className={`
-                p-4 rounded-lg cursor-pointer
-                focus-within:shadow-md
-                ${cardClasses}
-                ${isUnread ? 'ring-2 ring-blue-500' : ''}
+                flex items-start gap-3 p-3 sm:p-4 rounded-lg transition-colors cursor-pointer
+                ${isUnread ? 'hover:bg-accent' : 'hover:bg-accent'}
               `}
               onClick={() => handleNotificationClick(notification)}
             >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-start gap-3 flex-1 min-w-0">
-                  {/* ✅ Icon inside circle with forced contrast colors using inline styles */}
-                  <div
-                    className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{
-                      backgroundColor: isDarkMode ? '#ffffff' : '#000000',
-                    }}
-                  >
-                    {/* ✅ Use Lucide's color prop to force stroke color, bypassing CSS cascade */}
-                    <NotificationIcon
-                      className="w-4 h-4"
-                      color={isDarkMode ? '#000000' : '#ffffff'}
-                      strokeWidth={2} // Make lines slightly bolder for better readability
-                    />
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    {/* Title */}
-                    <p className={`text-base font-medium ${titleColor}`}>
-                      {formatNotificationTitle(notification)}
-                    </p>
-
-                    {/* Optional preview */}
-                    {getMessagePreview(notification) && (
-                      <p className={`text-base mt-1 line-clamp-2 ${subtitleColor}`}>
-                        {getMessagePreview(notification)}
-                      </p>
-                    )}
-
-                    {/* Meta row */}
-                    <div className="flex items-center gap-2 mt-2">
-                      <div className="flex items-center gap-1">
-                        {/* ✅ Small meta icon also with forced color */}
-                        <NotificationIcon 
-                          className={`w-3 h-3 ${metaColor}`}
-                          color={isDarkMode ? '#9ca3af' : '#6b7280'}
-                          strokeWidth={2}
-                        />
-                        <span className={`text-sm ${metaColor}`}>
-                          {getNotificationContext(notification)}
-                        </span>
-                      </div>
-                      <span className={`text-sm ${metaColor}`}>•</span>
-                      <span className={`text-sm ${metaColor}`}>{timeAgo}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Unread indicator */}
-                {isUnread && <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${unreadDot}`} />}
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-full flex items-center justify-center flex-shrink-0">
+                <NotificationIcon className="w-3 h-3 sm:w-4 sm:h-4 text-primary-foreground" />
               </div>
+
+              <div className="flex-1 min-w-0">
+                <p className="text-sm sm:text-base font-medium text-foreground line-clamp-2">
+                  {formatNotificationTitle(notification)}
+                </p>
+
+                {getMessagePreview(notification) && (
+                  <p className="text-sm sm:text-base mt-1 line-clamp-2 text-muted-foreground">
+                    {getMessagePreview(notification)}
+                  </p>
+                )}
+
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <div className="flex items-center gap-1">
+                    <NotificationIcon className="w-3 h-3 text-muted-foreground" />
+                    <span className="text-xs sm:text-sm text-muted-foreground">
+                      {getNotificationContext(notification)}
+                    </span>
+                  </div>
+                  <span className="text-xs sm:text-sm text-muted-foreground">•</span>
+                  <span className="text-xs sm:text-sm text-muted-foreground">{timeAgo}</span>
+                </div>
+              </div>
+
+              {isUnread && (
+                <div className="w-2 h-2 rounded-full mt-2 flex-shrink-0 bg-red-500" />
+              )}
             </div>
           );
         })}
@@ -578,24 +520,7 @@ export function MainContent({
     </div>
   );
 
-  // Add this function inside your MainContent component, after the other helper functions
-  const calculateNotificationCounts = (): NotificationCounts => {
-    const unreadNotifications = notifications.filter(n => n.status === 'UNREAD');
-
-    return {
-      total: unreadNotifications.length,
-      directories: unreadNotifications.filter(n => n.channelId).length,
-      pings: unreadNotifications.filter(n => n.directConversationId).length
-    };
-  };
-
-  // Notify parent of count changes
-  useEffect(() => {
-    const counts = calculateNotificationCounts();
-    onNotificationCountsChange?.(counts);
-  }, [notifications]);
-
-  // ✅ Default to notifications
+  // ✅ Tab routing
   switch (activeTab) {
     case "directories":
       return renderDirectories();
@@ -604,7 +529,7 @@ export function MainContent({
     case "notifications":
       return renderNotifications();
     case "dms":
-      return renderDirectories(); // or create a dedicated DMs view
+      return renderDirectories(); // You might want to create a dedicated DMs view
     default:
       return renderNotifications();
   }

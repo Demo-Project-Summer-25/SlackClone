@@ -216,7 +216,7 @@ export function DmList({
     );
   }
 
-// ✅ Update the return statement with toned hairline + subtle shadow
+// ✅ Remove the hairline border styling and simplify to match directories
 return (
   <div className="p-6">
     <h3 className="text-xl font-semibold mb-6 text-foreground">Direct Messages</h3>
@@ -237,119 +237,81 @@ return (
         <p className="text-base text-muted-foreground mt-2">Start a conversation with someone!</p>
       </div>
     ) : (
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         {dms.map((dm) => {
           const otherUser = getOtherUser(dm);
           const unreadCount = getUnreadNotificationCount(dm.id);
           const hasUnreadMessages = unreadCount > 0;
 
-          // Theme detect you already use
-          const isDarkMode =
-            theme === 'dark' ||
-            (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-
-          // Neutral state styles (no border utilities here)
-          let containerClasses: string;
-          let titleColor: string;
-          let timeColor: string;
-          let messageColor: string;
-
-          if (selectedDmId === dm.id) {
-            containerClasses = isDarkMode
-              ? 'bg-white/10 shadow hover:shadow hover:bg-white/15'
-              : 'bg-black/5 shadow-sm hover:shadow-md hover:bg-black/10';
-            titleColor = 'text-foreground';
-            timeColor = 'text-muted-foreground';
-            messageColor = 'text-foreground';
-          } else if (hasUnreadMessages) {
-            containerClasses = isDarkMode
-              ? 'bg-white/5 shadow-sm hover:shadow-md hover:bg-white/10'
-              : 'bg-black/5 shadow-sm hover:shadow-md hover:bg-black/10';
-            titleColor = 'text-foreground';
-            timeColor = 'text-muted-foreground';
-            messageColor = 'text-foreground';
-          } else {
-            containerClasses = isDarkMode
-              ? 'bg-card shadow-sm hover:shadow-md hover:bg-white/5'
-              : 'bg-white shadow-sm hover:shadow-md hover:bg-black/5';
-            titleColor = 'text-foreground';
-            timeColor = 'text-muted-foreground';
-            messageColor = 'text-muted-foreground';
-          }
-
-          // ✅ Softer hairline with alpha + gentle shadow
-          const hairlineStyle: React.CSSProperties = {
-            borderWidth: '0.7px',
-            borderStyle: 'solid',
-            borderColor: isDarkMode ? 'rgba(255,255,255,0.55)' : 'rgba(0,0,0,0.4)',
-            // Optional: crisp edges
-            WebkitFontSmoothing: 'antialiased',
-          };
-
           return (
             <div
               key={dm.id}
-              style={hairlineStyle}
               className={`
-                rounded-xl transition-all duration-200 overflow-hidden
-                focus-within:shadow-md
-                ${containerClasses}
+                flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-lg transition-colors cursor-pointer
+                ${selectedDmId === dm.id 
+                  ? 'bg-accent' 
+                  : hasUnreadMessages 
+                    ? 'hover:bg-accent' 
+                    : 'hover:bg-accent'
+                }
               `}
+              onClick={() => handleDmSelect(dm.id)}
             >
-              <button
-                onClick={() => handleDmSelect(dm.id)}
-                className="w-full text-left p-4 transition-colors duration-150 focus:outline-none"
-              >
-                <div className="flex items-center gap-4">
-                  {/* Avatar + badges */}
-                  <div className="relative">
-                    {dm.group ? (
-                      <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-semibold text-base">
-                          {getConversationInitials(dm)}
-                        </span>
-                      </div>
-                    ) : (
-                      <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-                        <span className="text-primary-foreground font-semibold text-base">
-                          {getConversationInitials(dm)}
-                        </span>
-                      </div>
-                    )}
-
-                    {hasUnreadMessages && (
-                      <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium border-2 border-background shadow-lg">
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </div>
-                    )}
-
-                    {!dm.group && (
-                      <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-background shadow-sm" />
-                    )}
+              {/* Avatar + badges */}
+              <div className="relative flex-shrink-0">
+                {dm.group ? (
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                    <span className="text-white font-semibold text-base">
+                      {getConversationInitials(dm)}
+                    </span>
                   </div>
-
-                  {/* Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h4 className={`font-semibold truncate text-base ${titleColor}`}>
-                        {dm.group && <span className="text-muted-foreground mr-1">#</span>}
-                        {getConversationName(dm)}
-                      </h4>
-                      <span className={`text-sm ml-3 flex-shrink-0 ${timeColor}`}>
-                        {getLastMessageTime(dm)}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center justify-between mt-2">
-                      <p className={`text-sm truncate ${messageColor}`}>{getMessagePreview(dm)}</p>
-
-                      {selectedDmId === dm.id && !hasUnreadMessages && (
-                        <div className="w-2 h-2 rounded-full flex-shrink-0 bg-foreground" />
-                      )}
-                    </div>
+                ) : (
+                  <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
+                    <span className="text-primary-foreground font-semibold text-base">
+                      {getConversationInitials(dm)}
+                    </span>
                   </div>
+                )}
+
+                {hasUnreadMessages && (
+                  <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-medium border-2 border-background shadow-lg">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </div>
+                )}
+
+                {!dm.group && (
+                  <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-background shadow-sm" />
+                )}
+              </div>
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold truncate text-base text-foreground">
+                    {dm.group && <span className="text-muted-foreground mr-1">#</span>}
+                    {getConversationName(dm)}
+                  </h4>
+                  <span className="text-sm ml-3 flex-shrink-0 text-muted-foreground">
+                    {getLastMessageTime(dm)}
+                  </span>
                 </div>
-              </button>
+
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-sm truncate text-muted-foreground">
+                    {getMessagePreview(dm)}
+                  </p>
+
+                  {/* ✅ Add notification dots for unread messages */}
+                  {hasUnreadMessages && (
+                    <div className="w-2 h-2 rounded-full flex-shrink-0 bg-red-500" />
+                  )}
+                  
+                  {/* ✅ Only show selection dot if no unread messages */}
+                  {selectedDmId === dm.id && !hasUnreadMessages && (
+                    <div className="w-2 h-2 rounded-full flex-shrink-0 bg-foreground" />
+                  )}
+                </div>
+              </div>
             </div>
           );
         })}
