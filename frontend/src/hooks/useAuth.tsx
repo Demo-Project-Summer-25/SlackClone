@@ -26,7 +26,9 @@ export const AuthProvider = ({ children }: AuthProviderProps): React.ReactElemen
       try {
         // Demo UUID from your seed file (Alice)
         const demoUserId = '68973614-94db-4f98-9729-0712e0c5c0fa';
-        const userData = await userService.getUserById(demoUserId);
+        const demoUserId2 = '962f18a5-f888-4886-b93d-a763ff8c9d98';
+
+        const userData = await userService.getUserById(demoUserId2);
         console.log("Fetched user from API:", userData);
         setCurrentUser(userData);
 

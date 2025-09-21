@@ -1,6 +1,40 @@
 -- Full seed data for Slack-like developer workspace (all 15 tables)
 -- All timestamps on 2025-09-19; generated for import.sql
 
+-- ------------------------------------------------------
+-- Calendar seed data (keeps demo calendar populated)
+-- ------------------------------------------------------
+INSERT INTO CALENDARS (ID, OWNER_ID, DEFAULT_TIMEZONE, DEFAULT_REMINDER_MINUTES)
+VALUES
+  ('11111111-1111-4111-8111-111111111111', '68973614-94db-4f98-9729-0712e0c5c0fa', 'America/New_York', 15),
+  ('22222222-2222-4222-8222-222222222222', '962f18a5-f888-4886-b93d-a763ff8c9d98', 'America/Chicago', 10);
+
+INSERT INTO EVENTS (
+  ID,
+  ORGANIZER_ID,
+  CALENDAR_ID,
+  TITLE,
+  START_UTC,
+  END_UTC,
+  TIMEZONE,
+  VISIBILITY,
+  DESCRIPTION,
+  LOCATION
+)
+VALUES
+  ('aaaaaaa1-aaaa-4aaa-8aaa-aaaaaaaaaaa1', '68973614-94db-4f98-9729-0712e0c5c0fa', '11111111-1111-4111-8111-111111111111',
+   'Develop UML Session', '2025-09-05T14:00:00Z', '2025-09-05T15:00:00Z', 'America/New_York', 'PRIVATE', 'Review core diagrams before sprint planning.', 'Design Room 2'),
+  ('aaaaaaa2-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '68973614-94db-4f98-9729-0712e0c5c0fa', '11111111-1111-4111-8111-111111111111',
+   'Frontend Test Review', '2025-09-12T19:00:00Z', '2025-09-12T20:00:00Z', 'America/New_York', 'PUBLIC', 'Walkthrough of component coverage and gaps.', 'Zoom'),
+  ('aaaaaaa3-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '68973614-94db-4f98-9729-0712e0c5c0fa', '11111111-1111-4111-8111-111111111111',
+   'Backend Integration Demo', '2025-09-20T16:00:00Z', '2025-09-20T17:30:00Z', 'America/New_York', 'CHANNEL', 'Demo for the platform team.', 'Conference A'),
+  ('bbbbbbb1-bbbb-4bbb-8bbb-bbbbbbbbbbb1', '962f18a5-f888-4886-b93d-a763ff8c9d98', '22222222-2222-4222-8222-222222222222',
+   'API Contract Kickoff', '2025-09-03T15:00:00Z', '2025-09-03T16:00:00Z', 'America/Chicago', 'PUBLIC', 'Initial review of service contracts.', 'War Room'),
+  ('bbbbbbb2-bbbb-4bbb-8bbb-bbbbbbbbbbb2', '962f18a5-f888-4886-b93d-a763ff8c9d98', '22222222-2222-4222-8222-222222222222',
+   'Load Test Planning', '2025-09-18T21:00:00Z', '2025-09-18T22:00:00Z', 'America/Chicago', 'PRIVATE', 'Define scope for upcoming load tests.', 'Zoom'),
+  ('bbbbbbb3-bbbb-4bbb-8bbb-bbbbbbbbbbb3', '962f18a5-f888-4886-b93d-a763ff8c9d98', '22222222-2222-4222-8222-222222222222',
+   'Mentorship Circle', '2025-09-25T22:00:00Z', '2025-09-25T23:00:00Z', 'America/Chicago', 'CHANNEL', 'Monthly mentorship sync.', 'Cafe Common Space');
+
 INSERT INTO USERS (ID, USERNAME, DISPLAY_NAME, EMAIL, PROFILE_URL, ACCOUNT_STATUS, CREATED_TIMESTAMP, UPDATED_TIMESTAMP) VALUES ('68973614-94db-4f98-9729-0712e0c5c0fa', 'alice1', 'Alice', 'alice1@example.com', 'https://i.pravatar.cc/150?u=alice1', 'ACTIVE', '2025-09-19T10:00:00Z', '2025-09-19T10:00:00Z');
 INSERT INTO USERS (ID, USERNAME, DISPLAY_NAME, EMAIL, PROFILE_URL, ACCOUNT_STATUS, CREATED_TIMESTAMP, UPDATED_TIMESTAMP) VALUES ('e47beacf-c098-4286-b417-3d45c94bd968', 'bob2', 'Bob', 'bob2@example.com', 'https://i.pravatar.cc/150?u=bob2', 'ACTIVE', '2025-09-19T10:01:00Z', '2025-09-19T10:01:00Z');
 INSERT INTO USERS (ID, USERNAME, DISPLAY_NAME, EMAIL, PROFILE_URL, ACCOUNT_STATUS, CREATED_TIMESTAMP, UPDATED_TIMESTAMP) VALUES ('ae2d64e5-d825-49fc-91bb-f530be88ca84', 'charlie3', 'Charlie', 'charlie3@example.com', 'https://i.pravatar.cc/150?u=charlie3', 'ACTIVE', '2025-09-19T10:02:00Z', '2025-09-19T10:02:00Z');

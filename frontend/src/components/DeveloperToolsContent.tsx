@@ -1,9 +1,14 @@
 import * as React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
+import { useAuth } from "../hooks/useAuth";
+import { toast } from "sonner";
+import { calendarService, EventResponse } from "../services/calendarService";
 import {
   Plus,
   Play,
@@ -36,6 +41,21 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
   const monthShort = monthDate.toLocaleString(undefined, { month: "short" });
   const daysInMonth = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 0).getDate();
   const daysArray = useMemo(() => Array.from({ length: daysInMonth }, (_, i) => i + 1), [daysInMonth]);
+  const startOffset = useMemo(() => {
+    const firstDay = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1);
+    return (firstDay.getDay() + 6) % 7; // convert Sunday=0 to Monday=0
+  }, [monthDate]);
+  const calendarCells = useMemo(() => {
+    const cells: Array<number | null> = [];
+    for (let i = 0; i < startOffset; i += 1) {
+      cells.push(null);
+    }
+    daysArray.forEach(day => cells.push(day));
+    while (cells.length % 7 !== 0) {
+      cells.push(null);
+    }
+    return cells;
+  }, [daysArray, startOffset]);
   useEffect(() => {
     if (selectedDate && selectedDate > daysInMonth) {
       setSelectedDate(null);
@@ -78,70 +98,305 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
   // Current kanban data for selected board
   const [kanbanData, setKanbanData] = useState(backlogBoardData["1"]);
 
-  type MockEvent = {
+  type CalendarEventDetails = {
+    id: string;
     title: string;
-    time: string;
-    type: string;
+    start: Date;
+    end: Date;
+    timeLabel: string;
+    visibility: EventResponse["visibility"];
   };
 
-  const formatKey = (date: Date) => `${date.getFullYear()}-${date.getMonth()}`;
+  type NormalizedEvent = {
+    id: string;
+    title: string;
+    start: Date;
+    end: Date;
+    time: string;
+    timeLabel: string;
+    dateLabel: string;
+    visibility: EventResponse["visibility"];
+  };
 
-  const prevReference = useMemo(() => new Date(today.getFullYear(), today.getMonth() - 1, 1), [today]);
-  const nextReference = useMemo(() => new Date(today.getFullYear(), today.getMonth() + 1, 1), [today]);
-  const prevKey = formatKey(prevReference);
-  const currentKey = formatKey(today);
-  const nextKey = formatKey(nextReference);
+  const { currentUser, isLoading: authLoading } = useAuth();
+  const [eventsRaw, setEventsRaw] = useState<EventResponse[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [eventsError, setEventsError] = useState<string | null>(null);
+  const [isAddEventOpen, setIsAddEventOpen] = useState(false);
+  const [isDayEventsOpen, setIsDayEventsOpen] = useState(false);
+  const [dayDialogDay, setDayDialogDay] = useState<number | null>(null);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [submittingEvent, setSubmittingEvent] = useState(false);
+  const [eventError, setEventError] = useState<string | null>(null);
+  const [deletingEventId, setDeletingEventId] = useState<string | null>(null);
+  const [newEventForm, setNewEventForm] = useState({
+    title: "",
+    date: "",
+    startTime: "09:00",
+    endTime: "10:00",
+    description: "",
+    location: "",
+    visibility: "PRIVATE" as EventResponse["visibility"],
+  });
 
-  const calendarMocks = useMemo<Record<string, Record<number, MockEvent[]>>>(() => ({
-    [prevKey]: {
-      3: [{ title: "Bug Bash Prep", time: "9:30 AM", type: "prep" }],
-      18: [{ title: "Legacy Audit", time: "4:00 PM", type: "audit" }],
-    },
-    [currentKey]: {
-      2: [
-        { title: "Sprint Planning", time: "10:00 AM", type: "planning" },
-        { title: "Architecture Sync", time: "3:00 PM", type: "planning" },
-      ],
-      5: [{ title: "Frontend Pairing", time: "2:00 PM", type: "pairing" }],
-      9: [{ title: "API Contract Review", time: "11:00 AM", type: "review" }],
-      14: [{ title: "Release Dry Run", time: "4:30 PM", type: "release" }],
-      21: [
-        { title: "Team Retrospective", time: "1:30 PM", type: "retro" },
-        { title: "1:1 Coaching", time: "4:00 PM", type: "coaching" },
-      ],
-      28: [{ title: "Hackathon Demo", time: "12:00 PM", type: "demo" }],
-    },
-    [nextKey]: {
-      4: [{ title: "Quarter Kickoff", time: "9:00 AM", type: "kickoff" }],
-      12: [{ title: "Design Systems Deep Dive", time: "2:00 PM", type: "deep-dive" }],
-      19: [
-        { title: "Ops Load Test", time: "1:00 PM", type: "ops" },
-        { title: "Mentorship Circle", time: "5:00 PM", type: "mentoring" },
-      ],
-    },
-  }), [prevKey, currentKey, nextKey]);
+  const timeFormatter = useMemo(
+    () => new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" }),
+    []
+  );
+  const dateFormatter = useMemo(
+    () => new Intl.DateTimeFormat(undefined, { weekday: "short", month: "short", day: "numeric" }),
+    []
+  );
+  const timezoneId = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone ?? "UTC", []);
 
-  const eventsData = useMemo<Record<number, MockEvent[]>>(() => {
-    const mapped = calendarMocks[formatKey(monthDate)];
-    return mapped ? mapped : {};
-  }, [calendarMocks, monthDate]);
+  const fetchEvents = useCallback(async () => {
+    if (!currentUser?.id) return;
+    setEventsLoading(true);
+    setEventsError(null);
+    try {
+      const from = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1).toISOString();
+      const to = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1).toISOString();
+      await calendarService.createOrGetMyCalendar(currentUser.id);
+      const events = await calendarService.listEvents(currentUser.id, from, to);
+      setEventsRaw(events);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to load events.";
+      setEventsError(message);
+      toast.error(message);
+      setEventsRaw([]);
+    } finally {
+      setEventsLoading(false);
+    }
+  }, [currentUser?.id, monthDate]);
 
-  const upcomingEvents = useMemo(() => {
-    const flattened = Object.entries(eventsData)
-      .flatMap(([day, events]) =>
-        events.map(event => ({
-          ...event,
-          day: Number(day),
-          dateLabel: new Date(monthDate.getFullYear(), monthDate.getMonth(), Number(day)).toLocaleDateString(undefined, {
-            weekday: "short",
-            month: "short",
-            day: "numeric",
-          }),
-        }))
-      )
-      .sort((a, b) => a.day - b.day);
-    return flattened.slice(0, 4);
-  }, [eventsData, monthDate]);
+  useEffect(() => {
+    if (!authLoading) {
+      fetchEvents();
+    }
+  }, [authLoading, fetchEvents]);
+
+  useEffect(() => {
+    if (!isDayEventsOpen) {
+      setDayDialogDay(null);
+    }
+  }, [isDayEventsOpen]);
+
+  const normalizedEvents = useMemo<NormalizedEvent[]>(() => {
+    return eventsRaw
+      .map(event => {
+        const start = new Date(event.startsAt);
+        const end = new Date(event.endsAt);
+        return {
+          id: event.id,
+          title: event.title,
+          start,
+          end,
+          time: timeFormatter.format(start),
+          timeLabel: timeFormatter.format(start),
+          dateLabel: dateFormatter.format(start),
+          visibility: event.visibility,
+          description: event.description,
+          location: event.location,
+        };
+      })
+      .sort((a, b) => a.start.getTime() - b.start.getTime());
+  }, [eventsRaw, timeFormatter, dateFormatter]);
+
+  const eventsByDay = useMemo<Record<number, CalendarEventDetails[]>>(() => {
+    const grouped: Record<number, CalendarEventDetails[]> = {};
+    normalizedEvents.forEach(event => {
+      const day = event.start.getDate();
+      const entry: CalendarEventDetails = {
+        id: event.id,
+        title: event.title,
+        start: event.start,
+        end: event.end,
+        timeLabel: event.time,
+        visibility: event.visibility,
+      };
+      grouped[day] = grouped[day] ? [...grouped[day], entry] : [entry];
+    });
+    Object.values(grouped).forEach(list => list.sort((a, b) => a.start.getTime() - b.start.getTime()));
+    return grouped;
+  }, [normalizedEvents]);
+
+  const upcomingEvents = useMemo(() => normalizedEvents.slice(0, 4), [normalizedEvents]);
+
+  const dayDialogEvents = useMemo(() => {
+    if (dayDialogDay === null) return [] as NormalizedEvent[];
+    return normalizedEvents.filter(event => event.start.getDate() === dayDialogDay);
+  }, [normalizedEvents, dayDialogDay]);
+
+  const formatDateForInput = useCallback((date: Date) => {
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, "0");
+    const dd = String(date.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  }, []);
+
+  const handleDialogOpenChange = (open: boolean) => {
+    setIsAddEventOpen(open);
+    if (!open) {
+      setEventError(null);
+      setEditingEventId(null);
+    }
+  };
+
+  const handleOpenAddEvent = () => {
+    const baseDay = selectedDate ?? today.getDate();
+    const targetDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), baseDay);
+    setNewEventForm({
+      title: "",
+      date: formatDateForInput(targetDate),
+      startTime: "09:00",
+      endTime: "10:00",
+      description: "",
+      location: "",
+      visibility: "PRIVATE",
+    });
+    setEventError(null);
+    setIsAddEventOpen(true);
+  };
+
+  const handleOpenEditEvent = (event: NormalizedEvent) => {
+    const startLocal = event.start;
+    const endLocal = event.end;
+    const formatTimeForInput = (date: Date) =>
+      date.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit' });
+    setNewEventForm({
+      title: event.title,
+      date: formatDateForInput(startLocal),
+      startTime: formatTimeForInput(startLocal),
+      endTime: formatTimeForInput(endLocal),
+      description: event.description || "",
+      location: event.location || "",
+      visibility: event.visibility,
+    });
+    setEditingEventId(event.id);
+    setEventError(null);
+    setIsAddEventOpen(true);
+  };
+
+  const handleCreateEvent = async () => {
+    if (!currentUser?.id) return;
+    const { title, date, startTime, endTime, description, location, visibility } = newEventForm;
+
+    if (!title.trim()) {
+      setEventError("Title is required.");
+      return;
+    }
+
+    if (!date || !startTime || !endTime) {
+      setEventError("Date and time are required.");
+      return;
+    }
+
+    const start = new Date(`${date}T${startTime}`);
+    const end = new Date(`${date}T${endTime}`);
+    if (!(end.getTime() > start.getTime())) {
+      setEventError("End time must be after start time.");
+      return;
+    }
+
+    setSubmittingEvent(true);
+    try {
+      const startIso = start.toISOString();
+      const endIso = end.toISOString();
+
+      if (editingEventId) {
+        const updated = await calendarService.updateEvent(currentUser.id, editingEventId, {
+          title: title.trim(),
+          startsAt: startIso,
+          endsAt: endIso,
+          timezone: timezoneId,
+          description: description ? description.trim() : null,
+          location: location ? location.trim() : null,
+          visibility,
+        });
+
+        const updatedStart = new Date(updated.startsAt);
+        const staysInMonth =
+          updatedStart.getFullYear() === monthDate.getFullYear() &&
+          updatedStart.getMonth() === monthDate.getMonth();
+
+        setEventsRaw(prev => {
+          const filtered = prev.filter(event => event.id !== updated.id);
+          return staysInMonth ? [...filtered, updated] : filtered;
+        });
+
+        if (!staysInMonth) {
+          setMonthDate(new Date(updatedStart.getFullYear(), updatedStart.getMonth(), 1));
+        }
+
+        toast.success("Event updated.");
+      } else {
+        const created = await calendarService.createEvent(currentUser.id, {
+          title: title.trim(),
+          startsAt: startIso,
+          endsAt: endIso,
+          timezone: timezoneId,
+          description: description ? description.trim() : undefined,
+          location: location ? location.trim() : undefined,
+          visibility,
+        });
+
+        toast.success("Event created.");
+        const createdStart = new Date(created.startsAt);
+        if (
+          createdStart.getFullYear() === monthDate.getFullYear() &&
+          createdStart.getMonth() === monthDate.getMonth()
+        ) {
+          setEventsRaw(prev => [...prev, created]);
+        } else {
+          setMonthDate(new Date(createdStart.getFullYear(), createdStart.getMonth(), 1));
+        }
+      }
+
+      setIsAddEventOpen(false);
+      setEventError(null);
+      setEditingEventId(null);
+  } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to create event.";
+      setEventError(message);
+      toast.error(message);
+    } finally {
+      setSubmittingEvent(false);
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!currentUser?.id) return;
+    const target = eventsRaw.find(event => event.id === eventId);
+    setDeletingEventId(eventId);
+    try {
+      await calendarService.deleteEvent(currentUser.id, eventId);
+      setEventsRaw(prev => prev.filter(event => event.id !== eventId));
+      toast.success("Event deleted.");
+
+      if (target) {
+        const eventDay = new Date(target.startsAt).getDate();
+        const remaining = eventsRaw.filter(event => event.id !== eventId && new Date(event.startsAt).getDate() === eventDay);
+        if (remaining.length === 0) {
+          setIsDayEventsOpen(false);
+          setDayDialogDay(null);
+          if (selectedDate === eventDay) {
+            setSelectedDate(null);
+          }
+        }
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to delete event.";
+      toast.error(message);
+    } finally {
+      setDeletingEventId(null);
+    }
+  };
+
+  const handleOpenDayEvents = (day: number) => {
+    setSelectedDate(day);
+    setDayDialogDay(day);
+    setIsDayEventsOpen(true);
+  };
 
   const handleDragStart = (e: React.DragEvent, columnId: string, taskIndex: number) => {
     setDraggedTask({ columnId, taskIndex });
@@ -431,14 +686,14 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
   const renderCalendar = () => {
     const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-    const getEventTypeColor = (type: string) => {
-      switch (type) {
-        case "meeting": return "bg-blue-500";
-        case "review": return "bg-green-500";
-        case "planning": return "bg-purple-500";
-        case "discussion": return "bg-orange-500";
-        case "demo": return "bg-red-500";
-        default: return "bg-gray-500";
+    const getVisibilityColor = (visibility: EventResponse["visibility"]) => {
+      switch (visibility) {
+        case "PUBLIC":
+          return "bg-green-500";
+        case "CHANNEL":
+          return "bg-orange-500";
+        default:
+          return "bg-blue-500";
       }
     };
 
@@ -449,36 +704,179 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
             <h2 className="text-2xl mb-2">Calendar</h2>
             <p className="text-muted-foreground">Manage your development schedule</p>
           </div>
-          <Button size="sm">
-            <Plus className="w-4 h-4 mr-2" />
-            Add Event
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              onClick={handleOpenAddEvent}
+              disabled={eventsLoading || submittingEvent || !currentUser}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add Event
+            </Button>
+          </div>
         </div>
 
+        {eventsError && (
+          <div className="mb-4 rounded border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">
+            {eventsError}
+          </div>
+        )}
+
+        <Dialog open={isAddEventOpen} onOpenChange={handleDialogOpenChange}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Add Event</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Title</label>
+                <Input
+                  value={newEventForm.title}
+                  onChange={e => setNewEventForm(prev => ({ ...prev, title: e.target.value }))}
+                  placeholder="Event title"
+                />
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Date</label>
+                  <Input
+                    type="date"
+                    value={newEventForm.date}
+                    onChange={e => setNewEventForm(prev => ({ ...prev, date: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Start Time</label>
+                  <Input
+                    type="time"
+                    value={newEventForm.startTime}
+                    onChange={e => setNewEventForm(prev => ({ ...prev, startTime: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">End Time</label>
+                  <Input
+                    type="time"
+                    value={newEventForm.endTime}
+                    onChange={e => setNewEventForm(prev => ({ ...prev, endTime: e.target.value }))}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-sm font-medium">Location</label>
+                  <Input
+                    value={newEventForm.location}
+                    onChange={e => setNewEventForm(prev => ({ ...prev, location: e.target.value }))}
+                    placeholder="Optional"
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Description</label>
+                <Textarea
+                  rows={3}
+                  value={newEventForm.description}
+                  onChange={e => setNewEventForm(prev => ({ ...prev, description: e.target.value }))}
+                  placeholder="Optional details"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-sm font-medium">Visibility</label>
+                <select
+                  className="w-full rounded border border-input bg-background px-3 py-2 text-sm"
+                  value={newEventForm.visibility}
+                  onChange={e =>
+                    setNewEventForm(prev => ({
+                      ...prev,
+                      visibility: e.target.value as EventResponse["visibility"],
+                    }))
+                  }
+                >
+                  <option value="PRIVATE">Private</option>
+                  <option value="PUBLIC">Public</option>
+                  <option value="CHANNEL">Channel</option>
+                </select>
+              </div>
+              {eventError && <p className="text-sm text-red-600">{eventError}</p>}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => handleDialogOpenChange(false)} disabled={submittingEvent}>
+                Cancel
+              </Button>
+              <Button onClick={handleCreateEvent} disabled={submittingEvent}>
+                {submittingEvent ? "Saving…" : "Save"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isDayEventsOpen} onOpenChange={setIsDayEventsOpen}>
+          <DialogContent className="max-h-[70vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {dayDialogDay !== null
+                  ? `Events for ${monthShort} ${dayDialogDay}`
+                  : "Events"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              {eventsLoading ? (
+                <p className="text-sm text-muted-foreground">Loading events…</p>
+              ) : dayDialogEvents.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No events scheduled for this day.</p>
+              ) : (
+                dayDialogEvents.map(event => (
+                  <div key={event.id} className="border rounded-lg p-3 space-y-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-medium">{event.title}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {event.timeLabel} • {event.dateLabel}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOpenEditEvent(event)}
+                          disabled={submittingEvent}
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="bg-black text-white hover:bg-black/90"
+                          onClick={() => handleDeleteEvent(event.id)}
+                          disabled={deletingEventId === event.id}
+                        >
+                          {deletingEventId === event.id ? "Deleting…" : "Delete"}
+                        </Button>
+                      </div>
+                    </div>
+                    {event.description && (
+                      <p className="text-sm text-muted-foreground">{event.description}</p>
+                    )}
+                    {event.location && (
+                      <p className="text-xs text-muted-foreground">Location: {event.location}</p>
+                    )}
+                    <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {event.visibility}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+
         <div className={`grid gap-6 ${isInSplitMode ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
-          {/* Calendar Grid */}
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>{monthLabel}</span>
                   <div className="flex gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => shiftMonth(-1)}
-                      aria-label="Previous month"
-                    >
-                      ‹
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => shiftMonth(1)}
-                      aria-label="Next month"
-                    >
-                      ›
-                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => shiftMonth(-1)} aria-label="Previous month">‹</Button>
+                    <Button variant="outline" size="sm" onClick={() => shiftMonth(1)} aria-label="Next month">›</Button>
                   </div>
                 </CardTitle>
               </CardHeader>
@@ -492,8 +890,18 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
                 </div>
 
                 <div className="grid grid-cols-7 gap-1">
-                  {daysArray.map(day => {
-                    const events = eventsData[day] || [];
+                  {calendarCells.map((cell, index) => {
+                    if (cell === null) {
+                      return (
+                        <div
+                          key={`empty-${index}`}
+                          className="min-h-[60px] rounded border border-transparent"
+                        />
+                      );
+                    }
+
+                    const day = cell;
+                    const dayEvents = eventsByDay[day] || [];
                     const isSelected = selectedDate === day;
                     const isToday =
                       monthDate.getFullYear() === today.getFullYear() &&
@@ -501,54 +909,55 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
                       day === today.getDate();
 
                     const cellClasses = [
-                      "min-h-[60px] p-1 border border-black rounded cursor-pointer transition-colors",
-                      isSelected ? "bg-primary/10" : "hover:bg-muted/50",
-                      isToday ? "ring-2 ring-primary/60" : "",
+                      "min-h-[60px] p-1 rounded cursor-pointer transition-colors",
+                      isSelected ? "border-2 border-black bg-primary/10" : "border border-transparent hover:bg-muted/50",
+                      !isSelected && isToday ? "border-2 border-black" : "",
                     ].join(" ");
 
                     return (
-                      <div
-                        key={day}
-                        className={cellClasses}
-                        onClick={() => setSelectedDate(day)}
-                      >
+                      <div key={day} className={cellClasses} onClick={() => handleOpenDayEvents(day)}>
                         <div className={`text-sm ${isToday ? 'font-semibold text-primary' : ''}`}>{day}</div>
                         <div className="space-y-1">
-                          {events.slice(0, 2).map((event, i) => (
+                          {dayEvents.slice(0, 2).map(event => (
                             <div
-                              key={i}
-                              className={`w-full h-1.5 rounded ${getEventTypeColor(event.type)}`}
+                              key={event.id}
+                              className={`w-full h-1.5 rounded ${getVisibilityColor(event.visibility)}`}
                             />
                           ))}
-                          {events.length > 2 && (
-                            <div className="text-xs text-muted-foreground">+{events.length - 2}</div>
+                          {dayEvents.length > 2 && (
+                            <div className="text-xs text-muted-foreground">+{dayEvents.length - 2}</div>
                           )}
                         </div>
                       </div>
                     );
                   })}
                 </div>
+                {eventsLoading && (
+                  <div className="mt-4 text-sm text-muted-foreground">Loading events…</div>
+                )}
               </CardContent>
             </Card>
           </div>
 
-          {/* Event Details */}
           <div className="lg:col-span-2 space-y-8">
-            {selectedDate && eventsData[selectedDate] ? (
+            {selectedDate && eventsByDay[selectedDate] ? (
               <Card>
                 <CardHeader>
                   <CardTitle>Events for {selectedDate} {monthShort}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {eventsData[selectedDate].map((event, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 border rounded-lg">
-                      <div className={`w-3 h-3 rounded-full ${getEventTypeColor(event.type)}`} />
+                  {eventsByDay[selectedDate].map(event => (
+                    <div key={event.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                      <div className={`w-3 h-3 rounded-full ${getVisibilityColor(event.visibility)}`} />
                       <div className="flex-1">
                         <p className="text-sm">{event.title}</p>
-                        <p className="text-xs text-muted-foreground">{event.time}</p>
+                        <p className="text-xs text-muted-foreground">{event.timeLabel}</p>
                       </div>
                     </div>
                   ))}
+                  {eventsByDay[selectedDate].length === 0 && (
+                    <p className="text-sm text-muted-foreground">No events for this day.</p>
+                  )}
                 </CardContent>
               </Card>
             ) : (
@@ -557,19 +966,25 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: Deve
                   <CardTitle>Upcoming Events</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {upcomingEvents.map((event, i) => (
-                    <div key={i} className="flex items-center gap-6 p-3 border rounded-lg">
-                      <div className="w-3 h-3 rounded-full bg-blue-500" />
-                      <div className="flex-1">
-                        <p className="text-sm">{event.title}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{event.time}</span>
-                          <span>•</span>
-                          <span>{event.dateLabel}</span>
+                  {upcomingEvents.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      {eventsLoading ? "Loading events…" : "No events scheduled."}
+                    </p>
+                  ) : (
+                    upcomingEvents.map(event => (
+                      <div key={event.id} className="flex items-center gap-6 p-3 border rounded-lg">
+                        <div className={`w-3 h-3 rounded-full ${getVisibilityColor(event.visibility)}`} />
+                        <div className="flex-1">
+                          <p className="text-sm">{event.title}</p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{event.timeLabel}</span>
+                            <span>•</span>
+                            <span>{event.dateLabel}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </CardContent>
               </Card>
             )}

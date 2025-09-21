@@ -11,6 +11,13 @@ import { Input } from "./ui/input";
 import { Badge } from "./ui/badge";
 import { useAuth } from "../hooks/useAuth";
 import { Client } from "@stomp/stompjs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 
 
 interface DirectoryViewProps {
@@ -22,9 +29,19 @@ interface DirectoryViewProps {
     isPrivate: boolean;
   };
   onBack: () => void;
+  availableDirectories?: {
+    id: string;
+    name: string;
+  }[];
+  onSelectDirectory?: (id: string) => void;
 }
 
-export function DirectoryView({ directory, onBack }: DirectoryViewProps) {
+export function DirectoryView({
+  directory,
+  onBack,
+  availableDirectories = [],
+  onSelectDirectory,
+}: DirectoryViewProps) {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
   const [userMap, setUserMap] = useState<Record<string, any>>({});
@@ -153,11 +170,49 @@ export function DirectoryView({ directory, onBack }: DirectoryViewProps) {
               </div>
             </div>
           </div>
+          {availableDirectories.length > 0 && (
+            <div className="hidden sm:block w-48">
+              <Select
+                value={directory.id}
+                onValueChange={value => onSelectDirectory?.(value)}
+              >
+                <SelectTrigger className="h-9">
+                  <SelectValue placeholder="Select channel" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableDirectories.map(dir => (
+                    <SelectItem key={dir.id} value={dir.id}>
+                      {dir.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <Button variant="ghost" size="sm">
             <MoreVertical className="w-4 h-4" />
           </Button>
         </div>
       </div>
+      {availableDirectories.length > 0 && (
+        <div className="sm:hidden px-3 py-2 border-b border-border">
+          <Select
+            value={directory.id}
+            onValueChange={value => onSelectDirectory?.(value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select channel" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableDirectories.map(dir => (
+                <SelectItem key={dir.id} value={dir.id}>
+                  {dir.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-auto p-4 space-y-4">

@@ -60,6 +60,18 @@ export function MainContent({
   const [dirsLoading, setDirsLoading] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
 
+  const handleSelectDirectory = (directoryId: string) => {
+    const target = directories.find(d => d.id === directoryId);
+    if (!target) return;
+    onOpenDirectory?.({
+      id: target.id,
+      name: target.name,
+      description: target.description,
+      memberCount: 0,
+      isPrivate: target.isPrivate,
+    });
+  };
+
   // ✅ Load channels for the signed-in user
   useEffect(() => {
     if (!currentUser) return;
@@ -121,7 +133,14 @@ export function MainContent({
 
   // ✅ Directory View
   if (activeDirectory && onCloseDirectory) {
-    return <DirectoryView directory={activeDirectory} onBack={onCloseDirectory} />;
+    return (
+      <DirectoryView
+        directory={activeDirectory}
+        onBack={onCloseDirectory}
+        availableDirectories={directories}
+        onSelectDirectory={handleSelectDirectory}
+      />
+    );
   }
 
   // ✅ Directories (channels) list
@@ -153,16 +172,8 @@ export function MainContent({
           {directories.map((d) => (
             <div
               key={d.id}
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-accent transition-colors cursor-pointer"
-              onClick={() =>
-                onOpenDirectory?.({
-                  id: d.id,
-                  name: d.name,
-                  description: d.description,
-                  memberCount: 0,
-                  isPrivate: d.isPrivate,
-                })
-              }
+              className="flex items-center gap-3 p-3 rounded-lg border hover:bg-accent transition-colors cursor-pointer"
+              onClick={() => handleSelectDirectory(d.id)}
             >
               {d.isPrivate ? (
                 <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
