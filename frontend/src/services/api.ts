@@ -2,10 +2,12 @@ import { config } from '../config/environment';
 
 // Make sure your API_BASE_URL is correct
 const API_BASE_URL = 'http://localhost:8080/api';
-// And ensure all endpoints are properly formatted
+
 class ApiService {
+  private baseURL = API_BASE_URL;
+
   // Build query string from params object
-  static buildQueryString(params: Record<string, any>): string {
+  buildQueryString(params: Record<string, any>): string {
     const filtered = Object.entries(params).filter(([_, value]) => value !== undefined && value !== null);
     
     if (filtered.length === 0) {
@@ -25,7 +27,7 @@ class ApiService {
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${this.baseURL}${endpoint}`;
     
     const config: RequestInit = {
       headers: {
@@ -80,49 +82,37 @@ class ApiService {
 
   // HTTP method helpers
   async get<T>(endpoint: string): Promise<T> {
-    const response = await fetch(`${this.baseURL}${endpoint}`);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
+    return this.request<T>(endpoint, { method: 'GET' });
   }
 
   async post<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
+      body: data ? JSON.stringify(data) : undefined,
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
   }
 
   async put<T>(endpoint: string, data?: any): Promise<T> {
     return this.request<T>(endpoint, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  }
-  async delete<T>(endpoint: string): Promise<T> {
-    const response = await fetch(`${this.baseURL}${endpoint}`, {
-      method: 'DELETE',
+      body: data ? JSON.stringify(data) : undefined,
     });
   }
 
+  async patch<T>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async delete<T>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: 'DELETE' });
+  }
+
   // Special method for file uploads
-  static async uploadFile<T>(endpoint: string, formData: FormData): Promise<T> {
-    const url = `${API_BASE_URL}${endpoint}`;
+  async uploadFile<T>(endpoint: string, formData: FormData): Promise<T> {
+    const url = `${this.baseURL}${endpoint}`;
     
     const config: RequestInit = {
       method: 'POST',
@@ -162,21 +152,20 @@ class ApiService {
   }
 
   // Auth helpers
-  static setAuthToken(token: string): void {
+  setAuthToken(token: string): void {
     localStorage.setItem('authToken', token);
   }
 
-  static clearAuthToken(): void {
+  clearAuthToken(): void {
     localStorage.removeItem('authToken');
   }
 
-  static getAuthToken(): string | null {
+  getAuthToken(): string | null {
     return localStorage.getItem('authToken');
   }
-
 }
 
-// Create and export the instance
-export const api = new ApiService();
-export { ApiService };  // Export the class itself
-export default new ApiService();  // Export an instance
+// Create and export the singleton instance
+export const apiService = new ApiService();
+export { ApiService };
+export default apiService;
