@@ -24,6 +24,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): React.ReactElemen
   useEffect(() => {
     const fetchDemoUser = async () => {
       try {
+
         // Demo UUIDs from your seed file
         const aliceId = '68973614-94db-4f98-9729-0712e0c5c0fa';
         const umaId   = '962f18a5-f888-4886-b93d-a763ff8c9d98';
@@ -35,6 +36,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): React.ReactElemen
         const selectedId = userKey === 'uma' ? umaId : aliceId;
 
         const userData = await userService.getUserById(selectedId);
+
         console.log("Fetched user from API:", userData);
         setCurrentUser(userData);
 
