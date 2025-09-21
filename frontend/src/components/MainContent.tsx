@@ -117,6 +117,7 @@ export function MainContent({
     }
   };
 
+
   const markNotificationAsRead = async (notificationId: string) => {
     try {
       await fetch(`http://localhost:8080/api/notifications/${notificationId}/read`, {
@@ -214,6 +215,20 @@ export function MainContent({
   };
 
   // ✅ Effects
+
+  const handleSelectDirectory = (directoryId: string) => {
+    const target = directories.find(d => d.id === directoryId);
+    if (!target) return;
+    onOpenDirectory?.({
+      id: target.id,
+      name: target.name,
+      description: target.description,
+      memberCount: 0,
+      isPrivate: target.isPrivate,
+    });
+  };
+
+  // ✅ Load channels for the signed-in user
   useEffect(() => {
     if (!currentUser?.id) return;
 
@@ -266,7 +281,14 @@ export function MainContent({
 
   // ✅ Page renders
   if (activeDirectory && onCloseDirectory) {
-    return <DirectoryView directory={activeDirectory} onBack={onCloseDirectory} />;
+    return (
+      <DirectoryView
+        directory={activeDirectory}
+        onBack={onCloseDirectory}
+        availableDirectories={directories}
+        onSelectDirectory={handleSelectDirectory}
+      />
+    );
   }
 
   // ✅ Render functions
@@ -300,8 +322,10 @@ export function MainContent({
           {directories.map((d) => (
             <div
               key={d.id}
+
               className="flex items-center gap-3 p-3 sm:p-4 rounded-lg hover:bg-accent transition-colors cursor-pointer"
               onClick={() => onOpenDirectory?.(d)}
+
             >
               {/* ✅ Hash icon with theme-aware background circle - matching notification size */}
               <div className="relative w-6 h-6 sm:w-8 sm:h-8 shrink-0">
