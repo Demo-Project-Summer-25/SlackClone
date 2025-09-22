@@ -27,8 +27,8 @@ interface NotificationCounts {
 }
 
 function AppContent() {
-  // Default to directories tab
-  const [activeTab, setActiveTab] = useState("directories");
+  // Default to notifications tab
+  const [activeTab, setActiveTab] = useState("notifications");
   // Default to AI bot on the right
   const [activeTool, setActiveTool] = useState("ai");
   const [showDeveloperSidebar, setShowDeveloperSidebar] = useState(true);
@@ -39,7 +39,6 @@ function AppContent() {
   const [splitScreenMode, setSplitScreenMode] = useState(true);
 
   const [activeDirectory, setActiveDirectory] = useState<{
-    id: string;
     name: string;
     description: string;
     memberCount: number;
@@ -150,12 +149,13 @@ function AppContent() {
 
   // ✅ Add function to fetch notifications at App level
   const fetchNotifications = () => {
-    fetch("http://localhost:8080/api/notifications")
+    fetch(`http://localhost:8080/api/notifications?userId=${currentUserId}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
       })
       .then((data) => {
+        console.log('Raw notifications data:', data); // Add this debug line
         const mappedNotifications = Array.isArray(data) ? data.map(notif => ({
           id: notif.id,
           text: notif.text,
@@ -169,9 +169,9 @@ function AppContent() {
           channelId: notif.channelId,
           unread: notif.status === 'UNREAD'
         })) : [];
+        console.log('Mapped notifications:', mappedNotifications); // Add this debug line
         setNotifications(mappedNotifications);
         
-        // ✅ Calculate and update notification counts
         const unreadNotifications = mappedNotifications.filter(n => n.status === 'UNREAD');
         setNotificationCounts({
           total: unreadNotifications.length,
@@ -336,6 +336,7 @@ function AppContent() {
           )}
         </div>
 
+        {/* ✅ Developer sidebar only shows when profile page is not open */}
         {/* ✅ Developer sidebar should always be visible when showDeveloperSidebar is true */}
         {showDeveloperSidebar && (
           <DeveloperSidebar 

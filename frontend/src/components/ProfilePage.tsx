@@ -1,4 +1,3 @@
-// frontend/src/components/ProfilePage.tsx
 import { useEffect, useState } from "react";
 import { 
   ArrowLeft, Edit, Phone, Mail, MapPin, Clock, LogOut 

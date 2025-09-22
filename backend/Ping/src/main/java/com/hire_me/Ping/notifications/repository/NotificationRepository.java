@@ -7,6 +7,7 @@ import java.util.UUID;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;  // Add this import
 import org.springframework.transaction.annotation.Transactional;
 
 import com.hire_me.Ping.notifications.entity.Notification;
@@ -17,13 +18,6 @@ import com.hire_me.Ping.notifications.entity.NotificationStatus;
  * Knows how to fetch and update rows, but has no business logic.
  */
 public interface NotificationRepository extends JpaRepository<Notification, UUID> {
-
-    // ---- FINDERS ----
-
-    /**
-     * Get all notifications for a given user, newest first.
-     * Spring JPA builds the query just from the method name.
-     */
     List<Notification> findByRecipientUserIdOrderByCreatedAtDesc(UUID recipientUserId);
 
     /**
@@ -39,6 +33,15 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
      */
     long countByRecipientUserIdAndStatus(UUID recipientUserId, NotificationStatus status);
 
+    // Add this method to your NotificationRepository interface:
+    long countByRecipientUserId(UUID recipientUserId);
+
+    // Also add this method if it doesn't exist:
+    @Modifying
+    @Transactional
+    @Query("DELETE FROM Notification n WHERE n.recipientUserId = :recipientUserId")
+    void deleteByRecipientUserId(@Param("recipientUserId") UUID recipientUserId);
+
     // ---- UPDATES ----
 
     /**
@@ -48,16 +51,16 @@ public interface NotificationRepository extends JpaRepository<Notification, UUID
      */
     @Modifying
     @Transactional
-    @Query("UPDATE Notification n SET n.status = 'READ', n.readAt = :readAt " +
+    @Query("UPDATE Notification n SET n.status = :readStatus, n.readAt = :readAt " +
            "WHERE n.id = :notificationId AND n.recipientUserId = :recipientUserId")
-    int markAsRead(UUID notificationId, UUID recipientUserId, OffsetDateTime readAt);
+    int markAsRead(UUID notificationId, UUID recipientUserId, OffsetDateTime readAt, NotificationStatus readStatus);
 
     /**
      * Mark all notifications for a user as READ.
      */
     @Modifying
     @Transactional
-    @Query("UPDATE Notification n SET n.status = 'READ', n.readAt = :readAt " +
-           "WHERE n.recipientUserId = :recipientUserId AND n.status = 'UNREAD'")
-    int markAllAsRead(UUID recipientUserId, OffsetDateTime readAt);
+    @Query("UPDATE Notification n SET n.status = :readStatus, n.readAt = :readAt " +
+           "WHERE n.recipientUserId = :recipientUserId AND n.status = :unreadStatus")
+    int markAllAsRead(UUID recipientUserId, OffsetDateTime readAt, NotificationStatus readStatus, NotificationStatus unreadStatus);
 }

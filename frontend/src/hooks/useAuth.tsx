@@ -26,14 +26,14 @@ export const AuthProvider = ({ children }: AuthProviderProps): React.ReactElemen
       try {
 
         // Demo UUIDs from your seed file
-        const aliceId = '68973614-94db-4f98-9729-0712e0c5c0fa';
+        const jenniferId = '68973614-94db-4f98-9729-0712e0c5c0fa';
         const umaId   = '962f18a5-f888-4886-b93d-a763ff8c9d98';
 
-        // Read query string (e.g. ?user=alice or ?user=uma)
+        // Read query string (e.g. ?user=jennifer or ?user=uma)
         const params = new URLSearchParams(window.location.search);
-        const userKey = params.get('user') || 'alice'; // default to alice
+        const userKey = params.get('user') || 'jennifer'; // default to jennifer
 
-        const selectedId = userKey === 'uma' ? umaId : aliceId;
+        const selectedId = userKey === 'uma' ? umaId : jenniferId;
 
         const userData = await userService.getUserById(selectedId);
 
