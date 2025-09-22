@@ -2,9 +2,14 @@ import React, { useState } from 'react';
 import { CanvasList } from './CanvasList';
 import { CanvasViewer } from './CanvasViewer';
 import { Canvas } from '../../services/canvasService';
+import { useAuth } from '../../hooks/useAuth';
 
 export const CanvasPage: React.FC = () => {
+  const { user } = useAuth();
   const [selectedCanvasId, setSelectedCanvasId] = useState<string | null>(null);
+
+  // Use the actual user ID from auth, fallback to Jennifer's ID
+  const currentUserId = user?.id || '68973614-94db-4f98-9729-0712e0c5c0fa';
 
   const handleSelectCanvas = (canvas: Canvas) => {
     setSelectedCanvasId(canvas.id);
@@ -29,7 +34,7 @@ export const CanvasPage: React.FC = () => {
         <CanvasList 
           onSelectCanvas={handleSelectCanvas}
           onCreateCanvas={handleCreateCanvas}
-          currentUserId="demo-user"
+          currentUserId={currentUserId}
         />
       )}
     </div>

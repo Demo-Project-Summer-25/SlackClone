@@ -10,7 +10,10 @@ import { Textarea } from "./ui/textarea";
 import { useAuth } from "../hooks/useAuth";
 import { toast } from "sonner";
 import { calendarService, EventResponse } from "../services/calendarService";
-import { PongAI } from "./PingBotAI"; // ✅ Keep original filename
+import { PongAI } from "./PingBotAI";
+import { CanvasList } from "./Canvas/CanvasList";
+import { CanvasViewer } from "./Canvas/CanvasViewer";
+import { Canvas } from "../services/canvasService";
 import {
   Plus,
   Play,
@@ -33,10 +36,17 @@ import { KanbanBoard } from "./Kanban/KanbanBoard";
 interface DeveloperToolsContentProps {
   activeTool: string;
   isInSplitMode?: boolean;
-  currentUserId: string;
 }
 
-export function DeveloperToolsContent({ activeTool, isInSplitMode = true, currentUserId }: DeveloperToolsContentProps) {
+export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: DeveloperToolsContentProps) {
+  const { user } = useAuth();
+  
+  // Use the actual user ID from auth, fallback to Jennifer's ID
+  const currentUserId = user?.id || '68973614-94db-4f98-9729-0712e0c5c0fa';
+
+  // Canvas state for wireframes
+  const [selectedCanvas, setSelectedCanvas] = useState<Canvas | null>(null);
+
   // Fix the IDE layout logic: when in split mode (narrow), use stacked; when full screen (wide), use horizontal
   const [ideLayout, setIdeLayout] = useState<"stacked" | "horizontal">(isInSplitMode ? "stacked" : "horizontal");
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
@@ -83,98 +93,21 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true, curren
   ]);
 
   const renderWireFrame = () => {
-    // If no board is selected, show board selection screen
-    if (wireframeBoardSelection || !selectedWireframeBoard) {
+    if (selectedCanvas) {
       return (
-        <div className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-            <div>
-              <h2 className="text-2xl mb-2">WireFrame</h2>
-              <p className="text-muted-foreground">Select a wireframe board to start designing</p>
-            </div>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <Layout className="w-4 h-4 mr-2" />
-                Templates
-              </Button>
-              <Button size="sm">
-                <Plus className="w-4 h-4 mr-2" />
-                New Board
-              </Button>
-            </div>
-          </div>
-
-          <div className={`grid gap-4 ${isInSplitMode ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-2 xl:grid-cols-3'}`}>
-            {wireframeBoards.map((board) => (
-              <Card
-                key={board.id}
-                className="cursor-pointer hover:shadow-md transition-shadow"
-                onClick={() => {
-                  setSelectedWireframeBoard(board.id);
-                  setWireframeBoardSelection(false);
-                }}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-base sm:text-lg truncate">{board.name}</CardTitle>
-                      <Badge variant="outline" className="w-fit text-xs mt-2">{board.type}</Badge>
-                    </div>
-                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100">
-                      <MoreVertical className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="bg-muted/30 h-24 sm:h-32 rounded-md mb-3 flex items-center justify-center">
-                    <div className="text-muted-foreground text-xs sm:text-sm">Wireframe Preview</div>
-                  </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground mb-2">{board.description}</p>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Modified {board.lastModified}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
+        <CanvasViewer
+          canvasId={selectedCanvas.id}
+          onBack={() => setSelectedCanvas(null)}
+        />
       );
     }
 
-    // Show the actual wireframe editor with drag and drop
-    const selectedBoard = wireframeBoards.find(board => board.id === selectedWireframeBoard);
-
     return (
-      <div className="p-4 sm:p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setWireframeBoardSelection(true);
-                setSelectedWireframeBoard(null);
-              }}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              ← Back to Boards
-            </Button>
-            <div>
-              <h2 className="text-2xl mb-1">{selectedBoard?.name || 'WireFrame Board'}</h2>
-              <p className="text-muted-foreground">{selectedBoard?.description || 'Design your wireframes'}</p>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Info
-            </Button>
-            <Button variant="outline" size="sm">Templates</Button>
-            <Button size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Element
-            </Button>
-          </div>
-        </div>
-      </div>
+      <CanvasList
+        onSelectCanvas={setSelectedCanvas}
+        currentUserId={currentUserId}
+        isInSplitMode={false}
+      />
     );
   };
 
@@ -249,10 +182,14 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true, curren
       return <KanbanBoard isInSplitMode={isInSplitMode} currentUserId={currentUserId} />;
     case "canvas":
       return <CanvasPage />;
+    case "wireframe":
+      return renderWireFrame();
     case "ai":
       return <PongAI />;  
     case "calendar":
       return <CalendarComponent isInSplitMode={isInSplitMode} />;
+    case "ide":
+      return renderIDE();
     default:
       return (
         <div className="p-6 text-center">
