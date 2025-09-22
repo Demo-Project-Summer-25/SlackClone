@@ -1,65 +1,74 @@
 package com.hire_me.Ping.bots.controller;
 
-import com.hire_me.Ping.bots.service.OpenAIService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
+import java.util.List;
+import java.util.UUID;
+import com.hire_me.Ping.bots.service.BotService;
+import com.hire_me.Ping.bots.dto.BotIntegrationPublicDto;
+import com.hire_me.Ping.bots.dto.BotCreateRequest;
+import com.hire_me.Ping.bots.dto.BotUpdateRequest;
 
 @RestController
 @RequestMapping("/api/bots")
 public class BotController {
-
-    @Autowired
-    private OpenAIService openAIService;
-
-    @PostMapping("/chat")
-    public ResponseEntity<ChatResponse> chatWithBot(@RequestBody ChatRequest request) {
-        System.out.println(" BotController hit! Message: " + request.getMessage());
-        
-        try {
-            String response = openAIService.sendMessage(request.getMessage(), "user");
-            System.out.println(" OpenAI response: " + response);
-            return ResponseEntity.ok(new ChatResponse(response));
-        } catch (Exception e) {
-            System.err.println(" Error in BotController: " + e.getMessage());
-            e.printStackTrace();
-            return ResponseEntity.badRequest()
-                    .body(new ChatResponse("Sorry, I encountered an error. Please try again! 🤖"));
-        }
+    private final BotService botService;
+    
+    public BotController(BotService botService) {
+        this.botService = botService;
     }
-
-    @GetMapping("/status")
-    public ResponseEntity<String> getBotStatus() {
-        System.out.println(" Bot status endpoint hit");
-        return ResponseEntity.ok("PingBot AI is online and ready to help! ");
+    
+    // Create new bot for a user
+    @PostMapping("/users/{userId}")
+    public ResponseEntity<BotIntegrationPublicDto> createBot(
+            @PathVariable UUID userId,
+            @RequestBody BotCreateRequest request) {
+        BotIntegrationPublicDto createdBot = botService.createBot(userId, request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdBot);
     }
-
-    // Debug endpoint to test if controller is working
-    @GetMapping("/test")
-    public ResponseEntity<String> test() {
-        System.out.println(" Test endpoint hit");
-        return ResponseEntity.ok("BotController is working!");
+    
+    // Get bot by ID
+    @GetMapping("/{botId}")
+    public ResponseEntity<BotIntegrationPublicDto> getBotById(@PathVariable UUID botId) {
+        BotIntegrationPublicDto bot = botService.getBotById(botId);
+        return ResponseEntity.ok(bot);
     }
-
-    public static class ChatRequest {
-        private String message;
-        
-        public String getMessage() { return message; }
-        public void setMessage(String message) { this.message = message; }
+    
+    // Get all bots for a user
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<List<BotIntegrationPublicDto>> getUserBots(@PathVariable UUID userId) {
+        List<BotIntegrationPublicDto> bots = botService.getUserBots(userId);
+        return ResponseEntity.ok(bots);
     }
-
-    public static class ChatResponse {
-        private String response;
-        private long timestamp;
-        
-        public ChatResponse(String response) {
-            this.response = response;
-            this.timestamp = System.currentTimeMillis();
-        }
-        
-        public String getResponse() { return response; }
-        public void setResponse(String response) { this.response = response; }
-        public long getTimestamp() { return timestamp; }
-        public void setTimestamp(long timestamp) { this.timestamp = timestamp; }
+    
+    // Get active bots for a user
+    @GetMapping("/users/{userId}/active")
+    public ResponseEntity<List<BotIntegrationPublicDto>> getUserActiveBots(@PathVariable UUID userId) {
+        List<BotIntegrationPublicDto> activeBots = botService.getUserActiveBots(userId);
+        return ResponseEntity.ok(activeBots);
+    }
+    
+    // Update bot
+    @PutMapping("/{botId}")
+    public ResponseEntity<BotIntegrationPublicDto> updateBot(
+            @PathVariable UUID botId,
+            @RequestBody BotUpdateRequest request) {
+        BotIntegrationPublicDto updatedBot = botService.updateBot(botId, request);
+        return ResponseEntity.ok(updatedBot);
+    }
+    
+    // Delete bot
+    @DeleteMapping("/{botId}")
+    public ResponseEntity<Void> deleteBot(@PathVariable UUID botId) {
+        botService.deleteBot(botId);
+        return ResponseEntity.noContent().build();
+    }
+    
+    // Get bot count for user
+    @GetMapping("/users/{userId}/count")
+    public ResponseEntity<Long> getUserBotCount(@PathVariable UUID userId) {
+        long count = botService.getUserBotCount(userId);
+        return ResponseEntity.ok(count);
     }
 }

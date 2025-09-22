@@ -2598,7 +2598,7 @@
     width: var(--sidebar-width-icon);
   }
 
-  .group-data-\[collapsible\=icon\]\:w-\[calc\(var\(--sidebar-width-icon\)\+\(--spacing\(4\)\)\]:is(:where(.group)[data-collapsible="icon"] *) {
+  .group-data-\[collapsible\=icon\]\:w-\[calc\(var\(--sidebar-width-icon\)\+\(--spacing\(4\)\)\)\]:is(:where(.group)[data-collapsible="icon"] *) {
     width: calc(var(--sidebar-width-icon)  + (calc(var(--spacing) * 4)));
   }
 

@@ -1,128 +1,236 @@
-import { apiService } from './api';
-import {
-  MessageResponse,
-  MessageCreateRequest,
-  MessageUpdateRequest
+import ApiService from './api';
+import { 
+  MessageResponse, 
+  MessageCreateRequest, 
+  MessageUpdateRequest, 
+  MessageQueryParams 
 } from '../types/api';
 
 export class MessageService {
   // ===============================
   // CHANNEL MESSAGE OPERATIONS
   // ===============================
-
+  
   /**
    * Get messages for a specific channel
    */
   static async getChannelMessages(
-    channelId: number,
-    params: { limit?: number; offset?: number } = {}
+    channelId: number,  // Keep as number for channels
+    params: MessageQueryParams = {}
   ): Promise<MessageResponse[]> {
     const { limit = 50, ...otherParams } = params;
-    // ✅ Fix: Use instance method for buildQueryString
-    const queryString = apiService.buildQueryString({ limit, ...otherParams });
+    const queryString = ApiService.buildQueryString({ limit, ...otherParams });
     
-    // ✅ Fix: Use instance method for get
-    return apiService.get<MessageResponse[]>(`/channels/${channelId}/messages${queryString}`);
+    return ApiService.get<MessageResponse[]>(`/channels/${channelId}/messages${queryString}`);
   }
 
   /**
    * Send a message to a channel
    */
   static async sendChannelMessage(
-    channelId: number,
+    channelId: number,  // Keep as number for channels
     request: MessageCreateRequest
   ): Promise<MessageResponse> {
-    // ✅ Fix: Use instance method
-    return apiService.post<MessageResponse>(`/channels/${channelId}/messages`, request);
+    return ApiService.post<MessageResponse>(`/channels/${channelId}/messages`, request);
   }
 
   /**
    * Get a specific message from a channel
    */
   static async getChannelMessage(
-    channelId: number,
-    messageId: string
+    channelId: number,  // Keep as number for channels
+    messageId: string  // Changed from number to string (UUID)
   ): Promise<MessageResponse> {
-    // ✅ Fix: Use instance method
-    return apiService.get<MessageResponse>(`/channels/${channelId}/messages/${messageId}`);
+    return ApiService.get<MessageResponse>(`/channels/${channelId}/messages/${messageId}`);
   }
 
   // ===============================
   // DIRECT MESSAGE OPERATIONS
   // ===============================
-
+  
   /**
    * Get messages for a specific DM conversation
    */
   static async getDmMessages(
-    dmId: string,
-    params: { limit?: number; offset?: number } = {}
+    dmId: string,  // Changed from number to string (UUID)
+    params: MessageQueryParams = {}
   ): Promise<MessageResponse[]> {
-    try {
-      console.log(`Fetching messages for DM: ${dmId}`);
-      // ✅ Fix: Use instance method for buildQueryString
-      const queryString = apiService.buildQueryString(params);
-      // ✅ Fix: Use instance method for get
-      const result = await apiService.get<MessageResponse[]>(`/dms/${dmId}/messages${queryString}`);
-      console.log('DM messages fetched successfully:', result);
-      return result;
-    } catch (error) {
-      console.error('Failed to fetch DM messages:', dmId, error);
-      throw error;
-    }
+    const { limit = 50, ...otherParams } = params;
+    const queryString = ApiService.buildQueryString({ limit, ...otherParams });
+    
+    return ApiService.get<MessageResponse[]>(`/dms/${dmId}/messages${queryString}`);
   }
 
   /**
    * Send a message to a DM conversation
    */
   static async sendDmMessage(
-    dmId: string,
+    dmId: string,  // Changed from number to string (UUID)
     request: MessageCreateRequest
   ): Promise<MessageResponse> {
-    try {
-      console.log(`Sending message to DM ${dmId}:`, request);
-      // ✅ Fix: Use instance method
-      const result = await apiService.post<MessageResponse>(`/dms/${dmId}/messages`, request);
-      console.log('Message sent successfully:', result);
-      return result;
-    } catch (error) {
-      console.error('Failed to send DM message:', dmId, request, error);
-      throw error;
-    }
+    return ApiService.post<MessageResponse>(`/dms/${dmId}/messages`, request);
   }
 
   /**
-   * Update a message
+   * Get a specific message from a DM conversation
    */
-  static async updateMessage(
-    messageId: string,
+  static async getDmMessage(
+    dmId: string,  // Changed from number to string (UUID)
+    messageId: string  // Changed from number to string (UUID)
+  ): Promise<MessageResponse> {
+    return ApiService.get<MessageResponse>(`/dms/${dmId}/messages/${messageId}`);
+  }
+
+  // ===============================
+  // GENERAL MESSAGE OPERATIONS
+  // ===============================
+  
+  /**
+   * Edit a message (works for both channel and DM messages)
+   */
+  static async editMessage(
+    messageId: string,  // Changed from number to string (UUID)
     request: MessageUpdateRequest
   ): Promise<MessageResponse> {
-    try {
-      console.log(`Updating message ${messageId}:`, request);
-      // ✅ Fix: Use instance method
-      const result = await apiService.put<MessageResponse>(`/messages/${messageId}`, request);
-      console.log('Message updated successfully:', result);
-      return result;
-    } catch (error) {
-      console.error('Failed to update message:', messageId, request, error);
-      throw error;
-    }
+    return ApiService.patch<MessageResponse>(`/messages/${messageId}`, request);
   }
 
   /**
-   * Delete a message
+   * Delete a message (soft delete - marks as deleted)
    */
-  static async deleteMessage(messageId: string): Promise<void> {
-    try {
-      console.log(`Deleting message: ${messageId}`);
-      // ✅ Fix: Use instance method
-      await apiService.delete<void>(`/messages/${messageId}`);
-      console.log('Message deleted successfully');
-    } catch (error) {
-      console.error('Failed to delete message:', messageId, error);
-      throw error;
+  static async deleteMessage(messageId: string): Promise<void> {  // Changed parameter type
+    return ApiService.delete<void>(`/messages/${messageId}`);
+  }
+
+  /**
+   * Get a message by ID (works for both channel and DM messages)
+   */
+  static async getMessageById(messageId: string): Promise<MessageResponse> {  // Changed parameter type
+    return ApiService.get<MessageResponse>(`/messages/${messageId}`);
+  }
+
+  // ===============================
+  // FILE UPLOAD OPERATIONS
+  // ===============================
+  
+  /**
+   * Upload a file and send as message to a channel
+   */
+  static async sendChannelFileMessage(
+    channelId: number,  // Keep as number for channels
+    file: File,
+    senderUserId: string,  // Changed parameter type
+    caption?: string
+  ): Promise<MessageResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('senderUserId', senderUserId);  // Now string
+    formData.append('contentType', 'FILE');
+    
+    if (caption) {
+      formData.append('caption', caption);
     }
+
+    return ApiService.uploadFile<MessageResponse>(`/channels/${channelId}/messages/upload`, formData);
+  }
+
+  /**
+   * Upload a file and send as message to a DM
+   */
+  static async sendDmFileMessage(
+    dmId: string,  // Changed parameter type
+    file: File,
+    senderUserId: string,  // Changed parameter type
+    caption?: string
+  ): Promise<MessageResponse> {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('senderUserId', senderUserId);  // Now string
+    formData.append('contentType', 'FILE');
+    
+    if (caption) {
+      formData.append('caption', caption);
+    }
+
+    return ApiService.uploadFile<MessageResponse>(`/dms/${dmId}/messages/upload`, formData);
+  }
+
+  // ===============================
+  // SEARCH AND PAGINATION
+  // ===============================
+  
+  /**
+   * Search messages in a channel
+   */
+  static async searchChannelMessages(
+    channelId: number,  // Keep as number for channels
+    query: string,
+    params: { limit?: number; offset?: number } = {}
+  ): Promise<MessageResponse[]> {
+    const { limit = 50, offset = 0 } = params;
+    const queryString = ApiService.buildQueryString({ q: query, limit, offset });
+    
+    return ApiService.get<MessageResponse[]>(`/channels/${channelId}/messages/search${queryString}`);
+  }
+
+  /**
+   * Search messages in a DM conversation
+   */
+  static async searchDmMessages(
+    dmId: string,  // Changed parameter type
+    query: string,
+    params: { limit?: number; offset?: number } = {}
+  ): Promise<MessageResponse[]> {
+    const { limit = 50, offset = 0 } = params;
+    const queryString = ApiService.buildQueryString({ q: query, limit, offset });
+    
+    return ApiService.get<MessageResponse[]>(`/dms/${dmId}/messages/search${queryString}`);
+  }
+
+  // ===============================
+  // UTILITY METHODS
+  // ===============================
+  
+  /**
+   * Get latest messages for a channel (convenience method)
+   */
+  static async getLatestChannelMessages(
+    channelId: number,  // Keep as number for channels
+    limit: number = 50
+  ): Promise<MessageResponse[]> {
+    return this.getChannelMessages(channelId, { limit });
+  }
+
+  /**
+   * Get latest messages for a DM (convenience method)
+   */
+  static async getLatestDmMessages(
+    dmId: string,  // Changed parameter type
+    limit: number = 50
+  ): Promise<MessageResponse[]> {
+    return this.getDmMessages(dmId, { limit });
+  }
+
+  /**
+   * Get messages before a specific message (for pagination)
+   */
+  static async getChannelMessagesBefore(
+    channelId: number,  // Keep as number for channels
+    beforeMessageId: string,  // Changed parameter type
+    limit: number = 50
+  ): Promise<MessageResponse[]> {
+    return this.getChannelMessages(channelId, { before: beforeMessageId, limit });
+  }
+
+  /**
+   * Get messages after a specific message (for real-time updates)
+   */
+  static async getChannelMessagesAfter(
+    channelId: number,  // Keep as number for channels
+    afterMessageId: string,  // Changed parameter type
+    limit: number = 50
+  ): Promise<MessageResponse[]> {
+    return this.getChannelMessages(channelId, { after: afterMessageId, limit });
   }
 }
 
