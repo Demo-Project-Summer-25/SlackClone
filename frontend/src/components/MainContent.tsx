@@ -190,6 +190,14 @@ export function MainContent({
     return context.icon;
   };
 
+  // ✅ Add function to get unread notification count for a specific channel
+  const getChannelUnreadCount = (channelId: string): number => {
+    return notifications.filter(notification => 
+      notification.channelId === channelId && 
+      notification.status === 'UNREAD'
+    ).length;
+  };
+
   const formatTimeAgo = (timestamp: string) => {
     const now = new Date();
     const time = new Date(timestamp);
@@ -319,42 +327,49 @@ export function MainContent({
         </div>
 
         <div className="space-y-2 sm:space-y-3">
-          {directories.map((d) => (
-            <div
-              key={d.id}
-
-              className="flex items-center gap-3 p-3 sm:p-4 rounded-lg hover:bg-accent transition-colors cursor-pointer"
-              onClick={() => onOpenDirectory?.(d)}
-
-            >
-              {/* ✅ Hash icon with theme-aware background circle - matching notification size */}
-              <div className="relative w-6 h-6 sm:w-8 sm:h-8 shrink-0">
-                {/* Background circle - white in dark mode, black in light mode */}
-                <div className={`absolute inset-0 rounded-full ${
-                  theme === 'dark' 
-                    ? 'bg-white' 
-                    : 'bg-black'
-                }`} />
-                {/* Hash icon - same size as notification icons */}
-                <Hash 
-                  className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4"
-                  style={{
-                    color: theme === 'dark' ? '#000000' : '#ffffff',
-                    fill: theme === 'dark' ? '#000000' : '#ffffff'
-                  }}
-                />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm sm:text-base lg:text-lg font-medium truncate">{d.name}</span>
+          {directories.map((d) => {
+            const unreadCount = getChannelUnreadCount(d.id);
+            
+            return (
+              <div
+                key={d.id}
+                className="flex items-center gap-3 p-3 sm:p-4 rounded-lg hover:bg-accent transition-colors cursor-pointer"
+                onClick={() => onOpenDirectory?.(d)}
+              >
+                {/* ✅ Hash icon with theme-aware background circle - matching notification size */}
+                <div className="relative w-6 h-6 sm:w-8 sm:h-8 shrink-0">
+                  {/* Background circle - white in dark mode, black in light mode */}
+                  <div className={`absolute inset-0 rounded-full ${
+                    theme === 'dark' 
+                      ? 'bg-white' 
+                      : 'bg-black'
+                  }`} />
+                  {/* Hash icon - same size as notification icons */}
+                  <Hash 
+                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 sm:w-4 sm:h-4"
+                    style={{
+                      color: theme === 'dark' ? '#000000' : '#ffffff',
+                      fill: theme === 'dark' ? '#000000' : '#ffffff'
+                    }}
+                  />
                 </div>
-                {d.description && (
-                  <p className="text-xs sm:text-sm text-muted-foreground truncate mt-1">{d.description}</p>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm sm:text-base lg:text-lg font-medium truncate">{d.name}</span>
+                  </div>
+                  {d.description && (
+                    <p className="text-xs sm:text-sm text-muted-foreground truncate mt-1">{d.description}</p>
+                  )}
+                </div>
+
+                {/* ✅ Red notification circle for unread messages - positioned on the right like notifications and DMs */}
+                {unreadCount > 0 && (
+                  <div className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
                 )}
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     );

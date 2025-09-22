@@ -95,9 +95,9 @@ export const PongAI: React.FC = () => {
       <div className="p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8">
         <div className="mb-4 sm:mb-6 lg:mb-8">
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-2">Pong AI</h2>
-          <p className="text-sm sm:text-base text-muted-foreground">
+          <div className="text-sm sm:text-base text-muted-foreground">
            <p>Hello! I'm Pong, your AI coding companion. How can I help you today?</p>
-          </p>
+          </div>
         </div>
       </div>
 
