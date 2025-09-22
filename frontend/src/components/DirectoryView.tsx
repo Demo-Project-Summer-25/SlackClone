@@ -12,6 +12,7 @@ import { MessageInput } from "./ui/MessageInput";
 import { useAuth } from "../hooks/useAuth";
 import { Client } from "@stomp/stompjs";
 import { useTheme } from "./ThemeProvider";
+import { toast } from "sonner";
 import {
   Select,
   SelectContent,
@@ -53,36 +54,44 @@ export function DirectoryView({
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [showNewMessageBtn, setShowNewMessageBtn] = useState(false);
 
-  // track whether user is scrolled to bottom
+  // Helper: check if user is at bottom
   const isAtBottom = () => {
     const container = scrollContainerRef.current;
     if (!container) return true;
-    return container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
+    return (
+      container.scrollHeight - container.scrollTop <=
+      container.clientHeight + 50
+    );
   };
 
-  // Load members
+  // Load channel members
   useEffect(() => {
     if (!directory?.id) return;
     fetch(`/api/channels/${directory.id}/members`)
       .then((res) => res.json())
       .then((members) => {
         const map: Record<string, any> = {};
-        members.forEach((m: any) => (map[m.user.id] = m.user));
+        members.forEach((m: any) => {
+          map[m.user.id] = m.user;
+        });
         setUserMap(map);
-      });
+      })
+      .catch(() => setUserMap({}));
   }, [directory.id]);
 
-  // Load initial messages
+  // Load initial channel messages
   useEffect(() => {
     if (!directory?.id) return;
     fetch(`/api/channels/${directory.id}/messages`)
       .then((res) => res.json())
-      .then((data) => setMessages(Array.isArray(data) ? data : []));
+      .then((data) => setMessages(Array.isArray(data) ? data : []))
+      .catch(() => setMessages([]));
   }, [directory.id]);
 
-  // Subscribe to WebSocket
+  // WebSocket subscription
   useEffect(() => {
     if (!directory?.id) return;
+
     const client = new Client({
       brokerURL: "ws://localhost:8080/ws",
       reconnectDelay: 5000,
@@ -93,9 +102,12 @@ export function DirectoryView({
         const payload = JSON.parse(frame.body);
         if (payload.type === "created") {
           setMessages((prev) => {
-            // If user at bottom → auto scroll, else show button
             if (isAtBottom()) {
-              setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+              setTimeout(
+                () =>
+                  messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }),
+                50
+              );
               return [...prev, payload.message];
             } else {
               setShowNewMessageBtn(true);
@@ -104,19 +116,25 @@ export function DirectoryView({
           });
         } else if (payload.type === "updated") {
           setMessages((prev) =>
-            prev.map((m) => (m.id === payload.message.id ? payload.message : m))
+            prev.map((m) =>
+              m.id === payload.message.id ? payload.message : m
+            )
           );
         } else if (payload.type === "deleted") {
-          setMessages((prev) => prev.filter((m) => m.id !== payload.message.id));
+          setMessages((prev) =>
+            prev.filter((m) => m.id !== payload.message.id)
+          );
         }
       });
     };
 
     client.activate();
-    return () => client.deactivate();
+    return () => {
+      client.deactivate();
+    };
   }, [directory.id]);
 
-  // Scroll handler
+  // Hide button if scrolled back to bottom
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -127,17 +145,37 @@ export function DirectoryView({
     return () => container.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Fallback fetch for unknown senders
+  const fetchUserIfMissing = async (userId: string) => {
+    if (!userId || userMap[userId]) return;
+    try {
+      const res = await fetch(`/api/users/${userId}`);
+      if (res.ok) {
+        const fetchedUser = await res.json();
+        setUserMap((prev) => ({ ...prev, [fetchedUser.id]: fetchedUser }));
+      }
+    } catch (e) {
+      console.error("Failed to fetch user", e);
+    }
+  };
+
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
+    const content = inputMessage;
     setInputMessage("");
     setIsLoading(true);
 
     fetch(`/api/channels/${directory.id}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ content: inputMessage, senderUserId: currentUser?.id }),
-    }).finally(() => setIsLoading(false));
+      body: JSON.stringify({
+        content,
+        senderUserId: currentUser?.id,
+      }),
+    })
+      .finally(() => setIsLoading(false));
   };
+
 
   return (
     <div className="h-full flex flex-col">
@@ -149,7 +187,10 @@ export function DirectoryView({
         <h3 className="font-medium">{directory.name}</h3>
         <div className="ml-auto flex gap-2">
           {availableDirectories.length > 0 && (
-            <Select value={directory.id} onValueChange={(v) => onSelectDirectory?.(v)}>
+            <Select
+              value={directory.id}
+              onValueChange={(v) => onSelectDirectory?.(v)}
+            >
               <SelectTrigger className="h-8 w-32">
                 <SelectValue placeholder="Select channel" />
               </SelectTrigger>
@@ -169,30 +210,84 @@ export function DirectoryView({
       </div>
 
       {/* Messages */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-auto px-6 py-4 space-y-4">
-        {messages.map((msg) => {
-          const sender = userMap[msg.senderUserId];
-          const isOwn = msg.senderUserId === currentUser?.id;
-          return (
-            <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
-              <div className="max-w-[70%]">
-                {!isOwn && (
-                  <p className="text-xs text-muted-foreground mb-1">
-                    {sender ? sender.displayName || sender.username : msg.senderUserId}
-                  </p>
-                )}
-                <div className={`p-3 rounded-lg ${isOwn ? "bg-black text-white" : "bg-gray-200"}`}>
-                  {msg.content}
+      <div
+        ref={scrollContainerRef}
+        className="flex-1 overflow-auto px-6 py-8 space-y-6"
+      >
+        {messages.length === 0 ? (
+          <div className="text-center text-muted-foreground py-12">
+            <p className="text-lg">No messages yet. Start the conversation!</p>
+          </div>
+        ) : (
+          <>
+            {messages.map((msg) => {
+              const sender = userMap[msg.senderUserId];
+              if (!sender) fetchUserIfMissing(msg.senderUserId);
+              const isOwn = msg.senderUserId === currentUser?.id;
+
+              return (
+                <div
+                  key={msg.id}
+                  className={`flex ${isOwn ? "justify-end" : "justify-start"}`}
+                >
+                  <div className={`max-w-[70%] ${isOwn ? "order-2" : "order-1"}`}>
+                    {!isOwn && (
+                      <p className="text-sm font-medium text-muted-foreground mb-1 px-1">
+                        {sender
+                          ? sender.displayName || sender.username
+                          : msg.senderUserId}
+                      </p>
+                    )}
+
+                    <div
+                      className={`p-4 rounded-lg relative transition-all duration-200 hover:shadow-md ${isOwn
+                          ? theme === "dark"
+                            ? "bg-white text-black shadow-md border border-gray-200/80"
+                            : "bg-black text-white shadow-md border border-gray-800/80"
+                          : theme === "dark"
+                            ? "bg-gray-800 text-gray-100 shadow-md border border-gray-700/50"
+                            : "bg-gray-50 text-gray-900 shadow-md border border-gray-200/80 hover:bg-gray-100"
+                        }`}
+                    >
+                      <p
+                        className="text-base leading-relaxed"
+                        style={{
+                          color: isOwn
+                            ? theme === "dark"
+                              ? "#000000"
+                              : "#ffffff"
+                            : theme === "dark"
+                              ? "#f3f4f6"
+                              : "#111827",
+                        }}
+                      >
+                        {msg.content}
+                      </p>
+                      {isOwn && (
+                        <div
+                          className={`absolute -bottom-1 -right-1 w-2 h-2 rounded-full opacity-60 ${theme === "dark" ? "bg-black/30" : "bg-white/30"
+                            }`}
+                        ></div>
+                      )}
+                    </div>
+
+                    <p
+                      className={`text-sm mt-2 px-1 transition-colors ${theme === "dark" ? "text-gray-400" : "text-gray-500"
+                        }`}
+                    >
+                      {msg.createdAt &&
+                        new Date(msg.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {msg.createdAt &&
-                    new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                </p>
-              </div>
-            </div>
-          );
-        })}
-        <div ref={messagesEndRef} />
+              );
+            })}
+            <div ref={messagesEndRef} />
+          </>
+        )}
       </div>
 
       {/* New Message Button */}
@@ -211,7 +306,7 @@ export function DirectoryView({
         </div>
       )}
 
-      {/* Input */}
+      {/* Message Input */}
       <MessageInput
         message={inputMessage}
         onMessageChange={setInputMessage}
