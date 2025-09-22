@@ -16,12 +16,12 @@ interface Message {
   timestamp: number;
 }
 
-export const PingBotAI: React.FC = () => {
+export const PongAI: React.FC = () => {
   const { theme } = useTheme();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hey! I'm PingBot, your AI coding companion. I can help with React, Java, debugging, architecture questions, or just chat about development. What are you working on?",
+      content: "Code Blocks, Development Strategies, I can help with it all! What are you working on?",
       isUser: false,
       timestamp: Date.now(),
     }
@@ -67,7 +67,7 @@ export const PingBotAI: React.FC = () => {
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
       console.error('Error chatting with bot:', error);
-      toast.error('Failed to send message to PingBot');
+      toast.error('Failed to send message to Pong');
 
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -94,9 +94,9 @@ export const PingBotAI: React.FC = () => {
       {/* Header - Remove max-w and mx-auto centering */}
       <div className="p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8">
         <div className="mb-4 sm:mb-6 lg:mb-8">
-          <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-2">PingBot AI</h2>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-2">Pong AI</h2>
           <p className="text-sm sm:text-base text-muted-foreground">
-            Hello! I'm Pingbot. Your personal coding assistant. What are we working on today?
+           <p>Hello! I'm Pong, your AI coding companion. How can I help you today?</p>
           </p>
         </div>
       </div>
@@ -114,7 +114,7 @@ export const PingBotAI: React.FC = () => {
                   <div className="flex-shrink-0">
                     <img
                       src={theme === 'dark' ? '/botwhite.png' : '/bot.png'}
-                      alt="PingBot"
+                      alt="Pong"
                       className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
                     />
                   </div>
@@ -152,7 +152,7 @@ export const PingBotAI: React.FC = () => {
                 <div className="flex-shrink-0">
                   <img
                     src={theme === 'dark' ? '/botwhite.png' : '/bot.png'}
-                    alt="PingBot"
+                    alt="Pong"
                     className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover"
                   />
                 </div>
@@ -173,7 +173,7 @@ export const PingBotAI: React.FC = () => {
           message={inputMessage}
           onMessageChange={setInputMessage}
           onSendMessage={sendMessage}
-          placeholder="Ask PingBot anything about your code..."
+          placeholder="Ask Pong anything about your code..."
           disabled={isLoading}
         />
       </div>

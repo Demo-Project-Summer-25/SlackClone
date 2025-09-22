@@ -10,7 +10,7 @@ import { Textarea } from "./ui/textarea";
 import { useAuth } from "../hooks/useAuth";
 import { toast } from "sonner";
 import { calendarService, EventResponse } from "../services/calendarService";
-import { PingBotAI } from "./PingBotAI";
+import { PongAI } from "./PingBotAI"; // ✅ Keep original filename
 import {
   Plus,
   Play,
@@ -250,7 +250,7 @@ export function DeveloperToolsContent({ activeTool, isInSplitMode = true, curren
     case "canvas":
       return <CanvasPage />;
     case "ai":
-      return <PingBotAI />;  
+      return <PongAI />;  
     case "calendar":
       return <CalendarComponent isInSplitMode={isInSplitMode} />;
     default:
