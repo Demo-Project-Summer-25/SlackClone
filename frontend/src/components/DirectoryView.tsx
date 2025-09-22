@@ -161,15 +161,7 @@ export function DirectoryView({
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
-
-    const userMessage: any = {
-      id: Date.now().toString(),
-      content: inputMessage,
-      senderUserId: currentUser?.id,
-      timestamp: Date.now(),
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
+    const content = inputMessage;
     setInputMessage("");
     setIsLoading(true);
 
@@ -177,16 +169,13 @@ export function DirectoryView({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        content: inputMessage,
+        content,
         senderUserId: currentUser?.id,
       }),
     })
-      .then(() => setIsLoading(false))
-      .catch(() => {
-        setIsLoading(false);
-        toast.error("Failed to send message");
-      });
+      .finally(() => setIsLoading(false));
   };
+
 
   return (
     <div className="h-full flex flex-col">
@@ -251,15 +240,14 @@ export function DirectoryView({
                     )}
 
                     <div
-                      className={`p-4 rounded-lg relative transition-all duration-200 hover:shadow-md ${
-                        isOwn
+                      className={`p-4 rounded-lg relative transition-all duration-200 hover:shadow-md ${isOwn
                           ? theme === "dark"
                             ? "bg-white text-black shadow-md border border-gray-200/80"
                             : "bg-black text-white shadow-md border border-gray-800/80"
                           : theme === "dark"
-                          ? "bg-gray-800 text-gray-100 shadow-md border border-gray-700/50"
-                          : "bg-gray-50 text-gray-900 shadow-md border border-gray-200/80 hover:bg-gray-100"
-                      }`}
+                            ? "bg-gray-800 text-gray-100 shadow-md border border-gray-700/50"
+                            : "bg-gray-50 text-gray-900 shadow-md border border-gray-200/80 hover:bg-gray-100"
+                        }`}
                     >
                       <p
                         className="text-base leading-relaxed"
@@ -269,25 +257,23 @@ export function DirectoryView({
                               ? "#000000"
                               : "#ffffff"
                             : theme === "dark"
-                            ? "#f3f4f6"
-                            : "#111827",
+                              ? "#f3f4f6"
+                              : "#111827",
                         }}
                       >
                         {msg.content}
                       </p>
                       {isOwn && (
                         <div
-                          className={`absolute -bottom-1 -right-1 w-2 h-2 rounded-full opacity-60 ${
-                            theme === "dark" ? "bg-black/30" : "bg-white/30"
-                          }`}
+                          className={`absolute -bottom-1 -right-1 w-2 h-2 rounded-full opacity-60 ${theme === "dark" ? "bg-black/30" : "bg-white/30"
+                            }`}
                         ></div>
                       )}
                     </div>
 
                     <p
-                      className={`text-sm mt-2 px-1 transition-colors ${
-                        theme === "dark" ? "text-gray-400" : "text-gray-500"
-                      }`}
+                      className={`text-sm mt-2 px-1 transition-colors ${theme === "dark" ? "text-gray-400" : "text-gray-500"
+                        }`}
                     >
                       {msg.createdAt &&
                         new Date(msg.createdAt).toLocaleTimeString([], {
