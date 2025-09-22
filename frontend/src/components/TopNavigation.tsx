@@ -31,7 +31,7 @@ export function TopNavigation({
   const { theme } = useTheme();
 
   const terminals = [
-    { id: "1", name: "Zip Code Wilmington", type:"10.1", status: "Active" as const },
+    { id: "1", name: "Zip Code Wilmington", type:"11.1", status: "Active" as const },
     { id: "2", name: "ZipCorp LLC", type: "New Job", status: "Inactive" as const },
   ];
   
