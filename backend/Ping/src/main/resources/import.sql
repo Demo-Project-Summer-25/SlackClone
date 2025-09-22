@@ -236,3 +236,33 @@ INSERT INTO message (id, content, content_type, sender_user_id, channel_id, dire
 INSERT INTO notification (id, recipient_user_id, actor_user_id, direct_conversation_id, channel_id, message_id, type, status, text, created_at, read_at) VALUES ('5def7111-d454-4a10-8a22-7aa0bbccdde0', '68973614-94db-4f98-9729-0712e0c5c0fa', 'ae2d64e5-d825-49fc-91bb-f530be88ca84', NULL, '63353300-1058-42be-a3c5-09e03f829391', 'c5d6f778-4a5b-40c7-b18e-e5f60718293a', 'MENTION', 'UNREAD', 'Younis mentioned you in Spring Boot Lab', '2025-09-22T09:35:00Z', NULL);
 
 INSERT INTO notification (id, recipient_user_id, actor_user_id, direct_conversation_id, channel_id, message_id, type, status, text, created_at, read_at) VALUES ('6ef08222-e565-4b21-9b33-8bb0ccddeeff', '68973614-94db-4f98-9729-0712e0c5c0fa', '2915dd6e-8c44-4355-8f1b-f7c8c8b0f48d', NULL, 'faecdb32-9123-480a-8a72-7d75b83857c5', '6ef08112-e365-4a11-9b23-8f901a2b3c4d', 'MENTION', 'READ', 'Iara mentioned you in Passion Projects', '2025-09-22T07:45:00Z', '2025-09-22T07:50:00Z');
+
+// ...existing code...
+
+-- Add calendar for Jennifer (and other users)
+INSERT INTO calendars (id, owner_id, default_timezone, default_reminder_minutes) VALUES ('11111111-1111-1111-1111-111111111111', '68973614-94db-4f98-9729-0712e0c5c0fa', 'America/New_York', 15);
+
+INSERT INTO calendars (id, owner_id, default_timezone, default_reminder_minutes) VALUES ('22222222-2222-2222-2222-222222222222', 'ae2d64e5-d825-49fc-91bb-f530be88ca84', 'America/New_York', 15);
+
+INSERT INTO calendars (id, owner_id, default_timezone, default_reminder_minutes) VALUES ('33333333-3333-3333-3333-333333333333', 'e47beacf-c098-4286-b417-3d45c94bd968', 'America/New_York', 15);
+
+INSERT INTO calendars (id, owner_id, default_timezone, default_reminder_minutes) VALUES ('44444444-4444-4444-4444-444444444444', '0d9d27d6-8977-46d8-b00a-2464a932aafe', 'America/New_York', 15);
+
+INSERT INTO calendars (id, owner_id, default_timezone, default_reminder_minutes) VALUES ('55555555-5555-5555-5555-555555555555', 'cc58e483-1807-4ab2-83ce-fb2336da1cfd', 'America/New_York', 15);
+
+INSERT INTO calendars (id, owner_id, default_timezone, default_reminder_minutes) VALUES ('66666666-6666-6666-6666-666666666666', '0c862291-6d43-47fc-8682-ae358658a5e4', 'America/New_York', 15);
+
+INSERT INTO calendars (id, owner_id, default_timezone, default_reminder_minutes) VALUES ('77777777-7777-7777-7777-777777777777', '2915dd6e-8c44-4355-8f1b-f7c8c8b0f48d', 'America/New_York', 15);
+
+INSERT INTO calendars (id, owner_id, default_timezone, default_reminder_minutes) VALUES ('88888888-8888-8888-8888-888888888888', '927bb721-e8e5-41a7-9a4a-d04201713d45', 'America/New_York', 15);
+
+INSERT INTO calendars (id, owner_id, default_timezone, default_reminder_minutes) VALUES ('99999999-9999-9999-9999-999999999999', 'fff673d0-c4be-49fc-8342-6554a25d19ee', 'America/New_York', 15);
+
+INSERT INTO calendars (id, owner_id, default_timezone, default_reminder_minutes) VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '3be336ff-fa43-4f51-baab-0f05457184ef', 'America/New_York', 15);
+
+-- Add some sample calendar events
+INSERT INTO calendar_events (id, calendar_id, title, description, start_time, end_time, all_day, location, event_type, reminder_minutes) VALUES ('event001-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'Daily Standup', 'Team standup meeting', '2025-09-23T14:00:00Z', '2025-09-23T14:30:00Z', false, 'Conference Room A', 'MEETING', 10);
+
+INSERT INTO calendar_events (id, calendar_id, title, description, start_time, end_time, all_day, location, event_type, reminder_minutes) VALUES ('event002-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'Spring Boot Lab', 'Lab session on JPA relationships', '2025-09-24T18:00:00Z', '2025-09-24T21:00:00Z', false, 'Classroom 101', 'CLASS', 15);
+
+INSERT INTO calendar_events (id, calendar_id, title, description, start_time, end_time, all_day, location, event_type, reminder_minutes) VALUES ('event003-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'Demo Day Prep', 'Prepare presentation for demo day', '2025-09-25T19:00:00Z', '2025-09-25T20:30:00Z', false, 'Study Room B', 'TASK', 30);
