@@ -19,12 +19,22 @@ import ReactFlow, {
   NodeResizer,
   EdgeProps,
   getSmoothStepPath,
+  applyNodeChanges,
+  applyEdgeChanges,
+  NodeChange,
+  EdgeChange,
 } from 'reactflow';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Plus, Save, Download, Upload, Trash2, Info } from 'lucide-react';
-import { useTheme } from '../ThemeProvider'; // ✅ Import useTheme hook
+import { useTheme } from '../ThemeProvider';
 import 'reactflow/dist/style.css';
+
+interface VisualCanvasProps {
+  onSave?: () => void;
+  initialData?: { nodes: Node[], edges: Edge[] } | null;
+  onDataChange?: (data: { nodes: Node[], edges: Edge[] }) => void;
+}
 
 // ✅ Helper function to determine if we're in dark mode
 const useIsDarkMode = () => {
@@ -221,7 +231,7 @@ const CustomEdge: React.FC<EdgeProps> = ({
             y={labelY}
             textAnchor="middle"
             dominantBaseline="middle"
-            fill={isDark ? '#ffffff' : '#000000'} // ✅ Fixed: black text in light mode, white in dark mode
+            fill={isDark ? '#ffffff' : '#000000'}
             style={{ fontSize: '11px', fontWeight: 'bold' }}
           >
             {relationshipText}
@@ -237,7 +247,7 @@ const EditableNode = memo(({ data, id, selected }: NodeProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [content, setContent] = useState(data.label);
   const { setNodes } = useReactFlow();
-  const isDark = useIsDarkMode(); // ✅ Use the proper hook
+  const isDark = useIsDarkMode();
 
   // Add this effect to communicate editing state
   useEffect(() => {
@@ -280,7 +290,6 @@ const EditableNode = memo(({ data, id, selected }: NodeProps) => {
       style={{ 
         fontSize: '14px', 
         fontWeight: '500',
-        // ✅ Force colors based on theme
         backgroundColor: isDark ? '#ffffff' : '#000000',
         color: isDark ? '#000000' : '#ffffff',
         borderColor: isDark ? '#ffffff' : '#000000',
@@ -303,7 +312,7 @@ const EditableNode = memo(({ data, id, selected }: NodeProps) => {
           onBlur={handleSubmit}
           className="bg-transparent border-none outline-none w-full h-full resize-none"
           style={{
-            color: isDark ? '#000000' : '#ffffff', // ✅ Force text color
+            color: isDark ? '#000000' : '#ffffff',
             fontSize: '14px', 
             fontWeight: '500',
             minHeight: '40px'
@@ -315,7 +324,7 @@ const EditableNode = memo(({ data, id, selected }: NodeProps) => {
         <div 
           className="whitespace-pre-wrap break-words h-full flex items-center"
           style={{
-            color: isDark ? '#000000' : '#ffffff' // ✅ Force text color
+            color: isDark ? '#000000' : '#ffffff'
           }}
         >
           {data.label || 'Double-click to edit'}
@@ -457,7 +466,7 @@ const initialEdges: Edge[] = [
 ];
 
 // Inner component that has access to useReactFlow
-const CanvasFlow: React.FC<{ onSave?: () => void, onDataChange?: (data: { nodes: any[], edges: any }) => void, initialData?: any }> = ({ onSave, onDataChange, initialData }) => {
+const CanvasFlow: React.FC<{ onSave?: () => void, onDataChange?: (data: { nodes: Node[], edges: Edge[] }) => void, initialData?: { nodes: Node[], edges: Edge[] } | null }> = ({ onSave, onDataChange, initialData }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [newNodeName, setNewNodeName] = useState('');
@@ -473,38 +482,50 @@ const CanvasFlow: React.FC<{ onSave?: () => void, onDataChange?: (data: { nodes:
   const [showCustomInput, setShowCustomInput] = useState(false);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { getNodes, getEdges } = useReactFlow();
-  const isDark = useIsDarkMode(); // ✅ Use the proper hook
+  const isDark = useIsDarkMode();
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Load initial data if provided
+  // Load initial data if provided - ONLY ONCE
   useEffect(() => {
-    if (initialData && initialData.nodes && initialData.edges) {
+    if (initialData && initialData.nodes && initialData.edges && !isInitialized) {
       console.log('Loading initial data:', initialData);
       setNodes(initialData.nodes);
       setEdges(initialData.edges);
-    } else {
-      // Try to load from localStorage if no initial data
-      const savedData = localStorage.getItem(`canvas-data-${Date.now()}`);
-      if (savedData) {
-        try {
-          const parsed = JSON.parse(savedData);
-          if (parsed.nodes && parsed.edges) {
-            setNodes(parsed.nodes);
-            setEdges(parsed.edges);
-          }
-        } catch (error) {
-          console.error('Failed to parse saved canvas data:', error);
-        }
-      }
+      setIsInitialized(true);
     }
-  }, [initialData, setNodes, setEdges]);
+  }, [initialData, setNodes, setEdges, isInitialized]);
 
-  // Report data changes to parent immediately
-  useEffect(() => {
-    console.log('Canvas data changed:', { nodes: nodes.length, edges: edges.length });
-    if (onDataChange) {
-      onDataChange({ nodes, edges });
+  // REMOVE THIS useEffect - this is what's causing the flashing!
+  // useEffect(() => {
+  //   if (onDataChange) {
+  //     onDataChange({ nodes, edges });
+  //   }
+  // }, [nodes, edges, onDataChange]);
+
+  // Instead, call onDataChange only when user actually makes changes
+  const handleNodesChange = useCallback((changes: any) => {
+    onNodesChange(changes);
+    // Only call onDataChange if we're initialized and have actual changes
+    if (isInitialized && onDataChange) {
+      setTimeout(() => {
+        const currentNodes = getNodes();
+        const currentEdges = getEdges();
+        onDataChange({ nodes: currentNodes, edges: currentEdges });
+      }, 0);
     }
-  }, [nodes, edges, onDataChange]);
+  }, [onNodesChange, isInitialized, onDataChange, getNodes, getEdges]);
+
+  const handleEdgesChange = useCallback((changes: any) => {
+    onEdgesChange(changes);
+    // Only call onDataChange if we're initialized and have actual changes
+    if (isInitialized && onDataChange) {
+      setTimeout(() => {
+        const currentNodes = getNodes();
+        const currentEdges = getEdges();
+        onDataChange({ nodes: currentNodes, edges: currentEdges });
+      }, 0);
+    }
+  }, [onEdgesChange, isInitialized, onDataChange, getNodes, getEdges]);
 
   const onConnect = useCallback(
     (params: any) => {
@@ -550,8 +571,17 @@ const CanvasFlow: React.FC<{ onSave?: () => void, onDataChange?: (data: { nodes:
       
       setEdges((eds) => [...eds, newEdge]);
       setPendingConnection(null);
+      
+      // Call onDataChange manually here since we're adding an edge
+      if (onDataChange) {
+        setTimeout(() => {
+          const currentNodes = getNodes();
+          const currentEdges = getEdges();
+          onDataChange({ nodes: currentNodes, edges: currentEdges });
+        }, 0);
+      }
     }
-  }, [pendingConnection, setEdges, isDark]);
+  }, [pendingConnection, setEdges, isDark, onDataChange, getNodes, getEdges]);
 
   const handleCustomRelationship = useCallback(() => {
     if (pendingConnection && customLabel.trim()) {
@@ -659,20 +689,17 @@ const CanvasFlow: React.FC<{ onSave?: () => void, onDataChange?: (data: { nodes:
     };
     
     // Save to temp location that CanvasViewer expects
-    const canvasId = localStorage.getItem('current-canvas-id'); // We'll set this from CanvasViewer
+    const canvasId = localStorage.getItem('current-canvas-id');
     if (canvasId) {
       localStorage.setItem(`canvas-temp-${canvasId}`, JSON.stringify(canvasData));
     }
     
     if (onSave) {
-      onSave(); // Call parent's save function
-    } else {
-      // Fallback to localStorage save
-      console.log('Canvas auto-saved');
+      onSave();
     }
   }, [nodes, edges, onSave]);
 
-  // Also auto-save on every change:
+  // Auto-save on every change
   useEffect(() => {
     const canvasId = localStorage.getItem('current-canvas-id');
     if (canvasId && nodes.length > 0) {
@@ -716,8 +743,8 @@ const CanvasFlow: React.FC<{ onSave?: () => void, onDataChange?: (data: { nodes:
       <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
+        onNodesChange={handleNodesChange}  // Use our custom handlers
+        onEdgesChange={handleEdgesChange}  // Use our custom handlers
         onConnect={onConnect}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
@@ -735,11 +762,11 @@ const CanvasFlow: React.FC<{ onSave?: () => void, onDataChange?: (data: { nodes:
           maskColor="rgba(255, 255, 255, 0.8)"
           className="bg-card border border-border rounded-lg dark:[&_.react-flow__minimap-node]:!fill-white dark:[&_.react-flow__minimap-mask]:!fill-black/80"
           style={{
-            width: 120,        // ✅ Set custom width (default is ~200px)
-            height: 80,        // ✅ Set custom height (default is ~150px)
+            width: 120,
+            height: 80,
           }}
-          pannable={true}      // ✅ Allow clicking to pan
-          zoomable={true}      // ✅ Allow zooming
+          pannable={true}
+          zoomable={true}
         />
         <Background 
           variant={BackgroundVariant.Dots}
@@ -749,7 +776,7 @@ const CanvasFlow: React.FC<{ onSave?: () => void, onDataChange?: (data: { nodes:
           className="dark:[&>*]:!stroke-gray-400"
         />
         
-        {/* Main Control Panel - Now fully opaque */}
+        {/* Main Control Panel */}
         <Panel position="top-left" className="bg-card border border-border rounded-lg shadow-lg">
           <div className="space-y-3 p-3">
             {/* Quick Add Node */}
@@ -842,7 +869,7 @@ const CanvasFlow: React.FC<{ onSave?: () => void, onDataChange?: (data: { nodes:
               </div>
             </div>
 
-            {/* ✅ Updated Relationship Type Selector with proper theme colors */}
+            {/* Relationship Type Selector */}
             {pendingConnection && (
               <div className="pt-3 border-t border-border bg-card">
                 <div className="space-y-3 p-3 bg-card border border-border rounded-lg shadow-lg">
@@ -866,7 +893,7 @@ const CanvasFlow: React.FC<{ onSave?: () => void, onDataChange?: (data: { nodes:
                         }}
                         className="h-8 text-xs bg-background border-border"
                         style={{
-                          color: isDark ? '#ffffff' : '#000000', // ✅ Force input text color
+                          color: isDark ? '#ffffff' : '#000000',
                         }}
                         autoFocus
                       />
@@ -935,12 +962,12 @@ const CanvasFlow: React.FC<{ onSave?: () => void, onDataChange?: (data: { nodes:
   );
 };
 
-// Update the main component to accept onSave prop
-export const VisualCanvas: React.FC<{ 
-  onSave?: () => void;
-  onDataChange?: (data: { nodes: any[], edges: any }) => void;
-  initialData?: any;
-}> = ({ onSave, onDataChange, initialData }) => {
+// Main component - simplified without duplicate state management
+export const VisualCanvas: React.FC<VisualCanvasProps> = ({
+  onSave,
+  initialData,
+  onDataChange
+}) => {
   return (
     <ReactFlowProvider>
       <div className="bg-background">

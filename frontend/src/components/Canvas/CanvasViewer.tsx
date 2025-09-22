@@ -18,14 +18,28 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
   onBack
 }) => {
   const [canvas, setCanvas] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
+  const [canvasData, setCanvasData] = useState<{ nodes: any[], edges: any[] } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
   });
-  const [canvasData, setCanvasData] = useState<{ nodes: any[], edges: any[] } | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+
+  // Simple callback without debouncing
+  const handleCanvasDataChange = useCallback((data: { nodes: any[], edges: any[] }) => {
+    setCanvasData(data);
+    
+    // Simple auto-save to localStorage without debouncing
+    if (canvas?.id) {
+      const canvasData = {
+        nodes: data.nodes,
+        edges: data.edges,
+        timestamp: new Date().toISOString(),
+      };
+      localStorage.setItem(`canvas-temp-${canvas.id}`, JSON.stringify(canvasData));
+    }
+  }, [canvas?.id]);
 
   useEffect(() => {
     if (canvasId) {
@@ -37,17 +51,17 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
     if (!canvasId) return;
 
     try {
-      setLoading(true);
       const data = await canvasService.getCanvas(canvasId);
       setCanvas(data);
       
+      // Initialize form data when canvas is loaded
+      setFormData({
+        title: data.title || '',
+        description: data.description || '',
+      });
+      
       // Set current canvas ID for VisualCanvas to use
       localStorage.setItem('current-canvas-id', canvasId);
-      
-      setFormData({
-        title: data.title,
-        description: '', // Backend doesn't support description yet
-      });
       
       // Try to load saved canvas data from localStorage
       const savedData = localStorage.getItem(`canvas-data-${canvasId}`);
@@ -63,8 +77,6 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
     } catch (error) {
       toast.error('Failed to load canvas');
       console.error('Error loading canvas:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -78,7 +90,6 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
       setIsSaving(true);
       const updatedCanvas = await canvasService.updateCanvas(canvas.id, {
         title: formData.title,
-        // Remove description since backend doesn't support it
       });
 
       setCanvas(updatedCanvas);
@@ -127,27 +138,14 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
   }, [canvas]);
 
   const toggleEdit = () => {
-    if (isEditing) {
-      if (canvas) {
-        setFormData({
-          title: canvas.title,
-          description: canvas.description || '',
-        });
-      }
+    if (canvas) {
+      setFormData({
+        title: canvas.title,
+        description: canvas.description || '',
+      });
     }
     setIsEditing(!isEditing);
   };
-
-  if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent"></div>
-          <p className="text-sm text-muted-foreground">Loading canvas...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (!canvas) {
     return (
@@ -193,7 +191,7 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
               variant="outline" 
               size="sm" 
               className="gap-2"
-              disabled={isSaving} // Remove the !canvasData condition
+              disabled={isSaving}
             >
               <Save className="h-4 w-4" />
               {isSaving ? 'Saving...' : 'Save Canvas'}
@@ -228,6 +226,7 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
                 <VisualCanvas 
                   onSave={handleSaveCanvas} 
                   initialData={canvasData}
+                  onDataChange={handleCanvasDataChange}
                 />
               </div>
             </CardContent>
@@ -247,13 +246,11 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
                       className="bg-background"
                     />
                   </div>
-                  {/* Remove description field since backend doesn't support it yet */}
                 </>
               ) : (
                 <>
                   <div>
                     <h3 className="font-semibold text-lg text-foreground">{canvas.title}</h3>
-                    {/* Remove description display since backend doesn't support it */}
                   </div>
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground pt-2 border-t border-border">
                     <div className="flex items-center gap-2">
