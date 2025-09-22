@@ -1,19 +1,24 @@
 import { User, UserUpdateRequest } from '../types/user';
-import { ApiService } from './api';
+import { apiService } from '../services/api'; // ✅ Changed from apiService to ApiService
 
-export class UserService {
+export const userService = {
   // GET /api/users/{id}
-  static async getUserById(id: string): Promise<User> {
-    return ApiService.get<User>(`/users/${id}`);
-  }
+  async getUserById(id: string): Promise<User> {
+    return apiService.get<User>(`/users/${id}`); // ✅ Changed to ApiService
+  },
 
   // GET /api/users/
-  static async getAllUsers(): Promise<User[]> {
-    return ApiService.get<User[]>(`users`);
-  }
+  async getAllUsers(): Promise<User[]> {
+    return apiService.get<User[]>('/users'); // ✅ Changed to ApiService
+  },
 
   // PUT /api/users/{id}
-  static async updateUser(id: string, updates: UserUpdateRequest): Promise<User> {
-    return ApiService.put<User>(`users/${id}`, updates);
+  async updateUser(id: string, updates: UserUpdateRequest): Promise<User> {
+    return apiService.put<User>(`/users/${id}`, updates); // ✅ Changed to ApiService
+  },
+
+  // DELETE /api/users/{id}
+  async deleteUser(id: string): Promise<void> {
+    return apiService.delete<void>(`/users/${id}`); // ✅ Changed to ApiService
   }
-}
+};

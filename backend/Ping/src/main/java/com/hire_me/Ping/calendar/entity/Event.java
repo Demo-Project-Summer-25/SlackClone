@@ -3,7 +3,7 @@ package com.hire_me.Ping.calendar.entity;
 import java.time.Instant;
 import java.util.UUID;
 
-import com.hire_me.Ping.calendar.model.EventVisibility; // <-- add this import
+import com.hire_me.Ping.calendar.model.EventVisibility;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

@@ -1,4 +1,4 @@
-import ApiService from './api';
+import { apiService } from './api';
 import { 
   DmResponse, 
   DmCreateRequest, 
@@ -9,41 +9,91 @@ import {
   DmQueryParams 
 } from '../types/api';
 
-export class DmService {
+export class dmService {
   // ===============================
   // CORE DM OPERATIONS
   // ===============================
   
   /**
    * Get all DM conversations for a user
+   * Matches: GET /api/dms/user/{userId}
    */
   static async getDmsForUser(userId: string): Promise<DmResponse[]> {
-    return ApiService.get<DmResponse[]>(`/dms/user/${userId}`);
+    try {
+      console.log(`Fetching DMs for user: ${userId}`);
+      const result = await apiService.get<DmResponse[]>(`/dms/user/${userId}`);
+      console.log('DMs fetched successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('Failed to fetch DMs for user:', userId, error);
+      throw error;
+    }
   }
 
   /**
    * Get a specific DM conversation by ID
+   * Matches: GET /api/dms/{id}
    */
   static async getDm(dmId: string): Promise<DmResponse> {
-    return ApiService.get<DmResponse>(`/dms/${dmId}`);
+    try {
+      console.log(`Fetching DM: ${dmId}`);
+      const result = await apiService.get<DmResponse>(`/dms/${dmId}`);
+      console.log('DM fetched successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('Failed to fetch DM:', dmId, error);
+      throw error;
+    }
   }
 
   /**
    * Create a new DM conversation
+   * Matches: POST /api/dms
    */
   static async createDm(request: DmCreateRequest): Promise<DmResponse> {
-    return ApiService.post<DmResponse>('/dms', request);
+    try {
+      console.log('Creating DM:', request);
+      const result = await apiService.post<DmResponse>('/dms', request);
+      console.log('DM created successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('Failed to create DM:', request, error);
+      throw error;
+    }
   }
 
-  /** 
-   * Get all DM conversations for a user with query params
+  /**
+   * Add a participant to a DM conversation
+   * Matches: POST /api/dms/{id}/participants
    */
-  static async getUserDms(
-    userId: string,
-    params: DmQueryParams = {}
-  ): Promise<DmResponse[]> {
-    const queryString = ApiService.buildQueryString(params);
-    return ApiService.get<DmResponse[]>(`/dms/user/${userId}${queryString}`);
+  static async addParticipant(
+    dmId: string,
+    request: DmParticipantCreateRequest
+  ): Promise<DmParticipantResponse> {
+    try {
+      console.log(`Adding participant to DM ${dmId}:`, request);
+      const result = await apiService.post<DmParticipantResponse>(`/dms/${dmId}/participants`, request);
+      console.log('Participant added successfully:', result);
+      return result;
+    } catch (error) {
+      console.error('Failed to add participant:', dmId, request, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove a participant from a DM conversation
+   * Matches: DELETE /api/dms/{id}/participants/{userId}
+   */
+  static async removeParticipant(dmId: string, userId: string): Promise<void> {
+    try {
+      console.log(`Removing participant ${userId} from DM ${dmId}`);
+      await apiService.delete<void>(`/dms/${dmId}/participants/${userId}`);
+      console.log('Participant removed successfully');
+    } catch (error) {
+      console.error('Failed to remove participant:', dmId, userId, error);
+      throw error;
+    }
   }
 
   /**
@@ -67,57 +117,5 @@ export class DmService {
     }
     
     return 'Direct Message';
-  }
-
-  /**
-   * Update a DM conversation
-   */
-  static async updateDm(
-    dmId: string,
-    request: DmUpdateRequest
-  ): Promise<DmResponse> {
-    return ApiService.put<DmResponse>(`/dms/${dmId}`, request);
-  }
-
-  /**
-   * Delete a DM conversation
-   */
-  static async deleteDm(dmId: string): Promise<void> {
-    return ApiService.delete<void>(`/dms/${dmId}`);
-  }
-
-  /**
-   * Add a participant to a DM conversation
-   */
-  static async addParticipant(
-    dmId: string,
-    request: DmParticipantCreateRequest
-  ): Promise<DmParticipantResponse> {
-    return ApiService.post<DmParticipantResponse>(`/dms/${dmId}/participants`, request);
-  }
-
-  /**
-   * Update a participant in a DM conversation
-   */
-  static async updateParticipant(
-    dmId: string,
-    participantId: string,
-    request: DmParticipantUpdateRequest
-  ): Promise<DmParticipantResponse> {
-    return ApiService.put<DmParticipantResponse>(`/dms/${dmId}/participants/${participantId}`, request);
-  }
-
-  /**
-   * Remove a participant from a DM conversation
-   */
-  static async removeParticipant(dmId: string, participantId: string): Promise<void> {
-    return ApiService.delete<void>(`/dms/${dmId}/participants/${participantId}`);
-  }
-
-  /**
-   * Get participants of a DM conversation
-   */
-  static async getParticipants(dmId: string): Promise<DmParticipantResponse[]> {
-    return ApiService.get<DmParticipantResponse[]>(`/dms/${dmId}/participants`);
   }
 }

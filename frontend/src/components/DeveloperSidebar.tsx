@@ -28,9 +28,10 @@ export function DeveloperSidebar({ activeTool, onToolChange }: DeveloperSidebarP
 
   const tools = [
     { id: "kanban", label: "BackLog", icon: Kanban },
-    { id: "uml", label: "WireFrame", icon: Network },
+    { id: "canvas", label: "WireFrame", icon: Network },
     { id: "calendar", label: "Calendar", icon: Calendar },
     { id: "ai", label: "PingBot AI", icon: Bot },
+    
   ];
 
   const getStatusColor = (status: string) => {

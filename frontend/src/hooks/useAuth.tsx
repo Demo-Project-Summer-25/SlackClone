@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserService } from '../services/userService';
+import { userService } from '../services/userService';
 import { User } from '../types/user';
 
-// The shape of our authentication context
+// Shape of our authentication context
 interface AuthContextType {
   currentUser: User | null;
   isLoading: boolean;
@@ -24,11 +24,21 @@ export const AuthProvider = ({ children }: AuthProviderProps): React.ReactElemen
   useEffect(() => {
     const fetchDemoUser = async () => {
       try {
-        // Demo UUID from your seed file (Alice)
-        const demoUserId = '68973614-94db-4f98-9729-0712e0c5c0fa';
-        const user = await UserService.getUserById(demoUserId);
-        console.log("Fetched user from API:", user);
-        setCurrentUser(user);
+
+        // Demo UUIDs from your seed file
+        const aliceId = '68973614-94db-4f98-9729-0712e0c5c0fa';
+        const umaId   = '962f18a5-f888-4886-b93d-a763ff8c9d98';
+
+        // Read query string (e.g. ?user=alice or ?user=uma)
+        const params = new URLSearchParams(window.location.search);
+        const userKey = params.get('user') || 'alice'; // default to alice
+
+        const selectedId = userKey === 'uma' ? umaId : aliceId;
+
+        const userData = await userService.getUserById(selectedId);
+
+        console.log("Fetched user from API:", userData);
+        setCurrentUser(userData);
 
       } catch (error) {
         console.error('Failed to fetch demo user:', error);
@@ -45,7 +55,6 @@ export const AuthProvider = ({ children }: AuthProviderProps): React.ReactElemen
       {children}
     </AuthContext.Provider>
   );
-
 };
 
 // Custom hook to consume context

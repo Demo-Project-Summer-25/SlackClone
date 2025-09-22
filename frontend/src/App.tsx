@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { TopNavigation } from "./components/TopNavigation";
 import { DeveloperSidebar } from "./components/DeveloperSidebar";
 import { MainContent } from "./components/MainContent";
@@ -12,14 +12,22 @@ import {
   X, 
   Terminal, 
   Kanban,
-  PanelLeftOpen // Changed from PanelRightOpen since sidebar is now on the right
+  PanelLeftOpen
 } from "lucide-react";
 import React from 'react'; 
 import { DmPage } from './pages/DmPage';
+import { ProfilePage } from './components/ProfilePage';
 import './styles/dm.css';
+import ErrorBoundary from './components/ErrorBoundary';
+
+interface NotificationCounts {
+  total: number;
+  directories: number;
+  pings: number;
+}
 
 function AppContent() {
-  // Default to directories tab (not terminals)
+  // Default to directories tab
   const [activeTab, setActiveTab] = useState("directories");
   // Default to AI bot on the right
   const [activeTool, setActiveTool] = useState("ai");
@@ -39,22 +47,32 @@ function AppContent() {
 
   const [showProfilePage, setShowProfilePage] = useState(false);
 
+  // Add this state
+  const [notificationCounts, setNotificationCounts] = useState<NotificationCounts>({
+    total: 0,
+    directories: 0,
+    pings: 0
+  });
+
+  // ✅ Add notifications state to App level
+  const [notifications, setNotifications] = useState<any[]>([]);
+
   // Handle split screen mode toggle
   const handleSplitScreenToggle = (enabled: boolean) => {
     setSplitScreenMode(enabled);
     
     if (enabled) {
+      // When enabling split screen, show both panels
       setShowDevTools(true);
+      setShowMainContent(true);
       setActiveTool("ai");
-      
-      if (!showMainContent) {
-        setShowMainContent(true);
-      }
-    } else {
-      if (showMainContent && showDevTools) {
-        // Keep both open but remove split mode
-      }
     }
+    // When disabling split screen, keep current state but they'll be mutually exclusive
+  };
+
+  // Handle terminal selection - just show a toast notification for now
+  const handleTerminalSelect = (terminal: { id: string; name: string; type: string; status: "running" | "paused" }) => {
+    toast(`Selected terminal: ${terminal.name} (${terminal.status})`);
   };
 
   // Handle tab changes - close DM conversations when switching tabs
@@ -69,9 +87,30 @@ function AppContent() {
       setShowProfilePage(false);
     }
     
-    // Auto-open main content when switching tabs
-    if (!showMainContent) {
+    // When changing tabs, show main content
+    if (splitScreenMode) {
+      // In split mode, show both
       setShowMainContent(true);
+      setShowDevTools(true);
+    } else {
+      // In non-split mode, show main content and hide dev tools
+      setShowMainContent(true);
+      setShowDevTools(false);
+    }
+  };
+
+  // Handle tool changes from developer sidebar
+  const handleToolChange = (tool: string) => {
+    setActiveTool(tool);
+    
+    if (splitScreenMode) {
+      // In split mode, show both panels
+      setShowMainContent(true);
+      setShowDevTools(true);
+    } else {
+      // In non-split mode, show only dev tools when selecting a tool
+      setShowMainContent(false);
+      setShowDevTools(true);
     }
   };
 
@@ -82,17 +121,76 @@ function AppContent() {
 
   // Handle panel closing with split screen mode considerations
   const handleCloseMainContent = () => {
-    setShowMainContent(false);
+    if (splitScreenMode) {
+      // In split mode, just hide main content
+      setShowMainContent(false);
+    } else {
+      // In non-split mode, show dev tools when closing main content
+      setShowMainContent(false);
+      setShowDevTools(true);
+    }
     setActiveDirectory(null);
     setShowProfilePage(false);
   };
 
   const handleCloseDevTools = () => {
-    setShowDevTools(false);
+    if (splitScreenMode) {
+      // In split mode, just hide dev tools
+      setShowDevTools(false);
+    } else {
+      // In non-split mode, show main content when closing dev tools
+      setShowDevTools(false);
+      setShowMainContent(true);
+    }
   };
 
   // Use Alice's actual ID from import.sql
   const currentUserId = '68973614-94db-4f98-9729-0712e0c5c0fa';
+
+  // ✅ Add function to fetch notifications at App level
+  const fetchNotifications = () => {
+    fetch("http://localhost:8080/api/notifications")
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return res.json();
+      })
+      .then((data) => {
+        const mappedNotifications = Array.isArray(data) ? data.map(notif => ({
+          id: notif.id,
+          text: notif.text,
+          message: notif.text,
+          status: notif.status,
+          type: notif.type,
+          createdAt: notif.createdAt,
+          readAt: notif.readAt,
+          messageId: notif.messageId,
+          directConversationId: notif.directConversationId,
+          channelId: notif.channelId,
+          unread: notif.status === 'UNREAD'
+        })) : [];
+        setNotifications(mappedNotifications);
+        
+        // ✅ Calculate and update notification counts
+        const unreadNotifications = mappedNotifications.filter(n => n.status === 'UNREAD');
+        setNotificationCounts({
+          total: unreadNotifications.length,
+          directories: unreadNotifications.filter(n => n.channelId).length,
+          pings: unreadNotifications.filter(n => n.directConversationId).length
+        });
+      })
+      .catch((error) => {
+        console.error('Error fetching notifications:', error);
+        setNotifications([]);
+      });
+  };
+
+  // ✅ Fetch notifications on app load
+  useEffect(() => {
+    fetchNotifications();
+    // Optionally set up polling for real-time updates
+    const interval = setInterval(fetchNotifications, 30000); // every 30 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -102,9 +200,9 @@ function AppContent() {
           variant="ghost"
           size="sm"
           onClick={() => setShowDeveloperSidebar(true)}
-          className="fixed top-4 right-4 z-50 bg-background/80 backdrop-blur-sm" // Changed from left-4 to right-4
+          className="fixed top-4 right-4 z-50 bg-background/80 backdrop-blur-sm"
         >
-          <PanelLeftOpen className="w-4 h-4" /> {/* Changed icon */}
+          <PanelLeftOpen className="w-4 h-4" />
         </Button>
       )}
 
@@ -113,10 +211,11 @@ function AppContent() {
         onTabChange={handleTabChange}
         splitScreenMode={splitScreenMode}
         onSplitScreenToggle={handleSplitScreenToggle}
+        onTerminalSelect={handleTerminalSelect}
+        notificationCounts={notificationCounts}
       />
       
       <div className="flex flex-1 overflow-hidden">
-        {/* Main content area - now comes FIRST (left side) */}
         <div className="flex-1 flex overflow-hidden">
           {bothPanelsVisible ? (
             <ResizablePanelGroup direction="horizontal" className="flex-1">
@@ -131,9 +230,12 @@ function AppContent() {
                     <X className="w-4 h-4" />
                   </Button>
                   
-                  {/* Show DM Page when dms tab is active */}
                   {activeTab === "dms" ? (
-                    <DmPage currentUserId={currentUserId} />
+                    <DmPage 
+                      currentUserId={currentUserId} 
+                      notifications={notifications}
+                      onNotificationsChange={fetchNotifications}
+                    />
                   ) : (
                     <MainContent 
                       activeTab={activeTab} 
@@ -141,9 +243,13 @@ function AppContent() {
                       activeDirectory={activeDirectory}
                       onOpenDirectory={setActiveDirectory}
                       onCloseDirectory={() => setActiveDirectory(null)}
-                      showProfilePage={showProfilePage}
+                      showProfilePage={showProfilePage} // ✅ Pass the actual state
                       onOpenProfilePage={() => setShowProfilePage(true)}
                       onCloseProfilePage={() => setShowProfilePage(false)}
+                      onNavigateToTab={setActiveTab}
+                      notifications={notifications}
+                      onNotificationsChange={fetchNotifications}
+                      onNotificationCountsChange={setNotificationCounts}
                     />
                   )}
                 </div>
@@ -161,7 +267,7 @@ function AppContent() {
                   >
                     <X className="w-4 h-4" />
                   </Button>
-                  <DeveloperToolsContent activeTool={activeTool} isInSplitMode={bothPanelsVisible} />
+                  <DeveloperToolsContent activeTool={activeTool} isInSplitMode={bothPanelsVisible} currentUserId={currentUserId} />
                 </div>
               </ResizablePanel>
             </ResizablePanelGroup>
@@ -176,9 +282,12 @@ function AppContent() {
                 <X className="w-4 h-4" />
               </Button>
               
-              {/* Show DM Page when dms tab is active */}
               {activeTab === "dms" ? (
-                <DmPage currentUserId={currentUserId} />
+                <DmPage 
+                  currentUserId={currentUserId}
+                  notifications={notifications}
+                  onNotificationsChange={fetchNotifications}
+                />
               ) : (
                 <MainContent 
                   activeTab={activeTab} 
@@ -186,9 +295,13 @@ function AppContent() {
                   activeDirectory={activeDirectory}
                   onOpenDirectory={setActiveDirectory}
                   onCloseDirectory={() => setActiveDirectory(null)}
-                  showProfilePage={showProfilePage}
+                  showProfilePage={showProfilePage} // ✅ Pass the actual state
                   onOpenProfilePage={() => setShowProfilePage(true)}
                   onCloseProfilePage={() => setShowProfilePage(false)}
+                  onNavigateToTab={setActiveTab}
+                  notifications={notifications}
+                  onNotificationsChange={fetchNotifications}
+                  onNotificationCountsChange={setNotificationCounts}
                 />
               )}
             </div>
@@ -202,7 +315,7 @@ function AppContent() {
               >
                 <X className="w-4 h-4" />
               </Button>
-              <DeveloperToolsContent activeTool={activeTool} isInSplitMode={false} />
+              <DeveloperToolsContent activeTool={activeTool} isInSplitMode={false} currentUserId={currentUserId} />
             </div>
           ) : (
             <div className="flex-1 flex items-center justify-center">
@@ -222,11 +335,11 @@ function AppContent() {
           )}
         </div>
 
-        {/* Developer Sidebar - now comes SECOND (right side) */}
-        {showDeveloperSidebar && (
+        {/* ✅ Developer sidebar only shows when profile page is not open */}
+        {!showProfilePage && showDeveloperSidebar && (
           <DeveloperSidebar 
             activeTool={activeTool}
-            onToolChange={setActiveTool}
+            onToolChange={handleToolChange}
             onClose={() => setShowDeveloperSidebar(false)}
           />
         )}
@@ -238,9 +351,14 @@ function AppContent() {
 }
 
 export default function App() {
+  // ✅ CHANGED: Set default tab to notifications
+  const [activeTab, setActiveTab] = useState('notifications');
+
   return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider defaultTheme="system" storageKey="ping-theme">
+        <AppContent />
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
