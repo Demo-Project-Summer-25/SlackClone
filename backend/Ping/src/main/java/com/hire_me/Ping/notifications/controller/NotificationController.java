@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -35,11 +36,8 @@ import com.hire_me.Ping.notifications.service.NotificationService;
 @RequestMapping("/api/notifications")
 public class NotificationController {
 
-    private final NotificationService notificationService;
-
-    public NotificationController(NotificationService notificationService) {
-        this.notificationService = notificationService;
-    }
+    @Autowired
+    private NotificationService notificationService;
 
     // ---------------------------------------------------------
     // GET /api/notifications?unread=true|false&limit=50
@@ -124,6 +122,21 @@ public class NotificationController {
     }
 
     // ---------------------------------------------------------
+    // POST /api/notifications/test/create-demo-data
+    // Create demo notifications for testing.
+    // Returns 200 OK if successful, 500 if there's an error.
+    // ---------------------------------------------------------
+    @PostMapping("/test/create-demo-data")
+    public ResponseEntity<String> createDemoData() {
+        try {
+            notificationService.createTestNotifications();
+            return ResponseEntity.ok("Demo notifications created successfully");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error: " + e.getMessage());
+        }
+    }
+
+    // ---------------------------------------------------------
     // Helper: get current user id from Principal
     // NOTE:
     // - In real apps, Principal is often a custom object with userId.
@@ -131,13 +144,13 @@ public class NotificationController {
     // ---------------------------------------------------------
     private UUID getCurrentUserId(Principal principal) {
         if (principal == null) {
-            // Return Alice's ID for testing when no authentication
+            // Return Jennifer's ID for testing when no authentication
             return UUID.fromString("68973614-94db-4f98-9729-0712e0c5c0fa");
         }
         try {
             return UUID.fromString(principal.getName());
         } catch (IllegalArgumentException e) {
-            // Fallback to Alice's ID if principal.getName() isn't a valid UUID
+            // Fallback to Jennifer's ID if principal.getName() isn't a valid UUID
             return UUID.fromString("68973614-94db-4f98-9729-0712e0c5c0fa");
         }
     }

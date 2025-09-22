@@ -183,9 +183,6 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
               <h1 className="text-xl font-semibold text-foreground">
                 {canvas.title}
               </h1>
-              <p className="text-sm text-muted-foreground">
-                Visual workspace editor
-              </p>
             </div>
           </div>
           
@@ -238,11 +235,6 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
 
           {/* Canvas Details */}
           <Card className="bg-card/60 backdrop-blur border-border">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg text-foreground">
-                Canvas Information
-              </CardTitle>
-            </CardHeader>
             <CardContent className="space-y-4">
               {isEditing ? (
                 <>
