@@ -369,7 +369,8 @@ export function MainContent({
     if (showProfilePage) {
       return (
         <div className="h-full">
-          <ProfilePage onClose={onCloseProfilePage} />
+          <ProfilePage onClose={onCloseProfilePage ?? (() => {})} />
+
         </div>
       );
     }

@@ -4,16 +4,14 @@ import {
   MoreVertical,
   Hash,
   Users,
+  ArrowDown,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 import { MessageInput } from "./ui/MessageInput";
 import { useAuth } from "../hooks/useAuth";
 import { Client } from "@stomp/stompjs";
-
 import { useTheme } from "./ThemeProvider";
-import { toast } from 'sonner';
-import '../styles/bot.css';
 import {
   Select,
   SelectContent,
@@ -21,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-
 
 interface DirectoryViewProps {
   directory: {
@@ -39,56 +36,55 @@ interface DirectoryViewProps {
   onSelectDirectory?: (id: string) => void;
 }
 
-// ✅ Correct single function declaration
-export function DirectoryView({ 
-  directory, 
-  onBack, 
-  availableDirectories = [], 
-  onSelectDirectory 
+export function DirectoryView({
+  directory,
+  onBack,
+  availableDirectories = [],
+  onSelectDirectory,
 }: DirectoryViewProps) {
   const { theme } = useTheme();
-  
-  // ✅ All your state declarations can stay
-  const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<any[]>([]);
   const [userMap, setUserMap] = useState<Record<string, any>>({});
-  const [inputMessage, setInputMessage] = useState('');
+  const [inputMessage, setInputMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { currentUser } = useAuth();
 
-  // Load channel members
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showNewMessageBtn, setShowNewMessageBtn] = useState(false);
+
+  // track whether user is scrolled to bottom
+  const isAtBottom = () => {
+    const container = scrollContainerRef.current;
+    if (!container) return true;
+    return container.scrollHeight - container.scrollTop <= container.clientHeight + 50;
+  };
+
+  // Load members
   useEffect(() => {
     if (!directory?.id) return;
-
     fetch(`/api/channels/${directory.id}/members`)
       .then((res) => res.json())
       .then((members) => {
         const map: Record<string, any> = {};
-        members.forEach((m: any) => {
-          map[m.user.id] = m.user;
-        });
+        members.forEach((m: any) => (map[m.user.id] = m.user));
         setUserMap(map);
-      })
-      .catch(() => setUserMap({}));
+      });
   }, [directory.id]);
 
-  // Load initial channel messages
+  // Load initial messages
   useEffect(() => {
     if (!directory?.id) return;
-
     fetch(`/api/channels/${directory.id}/messages`)
       .then((res) => res.json())
-      .then((data) => setMessages(Array.isArray(data) ? data : []))
-      .catch(() => setMessages([]));
+      .then((data) => setMessages(Array.isArray(data) ? data : []));
   }, [directory.id]);
 
-  // WebSocket subscription
+  // Subscribe to WebSocket
   useEffect(() => {
     if (!directory?.id) return;
-
     const client = new Client({
-      brokerURL: "ws://localhost:8080/ws", // <— no SockJS
+      brokerURL: "ws://localhost:8080/ws",
       reconnectDelay: 5000,
     });
 
@@ -96,7 +92,16 @@ export function DirectoryView({
       client.subscribe(`/topic/channels/${directory.id}`, (frame) => {
         const payload = JSON.parse(frame.body);
         if (payload.type === "created") {
-          setMessages((prev) => [...prev, payload.message]);
+          setMessages((prev) => {
+            // If user at bottom → auto scroll, else show button
+            if (isAtBottom()) {
+              setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
+              return [...prev, payload.message];
+            } else {
+              setShowNewMessageBtn(true);
+              return [...prev, payload.message];
+            }
+          });
         } else if (payload.type === "updated") {
           setMessages((prev) =>
             prev.map((m) => (m.id === payload.message.id ? payload.message : m))
@@ -108,220 +113,111 @@ export function DirectoryView({
     };
 
     client.activate();
-    return () => {
-      client.deactivate();
-    };
+    return () => client.deactivate();
   }, [directory.id]);
 
-  // Fallback fetch for unknown senders
-  const fetchUserIfMissing = async (userId: string) => {
-    if (!userId || userMap[userId]) return;
-    try {
-      const res = await fetch(`/api/users/${userId}`);
-      if (res.ok) {
-        const fetchedUser = await res.json();
-        setUserMap((prev) => ({ ...prev, [fetchedUser.id]: fetchedUser }));
-      }
-    } catch (e) {
-      console.error("Failed to fetch user", e);
-    }
-  };
+  // Scroll handler
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const onScroll = () => {
+      if (isAtBottom()) setShowNewMessageBtn(false);
+    };
+    container.addEventListener("scroll", onScroll);
+    return () => container.removeEventListener("scroll", onScroll);
+  }, []);
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
-
-    const userMessage: any = {
-      id: Date.now().toString(),
-      content: inputMessage,
-      senderUserId: currentUser?.id,
-      timestamp: Date.now(),
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
+    setInputMessage("");
     setIsLoading(true);
 
     fetch(`/api/channels/${directory.id}/messages`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content: inputMessage,
-        senderUserId: currentUser?.id,
-      }),
-    }).then(() => {
-      setMessage("");
-      setIsLoading(false);
-    }).catch(() => {
-      setIsLoading(false);
-      toast.error("Failed to send message");
-    });
+      body: JSON.stringify({ content: inputMessage, senderUserId: currentUser?.id }),
+    }).finally(() => setIsLoading(false));
   };
 
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-2 sm:p-4 border-b border-border">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <Button variant="ghost" size="sm" onClick={onBack}>
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-          <div className="flex items-center gap-2 flex-1 min-w-0">
-            <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary rounded-lg flex items-center justify-center shrink-0">
-              <Hash className="w-3 h-3 sm:w-4 sm:h-4 text-primary-foreground" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h3 className="font-medium text-sm sm:text-base truncate">
-                  {directory.name}
-                </h3>
-                {directory.isPrivate && (
-                  <Badge variant="secondary" className="text-xs shrink-0">
-                    Private
-                  </Badge>
-                )}
-              </div>
-              <div className="hidden sm:flex items-center gap-3 text-sm text-muted-foreground">
-                <Users className="w-3 h-3" />
-                <span>{directory.memberCount} members</span>
-                <span>•</span>
-                <span className="truncate">{directory.description}</span>
-              </div>
-            </div>
-          </div>
+      <div className="p-2 sm:p-4 border-b border-border flex items-center gap-2">
+        <Button variant="ghost" size="sm" onClick={onBack}>
+          <ArrowLeft className="w-4 h-4" />
+        </Button>
+        <h3 className="font-medium">{directory.name}</h3>
+        <div className="ml-auto flex gap-2">
           {availableDirectories.length > 0 && (
-            <div className="hidden sm:block w-48">
-              <Select
-                value={directory.id}
-                onValueChange={value => onSelectDirectory?.(value)}
-              >
-                <SelectTrigger className="h-9">
-                  <SelectValue placeholder="Select channel" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableDirectories.map(dir => (
-                    <SelectItem key={dir.id} value={dir.id}>
-                      {dir.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+            <Select value={directory.id} onValueChange={(v) => onSelectDirectory?.(v)}>
+              <SelectTrigger className="h-8 w-32">
+                <SelectValue placeholder="Select channel" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableDirectories.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>
+                    {d.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
           <Button variant="ghost" size="sm">
             <MoreVertical className="w-4 h-4" />
           </Button>
         </div>
       </div>
-      {availableDirectories.length > 0 && (
-        <div className="sm:hidden px-3 py-2 border-b border-border">
-          <Select
-            value={directory.id}
-            onValueChange={value => onSelectDirectory?.(value)}
+
+      {/* Messages */}
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto px-6 py-4 space-y-4">
+        {messages.map((msg) => {
+          const sender = userMap[msg.senderUserId];
+          const isOwn = msg.senderUserId === currentUser?.id;
+          return (
+            <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
+              <div className="max-w-[70%]">
+                {!isOwn && (
+                  <p className="text-xs text-muted-foreground mb-1">
+                    {sender ? sender.displayName || sender.username : msg.senderUserId}
+                  </p>
+                )}
+                <div className={`p-3 rounded-lg ${isOwn ? "bg-black text-white" : "bg-gray-200"}`}>
+                  {msg.content}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {msg.createdAt &&
+                    new Date(msg.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </p>
+              </div>
+            </div>
+          );
+        })}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* New Message Button */}
+      {showNewMessageBtn && (
+        <div className="px-4 pb-2">
+          <Button
+            onClick={() => {
+              messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+              setShowNewMessageBtn(false);
+            }}
+            className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground"
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Select channel" />
-            </SelectTrigger>
-            <SelectContent>
-              {availableDirectories.map(dir => (
-                <SelectItem key={dir.id} value={dir.id}>
-                  {dir.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <ArrowDown className="w-4 h-4" />
+            New Message
+          </Button>
         </div>
       )}
 
-      {/* Messages */}
-      <div className="flex-1 overflow-auto px-6 py-8 space-y-6">
-        {messages.length === 0 ? (
-          <div className="text-center text-muted-foreground py-12">
-            <p className="text-lg">No messages yet. Start the conversation!</p>
-          </div>
-        ) : (
-          <>
-            {messages.map((msg) => {
-              const sender = userMap[msg.senderUserId];
-              if (!sender) fetchUserIfMissing(msg.senderUserId);
-              const isOwn = msg.senderUserId === currentUser?.id;
-
-              return (
-                <div key={msg.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[70%] ${isOwn ? "order-2" : "order-1"}`}>
-                    {/* Show sender name for other people's messages */}
-                    {!isOwn && (
-                      <p className="text-sm font-medium text-muted-foreground mb-1 px-1">
-                        {sender ? sender.displayName || sender.username : msg.senderUserId}
-                      </p>
-                    )}
-
-                    <div
-                      className={`p-4 rounded-lg relative transition-all duration-200 hover:shadow-md ${
-                        isOwn
-                          ? // ✅ Own messages: Black background in light mode, white background in dark mode
-                            theme === 'dark' 
-                              ? "bg-white text-black shadow-md border border-gray-200/80" 
-                              : "bg-black text-white shadow-md border border-gray-800/80"
-                          : // ✅ Other messages: Styled differently
-                            theme === 'dark'
-                              ? "bg-gray-800 text-gray-100 shadow-md border border-gray-700/50"
-                              : "bg-gray-50 text-gray-900 shadow-md border border-gray-200/80 hover:bg-gray-100"
-                      }`}
-                      style={{
-                        boxShadow: isOwn 
-                          ? // ✅ Simple shadows for own messages
-                            theme === 'dark' 
-                              ? '0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1)'
-                              : '0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 3px rgba(0, 0, 0, 0.1)'
-                          : // ✅ Shadows for other messages
-                            theme === 'dark'
-                              ? '0 2px 4px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2)'
-                              : '0 2px 4px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.05)'
-                      }}
-                    >
-                      <p 
-                        className="text-base leading-relaxed"
-                        style={{
-                          color: isOwn 
-                            ? theme === 'dark' ? '#000000' : '#ffffff'  // ✅ Force proper contrast
-                            : theme === 'dark' ? '#f3f4f6' : '#111827'
-                        }}
-                      >
-                        {msg.content}
-                      </p>
-                      
-                      {/* ✅ Status indicator for own messages */}
-                      {isOwn && (
-                        <div className={`absolute -bottom-1 -right-1 w-2 h-2 rounded-full opacity-60 ${
-                          theme === 'dark' ? 'bg-black/30' : 'bg-white/30'
-                        }`}></div>
-                      )}
-                    </div>
-                    
-                    <p className={`text-sm mt-2 px-1 transition-colors ${
-                      theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-                    }`}>
-                      {new Date(msg.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </>
-        )}
-      </div>
-
-      {/* Message Input */}
+      {/* Input */}
       <MessageInput
         message={inputMessage}
         onMessageChange={setInputMessage}
         onSendMessage={sendMessage}
         placeholder={`Message #${directory.name}...`}
         disabled={isLoading}
-        className=""
       />
     </div>
   );
