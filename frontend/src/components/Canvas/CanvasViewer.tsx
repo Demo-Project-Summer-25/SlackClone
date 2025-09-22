@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
-import { ArrowLeft, Save, Edit, Calendar, User } from 'lucide-react';
-import { canvasService, Canvas } from '../../services/canvasService';
+import { ArrowLeft, Edit, Save, Calendar, User } from 'lucide-react';
 import { toast } from 'sonner';
 import { VisualCanvas } from './VisualCanvas';
+import { canvasService } from '../../services/canvasService';
 
 interface CanvasViewerProps {
-  canvasId: string;              
+  canvasId: string;
   onBack: () => void;
 }
 
@@ -17,14 +17,15 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
   canvasId,
   onBack
 }) => {
-  const [canvas, setCanvas] = useState<Canvas | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [canvas, setCanvas] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    canvasData: ''
   });
+  const [canvasData, setCanvasData] = useState<{ nodes: any[], edges: any[] } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (canvasId) {
@@ -39,11 +40,26 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
       setLoading(true);
       const data = await canvasService.getCanvas(canvasId);
       setCanvas(data);
+      
+      // Set current canvas ID for VisualCanvas to use
+      localStorage.setItem('current-canvas-id', canvasId);
+      
       setFormData({
         title: data.title,
-        description: data.description || '',
-        canvasData: JSON.stringify(data.canvasData, null, 2)    
+        description: '', // Backend doesn't support description yet
       });
+      
+      // Try to load saved canvas data from localStorage
+      const savedData = localStorage.getItem(`canvas-data-${canvasId}`);
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          setCanvasData({ nodes: parsed.nodes, edges: parsed.edges });
+        } catch (error) {
+          console.error('Failed to parse saved canvas data');
+        }
+      }
+      
     } catch (error) {
       toast.error('Failed to load canvas');
       console.error('Error loading canvas:', error);
@@ -52,35 +68,63 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
     }
   };
 
-  const handleSave = async () => {
+  const handleSaveInfo = async () => {
     if (!canvas || !formData.title.trim()) {
       toast.error('Canvas title is required');
       return;
     }
 
     try {
-      let parsedCanvasData;
-      try {
-        parsedCanvasData = JSON.parse(formData.canvasData);
-      } catch {
-        toast.error('Invalid JSON in canvas data');
-        return;
-      }
-
+      setIsSaving(true);
       const updatedCanvas = await canvasService.updateCanvas(canvas.id, {
         title: formData.title,
-        description: formData.description || undefined,
-        canvasData: parsedCanvasData                            
+        // Remove description since backend doesn't support it
       });
 
       setCanvas(updatedCanvas);
       setIsEditing(false);
-      toast.success('Canvas saved successfully');
+      toast.success('Canvas info saved successfully');
+    } catch (error) {
+      toast.error('Failed to save canvas info');
+      console.error('Error saving canvas info:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSaveCanvas = useCallback(async () => {
+    if (!canvas) {
+      toast.error('No canvas to save');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      
+      // Get current data from temp storage
+      const currentData = localStorage.getItem(`canvas-temp-${canvas.id}`);
+      if (!currentData) {
+        // If no temp data, create a minimal save from current state
+        const defaultData = {
+          nodes: [],
+          edges: [],
+          timestamp: new Date().toISOString(),
+        };
+        localStorage.setItem(`canvas-data-${canvas.id}`, JSON.stringify(defaultData));
+        toast.success('Canvas saved successfully');
+      } else {
+        // Save temp data to permanent storage
+        localStorage.setItem(`canvas-data-${canvas.id}`, currentData);
+        toast.success('Canvas saved successfully');
+      }
+      
     } catch (error) {
       toast.error('Failed to save canvas');
       console.error('Error saving canvas:', error);
+    } finally {
+      setIsSaving(false);
     }
-  };
+  }, [canvas]);
 
   const toggleEdit = () => {
     if (isEditing) {
@@ -88,7 +132,6 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
         setFormData({
           title: canvas.title,
           description: canvas.description || '',
-          canvasData: JSON.stringify(canvas.canvasData, null, 2)  
         });
       }
     }
@@ -128,7 +171,7 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
 
   return (
     <div className="h-full flex flex-col bg-background">
-      {/* ✅ Header - Removed Edit Button */}
+      {/* Header with Save Button */}
       <div className="flex-shrink-0 border-b border-border bg-card/50 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="flex justify-between items-center p-4">
           <div className="flex items-center gap-4">
@@ -145,6 +188,35 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
               </p>
             </div>
           </div>
+          
+          {/* Save and Edit Buttons in Header */}
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleSaveCanvas} 
+              variant="outline" 
+              size="sm" 
+              className="gap-2"
+              disabled={isSaving} // Remove the !canvasData condition
+            >
+              <Save className="h-4 w-4" />
+              {isSaving ? 'Saving...' : 'Save Canvas'}
+            </Button>
+            <Button onClick={toggleEdit} variant="outline" size="sm" className="gap-2">
+              <Edit className="h-4 w-4" />
+              {isEditing ? 'Cancel' : 'Edit Info'}
+            </Button>
+            {isEditing && (
+              <Button 
+                onClick={handleSaveInfo} 
+                size="sm" 
+                className="gap-2"
+                disabled={isSaving}
+              >
+                <Save className="h-4 w-4" />
+                {isSaving ? 'Saving...' : 'Save Info'}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -152,33 +224,23 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
       <div className="flex-1 overflow-y-auto">
         <div className="p-4 space-y-6">
           
-          {/* ✅ Visual Canvas Editor - Now at the top */}
+          {/* Visual Canvas Editor */}
           <Card className="bg-card/60 backdrop-blur border-border">
             <CardContent className="p-0">
               <div className="rounded-lg overflow-hidden">
-                <VisualCanvas />
+                <VisualCanvas 
+                  onSave={handleSaveCanvas} 
+                  initialData={canvasData}
+                />
               </div>
             </CardContent>
           </Card>
 
-          {/* ✅ Canvas Details - Edit button moved here */}
+          {/* Canvas Details */}
           <Card className="bg-card/60 backdrop-blur border-border">
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg text-foreground flex items-center justify-between">
+              <CardTitle className="text-lg text-foreground">
                 Canvas Information
-                <div className="flex gap-2">
-                  {/* ✅ Edit button moved to this section */}
-                  <Button onClick={toggleEdit} variant="outline" size="sm" className="gap-2">
-                    <Edit className="h-4 w-4" />
-                    {isEditing ? 'Cancel' : 'Edit Info'}
-                  </Button>
-                  {isEditing && (
-                    <Button onClick={handleSave} size="sm" className="gap-2">
-                      <Save className="h-4 w-4" />
-                      Save Changes
-                    </Button>
-                  )}
-                </div>
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -193,26 +255,13 @@ export const CanvasViewer: React.FC<CanvasViewerProps> = ({
                       className="bg-background"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground mb-2">Description</label>
-                    <Textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                      placeholder="Add a description for this canvas..."
-                      rows={3}
-                      className="bg-background resize-none"
-                    />
-                  </div>
+                  {/* Remove description field since backend doesn't support it yet */}
                 </>
               ) : (
                 <>
                   <div>
                     <h3 className="font-semibold text-lg text-foreground">{canvas.title}</h3>
-                    {canvas.description ? (
-                      <p className="text-muted-foreground mt-1">{canvas.description}</p>
-                    ) : (
-                      <p className="text-muted-foreground mt-1 italic">No description provided</p>
-                    )}
+                    {/* Remove description display since backend doesn't support it */}
                   </div>
                   <div className="flex flex-wrap gap-4 text-sm text-muted-foreground pt-2 border-t border-border">
                     <div className="flex items-center gap-2">

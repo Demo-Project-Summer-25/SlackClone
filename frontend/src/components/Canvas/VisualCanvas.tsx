@@ -457,7 +457,7 @@ const initialEdges: Edge[] = [
 ];
 
 // Inner component that has access to useReactFlow
-const CanvasFlow: React.FC = () => {
+const CanvasFlow: React.FC<{ onSave?: () => void, onDataChange?: (data: { nodes: any[], edges: any }) => void, initialData?: any }> = ({ onSave, onDataChange, initialData }) => {
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [newNodeName, setNewNodeName] = useState('');
@@ -474,6 +474,37 @@ const CanvasFlow: React.FC = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { getNodes, getEdges } = useReactFlow();
   const isDark = useIsDarkMode(); // ✅ Use the proper hook
+
+  // Load initial data if provided
+  useEffect(() => {
+    if (initialData && initialData.nodes && initialData.edges) {
+      console.log('Loading initial data:', initialData);
+      setNodes(initialData.nodes);
+      setEdges(initialData.edges);
+    } else {
+      // Try to load from localStorage if no initial data
+      const savedData = localStorage.getItem(`canvas-data-${Date.now()}`);
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          if (parsed.nodes && parsed.edges) {
+            setNodes(parsed.nodes);
+            setEdges(parsed.edges);
+          }
+        } catch (error) {
+          console.error('Failed to parse saved canvas data:', error);
+        }
+      }
+    }
+  }, [initialData, setNodes, setEdges]);
+
+  // Report data changes to parent immediately
+  useEffect(() => {
+    console.log('Canvas data changed:', { nodes: nodes.length, edges: edges.length });
+    if (onDataChange) {
+      onDataChange({ nodes, edges });
+    }
+  }, [nodes, edges, onDataChange]);
 
   const onConnect = useCallback(
     (params: any) => {
@@ -627,9 +658,31 @@ const CanvasFlow: React.FC = () => {
       timestamp: new Date().toISOString(),
     };
     
-    console.log('Saving canvas:', canvasData);
-    localStorage.setItem('canvas-data', JSON.stringify(canvasData));
-    alert('Canvas saved to localStorage!');
+    // Save to temp location that CanvasViewer expects
+    const canvasId = localStorage.getItem('current-canvas-id'); // We'll set this from CanvasViewer
+    if (canvasId) {
+      localStorage.setItem(`canvas-temp-${canvasId}`, JSON.stringify(canvasData));
+    }
+    
+    if (onSave) {
+      onSave(); // Call parent's save function
+    } else {
+      // Fallback to localStorage save
+      console.log('Canvas auto-saved');
+    }
+  }, [nodes, edges, onSave]);
+
+  // Also auto-save on every change:
+  useEffect(() => {
+    const canvasId = localStorage.getItem('current-canvas-id');
+    if (canvasId && nodes.length > 0) {
+      const canvasData = {
+        nodes: nodes,
+        edges: edges,
+        timestamp: new Date().toISOString(),
+      };
+      localStorage.setItem(`canvas-temp-${canvasId}`, JSON.stringify(canvasData));
+    }
   }, [nodes, edges]);
 
   // Export canvas as JSON
@@ -739,10 +792,6 @@ const CanvasFlow: React.FC = () => {
             {showAdvanced && (
               <>
                 <div className="flex gap-2 pt-2 border-t border-border">
-                  <Button size="sm" variant="outline" onClick={saveCanvas} className="text-xs flex-1">
-                    <Save className="h-3 w-3 mr-1" />
-                    Save
-                  </Button>
                   <Button size="sm" variant="outline" onClick={exportCanvas} className="text-xs flex-1">
                     <Download className="h-3 w-3 mr-1" />
                     Export
@@ -886,12 +935,16 @@ const CanvasFlow: React.FC = () => {
   );
 };
 
-// Main component wrapped with ReactFlowProvider
-export const VisualCanvas: React.FC = () => {
+// Update the main component to accept onSave prop
+export const VisualCanvas: React.FC<{ 
+  onSave?: () => void;
+  onDataChange?: (data: { nodes: any[], edges: any }) => void;
+  initialData?: any;
+}> = ({ onSave, onDataChange, initialData }) => {
   return (
     <ReactFlowProvider>
       <div className="bg-background">
-        <CanvasFlow />
+        <CanvasFlow onSave={onSave} onDataChange={onDataChange} initialData={initialData} />
       </div>
     </ReactFlowProvider>
   );
