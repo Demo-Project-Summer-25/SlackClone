@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
-import { Plus, Edit, Trash2, Eye, Calendar } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Calendar, Pen } from 'lucide-react';
 import { canvasService, Canvas } from '../../services/canvasService';
 import { toast } from 'sonner';
 
@@ -159,7 +159,7 @@ export const CanvasList: React.FC<CanvasListProps> = ({
       <div className="mb-4 sm:mb-6 lg:mb-8">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl sm:text-2xl lg:text-3xl mb-2">WireFrame</h2>
+            <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-2">WireFrame</h2>
             <p className="text-sm sm:text-base text-muted-foreground">Create and manage UMLs and data models</p>
           </div>
           <Button
@@ -257,7 +257,9 @@ export const CanvasList: React.FC<CanvasListProps> = ({
               ) : (
                 <>
                   {/* Canvas icon */}
-                  <div className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-gradient-to-br from-blue-500 to-purple-600 shrink-0 opacity-70"></div>
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-purple-100 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700/50 flex items-center justify-center shrink-0">
+                    <Pen className="w-3 h-3 sm:w-4 sm:h-4 text-purple-600 dark:text-purple-400" />
+                  </div>
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
