@@ -3,14 +3,12 @@ package com.hire_me.Ping.channels.controller;
 import com.hire_me.Ping.channels.dto.ChannelCreateRequest;
 import com.hire_me.Ping.channels.dto.ChannelResponse;
 import com.hire_me.Ping.channels.dto.ChannelUpdateRequest;
-import com.hire_me.Ping.channels.entity.Channel;
 import com.hire_me.Ping.channels.service.ChannelService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -36,8 +34,7 @@ public class ChannelController {
     }
 
     @PutMapping("/{channelId}")
-    public ResponseEntity<ChannelResponse> updateChannel(@PathVariable UUID channelId,
-            @Valid @RequestBody ChannelUpdateRequest updateRequest) {
+    public ResponseEntity<ChannelResponse> updateChannel(@PathVariable UUID channelId, @Valid @RequestBody ChannelUpdateRequest updateRequest) {
         return ResponseEntity.ok(channelService.updateChannel(channelId, updateRequest));
     }
 
@@ -46,14 +43,9 @@ public class ChannelController {
         channelService.deleteChannel(channelId);
         return ResponseEntity.noContent().build();
     }
-
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<ChannelResponse>> getUserChannels(@PathVariable UUID userId) {
-        return ResponseEntity.ok(channelService.getUserChannels(userId));
-    }
-
+    
     private UUID getAuthenticatedUserId() {
         // TODO: Replace with your actual security logic
-        return UUID.fromString("f47ac10b-58cc-4372-a567-0e02b2c3d479");
+        return UUID.fromString("f47ac10b-58cc-4372-a567-0e02b2c3d479"); 
     }
 }

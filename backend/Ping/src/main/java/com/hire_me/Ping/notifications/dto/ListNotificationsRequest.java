@@ -22,7 +22,7 @@ public record ListNotificationsRequest(
         OffsetDateTime cursorCreatedAt,
         UUID cursorId
 ) {
-    public enum Status { ALL, UNREAD }
+    public enum Status { UNREAD, ALL }
 
     public int safeLimit(int defaultValue, int max) {
         int d = (limit == null ? defaultValue : limit);

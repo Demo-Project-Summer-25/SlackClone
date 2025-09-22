@@ -18,5 +18,5 @@ public interface KanbanBoardRepository extends JpaRepository<KanbanBoard, UUID> 
             "columns.cards.priority",
             "columns.cards.assignments"
     })
-    Optional<KanbanBoard> findById(UUID id);
+    Optional<KanbanBoard> findWithDetailsById(UUID id);
 }

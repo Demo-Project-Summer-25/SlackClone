@@ -1,7 +1,6 @@
 package com.hire_me.Ping.notifications.controller;
 
 import java.security.Principal;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -54,31 +53,25 @@ public class NotificationController {
             @RequestParam(value = "unread", required = false) Boolean unread,
             @RequestParam(value = "limit", required = false) Integer limit
     ) {
-        try {
-            UUID userId = getCurrentUserId(principal);
-            
-            // Create the request object that your service expects
-            ListNotificationsRequest.Status status = (unread != null && unread) 
-                ? ListNotificationsRequest.Status.UNREAD 
+        UUID userId = getCurrentUserId(principal);
+
+        // Map boolean flag to our DTO enum
+        var status = (unread != null && unread)
+                ? ListNotificationsRequest.Status.UNREAD
                 : ListNotificationsRequest.Status.ALL;
-            
-            ListNotificationsRequest req = new ListNotificationsRequest(
-                status,              // Status
-                limit,               // Integer  
-                null,                // NotificationType (optional)
-                null,                // OffsetDateTime (optional)
-                null,                // OffsetDateTime (optional) 
-                null,                // OffsetDateTime (optional)
-                null                 // UUID (optional)
-            );
-            
-            // Use the correct method name
-            List<NotificationResponse> notifications = notificationService.listNotifications(userId, req);
-            return ResponseEntity.ok(notifications);
-        } catch (Exception e) {
-            // Return empty list if there's any error
-            return ResponseEntity.ok(new ArrayList<>());
-        }
+
+        ListNotificationsRequest req = new ListNotificationsRequest(
+                status,
+                limit,
+                null,   // type filter (not used in MVP)
+                null,   // since
+                null,   // before
+                null,   // cursorCreatedAt
+                null    // cursorId
+        );
+
+        List<NotificationResponse> items = notificationService.listNotifications(userId, req);
+        return ResponseEntity.ok(items);
     }
 
     // ---------------------------------------------------------
@@ -101,8 +94,8 @@ public class NotificationController {
 
     // ---------------------------------------------------------
     // POST /api/notifications/read-all
-    // Mark ALL unread notifications as read for this user.
-    // Returns 204 No Content.
+    // Mark ALL of the current user’s notifications as read.
+    // Returns 204 No Content always (even if none were unread).
     // ---------------------------------------------------------
     @PostMapping("/read-all")
     public ResponseEntity<Void> markAllAsRead(Principal principal) {
@@ -130,15 +123,6 @@ public class NotificationController {
     // - For now, we assume principal.getName() is a UUID string.
     // ---------------------------------------------------------
     private UUID getCurrentUserId(Principal principal) {
-        if (principal == null) {
-            // Return Alice's ID for testing when no authentication
-            return UUID.fromString("68973614-94db-4f98-9729-0712e0c5c0fa");
-        }
-        try {
-            return UUID.fromString(principal.getName());
-        } catch (IllegalArgumentException e) {
-            // Fallback to Alice's ID if principal.getName() isn't a valid UUID
-            return UUID.fromString("68973614-94db-4f98-9729-0712e0c5c0fa");
-        }
+        return UUID.fromString(principal.getName());
     }
 }

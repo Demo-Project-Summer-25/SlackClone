@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { userService } from '../../services/userService';
+import { UserService } from '../../services/userService';
 import { User } from '../../types/user';
 import { Badge } from '../ui/badge';
 import { useBots } from '../../hooks/useBots';
@@ -19,7 +19,7 @@ export const UserProfile = ({ userId, isOwnProfile = false }: UserProfileProps) 
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const userData = await userService.getUserById(userId);
+        const userData = await UserService.getUserById(userId);
         setUser(userData);
       } catch (err) {
         setError('Failed to load user');

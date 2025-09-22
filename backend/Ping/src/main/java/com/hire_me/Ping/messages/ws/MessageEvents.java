@@ -1,9 +1,6 @@
 package com.hire_me.Ping.messages.ws;
 
 import com.hire_me.Ping.messages.dto.MessageResponse;
-
-import java.util.UUID;
-
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
 
@@ -35,7 +32,7 @@ public class MessageEvents {
   }
 
   // Send message event to channel or DM subscribers
-  public void toChannel(UUID channelId, EventType type, MessageResponse msg) {
+  public void toChannel(Long channelId, EventType type, MessageResponse msg) {
     simp.convertAndSend("/topic/channels/" + channelId, new Payload(type, msg));
   }
 

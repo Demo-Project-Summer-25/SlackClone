@@ -6,8 +6,6 @@ import com.hire_me.Ping.messages.dto.MessageUpdateRequest;
 import com.hire_me.Ping.messages.entity.Message;
 import com.hire_me.Ping.messages.mapper.MessageMapper;
 import com.hire_me.Ping.messages.repository.MessageRepository;
-import com.hire_me.Ping.messages.ws.MessageEvents;
-
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +20,10 @@ public class MessageService {
 
   private final MessageRepository repository;
   private final MessageMapper mapper;
-  private final MessageEvents events;
 
-  public MessageService(MessageRepository repository, MessageMapper mapper, MessageEvents events) {
+  public MessageService(MessageRepository repository, MessageMapper mapper) {
     this.repository = repository;
     this.mapper = mapper;
-    this.events = events;
   }
 
   public static record PageParams(UUID after, int limit) {}
@@ -36,38 +32,21 @@ public class MessageService {
   // CHANNEL MESSAGE OPERATIONS
   // ===============================
 
-  // public List<MessageResponse> listChannel(UUID channelId, PageParams params) {
-  //   List<Message> messages;
-    
-  //   if (params.after() != null) {
-  //     messages = repository.findByChannelIdAndIdAfterOrderByCreatedAtDesc(
-  //         channelId, params.after(), PageRequest.of(0, params.limit()));
-  //   } else {
-  //     messages = repository.findByChannelIdOrderByCreatedAtDesc(
-  //         channelId, PageRequest.of(0, params.limit()));
-  //   }
-    
-  //   return messages.stream()
-  //       .map(mapper::toResponse)
-  //       .toList();
-  // }
-
   public List<MessageResponse> listChannel(UUID channelId, PageParams params) {
     List<Message> messages;
-
+    
     if (params.after() != null) {
-        messages = repository.findByChannelIdAndIdAfterOrderByCreatedAtAsc(
-            channelId, params.after(), PageRequest.of(0, params.limit()));
+      messages = repository.findByChannelIdAndIdAfterOrderByCreatedAtDesc(
+          channelId, params.after(), PageRequest.of(0, params.limit()));
     } else {
-        messages = repository.findByChannelIdOrderByCreatedAtAsc(
-            channelId, PageRequest.of(0, params.limit()));
+      messages = repository.findByChannelIdOrderByCreatedAtDesc(
+          channelId, PageRequest.of(0, params.limit()));
     }
-
+    
     return messages.stream()
         .map(mapper::toResponse)
         .toList();
-}
-
+  }
 
   public MessageResponse postToChannel(UUID channelId, MessageCreateRequest req) {
     if (req.senderUserId() == null) {
@@ -78,6 +57,7 @@ public class MessageService {
     }
     
     Message message = new Message();
+    message.setId(UUID.randomUUID());
     message.setChannelId(channelId);
     message.setSenderUserId(req.senderUserId());
     message.setContent(req.content().trim());
@@ -86,12 +66,7 @@ public class MessageService {
     message.setCreatedAt(Instant.now());  // Changed from LocalDateTime.now()
     
     Message saved = repository.save(message);
-    MessageResponse dto = mapper.toResponse(saved);
-
-    // 🔥 broadcast new message to subscribers
-    events.toChannel(channelId, MessageEvents.EventType.created, dto);
-
-    return dto;
+    return mapper.toResponse(saved);
   }
 
   // ===============================
@@ -123,6 +98,7 @@ public class MessageService {
     }
     
     Message message = new Message();
+    message.setId(UUID.randomUUID());
     message.setDirectConversationId(dmId);
     message.setSenderUserId(req.senderUserId());
     message.setContent(req.content().trim());
