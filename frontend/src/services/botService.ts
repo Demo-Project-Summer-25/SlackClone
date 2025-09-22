@@ -6,7 +6,7 @@ export interface ChatResponse {
 }
 
 export const botService = {
-  // Send message to PingBot AI
+  // Send message to Pong AI
   chatWithBot: async (message: string, userId?: string): Promise<string> => {
     try {
       console.log(' Sending to API:', { message, userId });

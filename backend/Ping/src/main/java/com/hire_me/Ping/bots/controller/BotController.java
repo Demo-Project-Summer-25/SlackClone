@@ -31,7 +31,7 @@ public class BotController {
     @GetMapping("/status")
     public ResponseEntity<String> getBotStatus() {
         System.out.println(" Bot status endpoint hit");
-        return ResponseEntity.ok("PingBot AI is online and ready to help! ");
+        return ResponseEntity.ok("Pong AI is online and ready to help! ");
     }
 
     // Debug endpoint to test if controller is working

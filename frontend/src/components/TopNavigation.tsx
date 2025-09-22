@@ -32,7 +32,7 @@ export function TopNavigation({
 
   const terminals = [
     { id: "1", name: "Zip Code Wilmington", type:"10.1", status: "Active" as const },
-    { id: "2", name: "JP Morgan", type: "New Job", status: "Inactive" as const },
+    { id: "2", name: "ZipCorp LLC", type: "New Job", status: "Inactive" as const },
   ];
   
   const tabs = [
