@@ -304,7 +304,7 @@ export function MainContent({
     if (!directories.length) {
       return (
         <div className={`p-3 sm:p-4 lg:p-6 ${isInSplitMode ? 'max-w-4xl mx-auto' : ''}`}>
-          <h2 className="text-xl sm:text-2xl lg:text-3xl mb-2">Directories</h2>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-2">Directories</h2>
           <p className="text-sm sm:text-base text-muted-foreground mb-4">Project channels and discussions</p>
           <div className="text-sm sm:text-base text-muted-foreground">You're not in any channels yet.</div>
         </div>
@@ -314,7 +314,7 @@ export function MainContent({
     return (
       <div className={`p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8 ${isInSplitMode ? 'max-w-4xl mx-auto' : ''}`}>
         <div className="mb-4 sm:mb-6 lg:mb-8">
-          <h2 className="text-xl sm:text-2xl lg:text-3xl mb-2">Directories</h2>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-2">Directories</h2>
           <p className="text-sm sm:text-base text-muted-foreground">Project channels and discussions</p>
         </div>
 
@@ -365,21 +365,20 @@ export function MainContent({
     if (isLoading) return <div className="p-3 sm:p-4 lg:p-6">Loading...</div>;
     if (!currentUser) return <div className="p-3 sm:p-4 lg:p-6">No profile found</div>;
 
-    // ✅ Show detailed profile page within the layout when showProfilePage is true
+    // ✅ Show detailed profile page - render with proper container styling for split mode
     if (showProfilePage) {
       return (
-        <div className="h-full">
-          <ProfilePage onClose={onCloseProfilePage ?? (() => {})} />
-
+        <div className={isInSplitMode ? 'max-w-4xl mx-auto' : ''}>
+          <ProfilePage onClose={onCloseProfilePage || (() => {})} />
         </div>
       );
     }
 
-    // ✅ Show profile summary (existing code)
+    // ✅ Show profile summary (rest remains the same)
     return (
       <div className={`p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8 ${isInSplitMode ? 'max-w-4xl mx-auto' : ''}`}>
         <div className="mb-4 sm:mb-6 lg:mb-8">
-          <h2 className="text-xl sm:text-2xl lg:text-3xl mb-2">Profile</h2>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-2">Profile</h2>
           <p className="text-sm sm:text-base text-muted-foreground">Manage your account and preferences</p>
         </div>
 
@@ -489,7 +488,7 @@ export function MainContent({
   const renderNotifications = () => (
     <div className={`p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8 ${isInSplitMode ? 'max-w-4xl mx-auto' : ''}`}>
       <div className="mb-4 sm:mb-6 lg:mb-8">
-        <h2 className="text-xl sm:text-2xl lg:text-3xl mb-2">Notifications</h2>
+        <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-2">Notifications</h2>
         <p className="text-sm sm:text-base text-muted-foreground">Stay updated with your team's activity</p>
       </div>
 

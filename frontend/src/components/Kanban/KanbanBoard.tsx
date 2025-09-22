@@ -7,7 +7,7 @@ import { Input } from '../ui/input';
 import { Textarea } from '../ui/textarea';
 import { Label } from '../ui/label';
 import { toast } from 'sonner';
-import { Plus, Trash2, Loader2, Edit, Calendar, MoreVertical } from 'lucide-react';
+import { Plus, Trash2, Loader2, Edit, Calendar, MoreVertical, Layout } from 'lucide-react';
 import KanbanService from '../../services/kanbanService';
 import { KanbanBoard as KanbanBoardType } from '../../types/kanban';
 
@@ -409,7 +409,7 @@ export function KanbanBoard({ isInSplitMode = false, currentUserId }: KanbanBoar
         <div className="mb-4 sm:mb-6 lg:mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl sm:text-2xl lg:text-3xl mb-2">BackLogs</h2>
+              <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-2">BackLogs</h2>
               <p className="text-sm sm:text-base text-muted-foreground">Organize your work with visual project boards</p>
             </div>
             <Button
@@ -511,7 +511,9 @@ export function KanbanBoard({ isInSplitMode = false, currentUserId }: KanbanBoar
                   ) : (
                     <>
                       {/* Board icon */}
-                      <div className="w-4 h-4 sm:w-5 sm:h-5 rounded bg-gradient-to-br from-green-500 to-blue-600 shrink-0 opacity-70"></div>
+                      <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700/50 flex items-center justify-center shrink-0">
+                        <Layout className="w-3 h-3 sm:w-4 sm:h-4 text-blue-600 dark:text-blue-400" />
+                      </div>
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">

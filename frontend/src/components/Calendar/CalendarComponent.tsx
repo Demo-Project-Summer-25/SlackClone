@@ -229,17 +229,24 @@ export function CalendarComponent({ isInSplitMode = false }: CalendarComponentPr
       const from = new Date(monthDate.getFullYear(), monthDate.getMonth(), 1).toISOString();
       const to = new Date(monthDate.getFullYear(), monthDate.getMonth() + 1, 1).toISOString();
       
-      // First, try to get existing calendar, only create if it doesn't exist
+      // Try to list events first - this will fail if no calendar exists
       try {
-        await calendarService.getMyCalendar(currentUser.id);
+        const events = await calendarService.listEvents(currentUser.id, from, to);
+        setEventsRaw(events);
       } catch (error) {
-        // Calendar doesn't exist, create it
-        console.log('Calendar not found, creating new one...');
-        await calendarService.createOrGetMyCalendar(currentUser.id);
+        // If listing events fails, check if it's a calendar-related error
+        const errorMessage = error instanceof Error ? error.message.toLowerCase() : '';
+        if (errorMessage.includes('calendar') || errorMessage.includes('not found') || errorMessage.includes('does not exist')) {
+          console.log('Calendar not found, creating new one...');
+          // Only create calendar if it doesn't exist
+          await calendarService.createOrGetMyCalendar(currentUser.id);
+          // Now try to fetch events again
+          const events = await calendarService.listEvents(currentUser.id, from, to);
+          setEventsRaw(events);
+        } else {
+          throw error; // Re-throw if it's a different error
+        }
       }
-      
-      const events = await calendarService.listEvents(currentUser.id, from, to);
-      setEventsRaw(events);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load events.";
       setEventsError(message);
@@ -270,8 +277,8 @@ export function CalendarComponent({ isInSplitMode = false }: CalendarComponentPr
     }
   };
 
-  const handleOpenAddEvent = () => {
-    const baseDay = selectedDate ?? today.getDate();
+  const handleOpenAddEvent = (preSelectedDay?: number) => {
+    const baseDay = preSelectedDay ?? selectedDate ?? today.getDate();
     const targetDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), baseDay);
     setNewEventForm({
       title: "",
@@ -465,6 +472,13 @@ export function CalendarComponent({ isInSplitMode = false }: CalendarComponentPr
     setSelectedDate(day);
     setDayDialogDay(day);
     setIsDayEventsOpen(true);
+    
+    // Pre-fill the date for new events
+    const targetDate = new Date(monthDate.getFullYear(), monthDate.getMonth(), day);
+    setNewEventForm(prev => ({
+      ...prev,
+      date: formatDateForInput(targetDate)
+    }));
   };
 
   // Color function that uses both visibility and event type
@@ -579,7 +593,7 @@ export function CalendarComponent({ isInSplitMode = false }: CalendarComponentPr
     <div className="p-4 sm:p-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
         <div>
-          <h2 className="text-2xl mb-2">Calendar</h2>
+          <h2 className="text-2xl font-semibold mb-2">Calendar</h2>
           <p className="text-muted-foreground">Manage your development schedule</p>
         </div>
         <div className="flex gap-2">
@@ -758,17 +772,45 @@ export function CalendarComponent({ isInSplitMode = false }: CalendarComponentPr
       <Dialog open={isDayEventsOpen} onOpenChange={setIsDayEventsOpen}>
         <DialogContent className="max-h-[70vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
-              {dayDialogDay !== null
-                ? `Events for ${monthShort} ${dayDialogDay}`
-                : "Events"}
-            </DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle>
+                {dayDialogDay !== null
+                  ? `Events for ${monthShort} ${dayDialogDay}`
+                  : "Events"}
+              </DialogTitle>
+              <Button
+                size="sm"
+                onClick={() => {
+                  setIsDayEventsOpen(false);
+                  handleOpenAddEvent(dayDialogDay || undefined);
+                }}
+                disabled={eventsLoading || submittingEvent || !currentUser}
+                className="gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Add Event
+              </Button>
+            </div>
           </DialogHeader>
           <div className="space-y-3">
             {eventsLoading ? (
               <p className="text-sm text-muted-foreground">Loading events…</p>
             ) : dayDialogEvents.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No events scheduled for this day.</p>
+              <div className="text-center py-8">
+                <p className="text-sm text-muted-foreground mb-4">No events scheduled for this day.</p>
+                <Button
+                  onClick={() => {
+                    setIsDayEventsOpen(false);
+                    handleOpenAddEvent(dayDialogDay || undefined);
+                  }}
+                  disabled={eventsLoading || submittingEvent || !currentUser}
+                  className="gap-2"
+                  size="sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  Add Your First Event
+                </Button>
+              </div>
             ) : (
               dayDialogEvents.map(event => {
                 const eventTypeId = extractEventType(event.description);

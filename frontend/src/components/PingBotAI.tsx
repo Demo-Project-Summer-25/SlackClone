@@ -94,7 +94,7 @@ export const PingBotAI: React.FC = () => {
       {/* Header - Remove max-w and mx-auto centering */}
       <div className="p-3 sm:p-4 md:p-5 lg:p-6 xl:p-8">
         <div className="mb-4 sm:mb-6 lg:mb-8">
-          <h2 className="text-xl sm:text-2xl lg:text-3xl mb-2">PingBot AI</h2>
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-semibold mb-2">PingBot AI</h2>
           <p className="text-sm sm:text-base text-muted-foreground">
             Hello! I'm Pingbot. Your personal coding assistant. What are we working on today?
           </p>
@@ -167,8 +167,8 @@ export const PingBotAI: React.FC = () => {
         </ScrollArea>
       </div>
 
-      {/* Input Area - Add padding here */}
-      <div className="px-3 sm:px-4 md:px-5 lg:px-6 xl:px-8 pb-3 sm:pb-4 md:pb-5 lg:pb-6 xl:pb-8">
+      {/* Input Area - Match other components' padding */}
+      <div className="shrink-0">
         <MessageInput
           message={inputMessage}
           onMessageChange={setInputMessage}

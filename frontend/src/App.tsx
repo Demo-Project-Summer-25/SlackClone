@@ -39,6 +39,7 @@ function AppContent() {
   const [splitScreenMode, setSplitScreenMode] = useState(true);
 
   const [activeDirectory, setActiveDirectory] = useState<{
+    id: string;
     name: string;
     description: string;
     memberCount: number;
@@ -71,7 +72,7 @@ function AppContent() {
   };
 
   // Handle terminal selection - just show a toast notification for now
-  const handleTerminalSelect = (terminal: { id: string; name: string; type: string; status: "running" | "paused" }) => {
+  const handleTerminalSelect = (terminal: { id: string; name: string; type: string; status: "Active" | "Inactive" }) => {
     toast(`Selected terminal: ${terminal.name} (${terminal.status})`);
   };
 
@@ -335,12 +336,11 @@ function AppContent() {
           )}
         </div>
 
-        {/* ✅ Developer sidebar only shows when profile page is not open */}
-        {!showProfilePage && showDeveloperSidebar && (
+        {/* ✅ Developer sidebar should always be visible when showDeveloperSidebar is true */}
+        {showDeveloperSidebar && (
           <DeveloperSidebar 
             activeTool={activeTool}
             onToolChange={handleToolChange}
-            onClose={() => setShowDeveloperSidebar(false)}
           />
         )}
       </div>
