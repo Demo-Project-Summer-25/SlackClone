@@ -30,7 +30,7 @@ export function DeveloperSidebar({ activeTool, onToolChange }: DeveloperSidebarP
     { id: "kanban", label: "BackLog", icon: Kanban },
     { id: "canvas", label: "WireFrame", icon: Network },
     { id: "calendar", label: "Calendar", icon: Calendar },
-    { id: "ai", label: "PingBot AI", icon: Bot },
+    { id: "ai", label: "Pong AI", icon: Bot },
     
   ];
 
