@@ -599,7 +599,7 @@ export function CalendarComponent({ isInSplitMode = false }: CalendarComponentPr
         <div className="flex gap-2">
           <Button
             size="sm"
-            onClick={handleOpenAddEvent}
+             onClick={handleOpenAddEvent}
             disabled={eventsLoading || submittingEvent || !currentUser}
           >
             <Plus className="w-4 h-4 mr-2" />
