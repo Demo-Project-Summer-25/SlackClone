@@ -29,11 +29,11 @@ interface NotificationCounts {
 function AppContent() {
   // Default to notifications tab
   const [activeTab, setActiveTab] = useState("notifications");
-  // Default to AI bot on the right
-  const [activeTool, setActiveTool] = useState("ai");
+  // Default to Calendar bot on the right
+  const [activeTool, setActiveTool] = useState("calendar");
   const [showDeveloperSidebar, setShowDeveloperSidebar] = useState(true);
   const [showMainContent, setShowMainContent] = useState(true);
-  // Default to showing dev tools (AI bot) on the right
+  // Default to showing dev tools (Calendar bot) on the right
   const [showDevTools, setShowDevTools] = useState(true);
   // Default to split screen mode
   const [splitScreenMode, setSplitScreenMode] = useState(true);
@@ -65,7 +65,7 @@ function AppContent() {
       // When enabling split screen, show both panels
       setShowDevTools(true);
       setShowMainContent(true);
-      setActiveTool("ai");
+      setActiveTool("calendar");
     }
     // When disabling split screen, keep current state but they'll be mutually exclusive
   };
