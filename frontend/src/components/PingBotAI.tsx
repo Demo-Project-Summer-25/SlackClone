@@ -151,7 +151,7 @@ export const PongAI: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
-      content: "Hey! I'm **Pong**, your AI coding companion. I can help with:\n\n- Code explanations and debugging\n- Architecture decisions\n- Best practices\n- Framework questions\n\nWhat are you working on today? 🚀",
+      content: "I can help with:\n\n- Code explanations and debugging\n- Architecture decisions\n- Best practices\n- Framework questions\n\nWhat are you working on today? ",
       isUser: false,
       timestamp: Date.now(),
     }
@@ -202,7 +202,7 @@ export const PongAI: React.FC = () => {
 
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: "Sorry, I'm having trouble connecting right now. Please try again! 🔧",
+        content: "Sorry, I'm having trouble connecting right now. Please try again! ",
         isUser: false,
         timestamp: Date.now(),
       };
