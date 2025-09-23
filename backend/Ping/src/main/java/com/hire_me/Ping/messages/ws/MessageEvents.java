@@ -40,7 +40,7 @@ public class MessageEvents {
   }
 
   // Send message event to channel or DM subscribers
-  public void toDm(Long dmId, EventType type, MessageResponse msg) {
+  public void toDm(UUID dmId, EventType type, MessageResponse msg) {
     simp.convertAndSend("/topic/dms/" + dmId, new Payload(type, msg));
   }
 }

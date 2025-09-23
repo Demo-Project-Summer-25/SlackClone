@@ -39,10 +39,10 @@ interface DeveloperToolsContentProps {
 }
 
 export function DeveloperToolsContent({ activeTool, isInSplitMode = true }: DeveloperToolsContentProps) {
-  const { user } = useAuth();
+  const { currentUser } = useAuth();
   
   // Use the actual user ID from auth, fallback to Jennifer's ID
-  const currentUserId = user?.id || '68973614-94db-4f98-9729-0712e0c5c0fa';
+  const currentUserId = currentUser?.id || '68973614-94db-4f98-9729-0712e0c5c0fa';
 
   // Canvas state for wireframes
   const [selectedCanvas, setSelectedCanvas] = useState<Canvas | null>(null);
