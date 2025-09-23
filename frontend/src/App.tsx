@@ -5,6 +5,7 @@ import { MainContent } from "./components/MainContent";
 import { DeveloperToolsContent } from "./components/DeveloperToolsContent";
 import { ThemeProvider } from "./components/ThemeProvider";
 import { Button } from "./components/ui/button";
+import { useAuth } from "./hooks/useAuth";
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "./components/ui/resizable";
 import { Toaster } from "./components/ui/sonner";
 import { toast } from "sonner";
@@ -29,14 +30,15 @@ interface NotificationCounts {
 function AppContent() {
   // Default to notifications tab
   const [activeTab, setActiveTab] = useState("notifications");
-  // Default to Calendar bot on the right
-  const [activeTool, setActiveTool] = useState("calendar");
+  // Default to AI bot on the right
+  const [activeTool, setActiveTool] = useState("ai");
   const [showDeveloperSidebar, setShowDeveloperSidebar] = useState(true);
   const [showMainContent, setShowMainContent] = useState(true);
-  // Default to showing dev tools (Calendar bot) on the right
+  // Default to showing dev tools (AI bot) on the right
   const [showDevTools, setShowDevTools] = useState(true);
   // Default to split screen mode
   const [splitScreenMode, setSplitScreenMode] = useState(true);
+  const { currentUser } = useAuth();
 
   const [activeDirectory, setActiveDirectory] = useState<{
     name: string;
@@ -65,7 +67,7 @@ function AppContent() {
       // When enabling split screen, show both panels
       setShowDevTools(true);
       setShowMainContent(true);
-      setActiveTool("calendar");
+      setActiveTool("ai");
     }
     // When disabling split screen, keep current state but they'll be mutually exclusive
   };
@@ -145,7 +147,9 @@ function AppContent() {
   };
 
   // Use Alice's actual ID from import.sql
-  const currentUserId = '68973614-94db-4f98-9729-0712e0c5c0fa';
+  // const currentUserId = '68973614-94db-4f98-9729-0712e0c5c0fa';
+  const currentUserId = currentUser?.id;
+  // const currentUserId = currentUser?.id;
 
   // ✅ Add function to fetch notifications at App level
   const fetchNotifications = () => {

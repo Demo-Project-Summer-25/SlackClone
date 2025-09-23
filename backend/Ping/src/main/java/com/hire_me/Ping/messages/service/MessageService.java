@@ -131,7 +131,12 @@ public class MessageService {
     message.setCreatedAt(Instant.now());  // Changed from LocalDateTime.now()
     
     Message saved = repository.save(message);
-    return mapper.toResponse(saved);
+    MessageResponse dto = mapper.toResponse(saved);
+
+    // 🔥 broadcast new DM message
+    events.toDm(dmId, MessageEvents.EventType.created, dto);
+
+    return dto;
   }
 
   // ===============================
