@@ -94,12 +94,12 @@ class NotificationServiceTest {
     void markAsRead_updatesOneRow() {
         UUID user = UUID.randomUUID();
         UUID id = UUID.randomUUID();
-        when(repo.markAsRead(eq(id), eq(user), any())).thenReturn(1);
+        when(repo.markAsRead(eq(id), eq(user), any(), null)).thenReturn(1);
 
         boolean ok = service.markAsRead(user, id);
         assertThat(ok).isTrue();
 
-        when(repo.markAsRead(eq(id), eq(user), any())).thenReturn(0);
+        when(repo.markAsRead(eq(id), eq(user), any(), null)).thenReturn(0);
         assertThat(service.markAsRead(user, id)).isFalse();
     }
 }
