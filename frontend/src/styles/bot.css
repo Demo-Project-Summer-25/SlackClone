@@ -57,3 +57,87 @@
   background-color: #1f2937 !important;
   color: #ffffff !important;
 }
+
+/* Markdown styling for Pong AI */
+.prose {
+  color: inherit;
+}
+
+.prose h1, .prose h2, .prose h3, .prose h4, .prose h5, .prose h6 {
+  color: inherit;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose p {
+  margin-bottom: 0.75rem;
+}
+
+.prose ul, .prose ol {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+}
+
+.prose li {
+  margin-bottom: 0.25rem;
+}
+
+.prose code {
+  background-color: var(--muted);
+  padding: 0.125rem 0.375rem;
+  border-radius: 0.25rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.875em;
+}
+
+.prose pre {
+  background-color: var(--muted);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.prose pre code {
+  background-color: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+.prose blockquote {
+  border-left: 4px solid var(--primary);
+  margin: 1rem 0;
+  padding-left: 1rem;
+  font-style: italic;
+  color: var(--muted-foreground);
+}
+
+.prose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+}
+
+.prose th, .prose td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.prose th {
+  background-color: var(--muted);
+  font-weight: 600;
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .hljs {
+  background: var(--muted) !important;
+  color: var(--foreground) !important;
+}
+
+[data-theme="light"] .hljs {
+  background: var(--muted) !important;
+  color: var(--foreground) !important;
+}
