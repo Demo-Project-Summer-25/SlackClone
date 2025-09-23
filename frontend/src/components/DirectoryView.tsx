@@ -147,16 +147,16 @@ export function DirectoryView({
 
   // Fallback fetch for unknown senders
   const fetchUserIfMissing = async (userId: string) => {
-    if (!userId || userMap[userId]) return;
-    try {
-      const res = await fetch(`/api/users/${userId}`);
-      if (res.ok) {
-        const fetchedUser = await res.json();
-        setUserMap((prev) => ({ ...prev, [fetchedUser.id]: fetchedUser }));
-      }
-    } catch (e) {
-      console.error("Failed to fetch user", e);
-    }
+    // if (!userId || userMap[userId]) return;
+    // try {
+    //   const res = await fetch(`/api/users/${userId}`);
+    //   if (res.ok) {
+    //     const fetchedUser = await res.json();
+    //     setUserMap((prev) => ({ ...prev, [fetchedUser.id]: fetchedUser }));
+    //   }
+    // } catch (e) {
+    //   console.error("Failed to fetch user", e);
+    // }
   };
 
   const sendMessage = async () => {
