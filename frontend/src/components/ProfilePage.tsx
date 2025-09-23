@@ -28,7 +28,7 @@ export function ProfilePage({ onClose }: ProfilePageProps) {
     phone: "",
     location: "Wilmington, Delaware",
     timezone: "EST",
-    bio: "Hire me!",
+    bio: "Open to work. Hire me!",
     pronouns: "she/her"
   });
 
