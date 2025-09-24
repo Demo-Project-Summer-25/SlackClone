@@ -260,9 +260,9 @@ INSERT INTO calendars (id, owner_id, default_timezone, default_reminder_minutes)
 
 INSERT INTO calendars (id, owner_id, default_timezone, default_reminder_minutes) VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '3be336ff-fa43-4f51-baab-0f05457184ef', 'America/New_York', 15);
 
--- Add some sample calendar events
-INSERT INTO calendar_events (id, calendar_id, title, description, start_time, end_time, all_day, location, event_type, reminder_minutes) VALUES ('event001-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'Daily Standup', 'Team standup meeting', '2025-09-23T14:00:00Z', '2025-09-23T14:30:00Z', false, 'Conference Room A', 'MEETING', 10);
+-- -- Add some sample calendar events
+-- INSERT INTO calendar_events (id, calendar_id, title, description, start_time, end_time, all_day, location, event_type, reminder_minutes) VALUES ('event001-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'Daily Standup', 'Team standup meeting', '2025-09-23T14:00:00Z', '2025-09-23T14:30:00Z', false, 'Conference Room A', 'MEETING', 10);
 
-INSERT INTO calendar_events (id, calendar_id, title, description, start_time, end_time, all_day, location, event_type, reminder_minutes) VALUES ('event002-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'Spring Boot Lab', 'Lab session on JPA relationships', '2025-09-24T18:00:00Z', '2025-09-24T21:00:00Z', false, 'Classroom 101', 'CLASS', 15);
+-- INSERT INTO calendar_events (id, calendar_id, title, description, start_time, end_time, all_day, location, event_type, reminder_minutes) VALUES ('event002-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'Spring Boot Lab', 'Lab session on JPA relationships', '2025-09-24T18:00:00Z', '2025-09-24T21:00:00Z', false, 'Classroom 101', 'CLASS', 15);
 
-INSERT INTO calendar_events (id, calendar_id, title, description, start_time, end_time, all_day, location, event_type, reminder_minutes) VALUES ('event003-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'Demo Day Prep', 'Prepare presentation for demo day', '2025-09-25T19:00:00Z', '2025-09-25T20:30:00Z', false, 'Study Room B', 'TASK', 30);
+-- INSERT INTO calendar_events (id, calendar_id, title, description, start_time, end_time, all_day, location, event_type, reminder_minutes) VALUES ('event003-1111-1111-1111-111111111111', '11111111-1111-1111-1111-111111111111', 'Demo Day Prep', 'Prepare presentation for demo day', '2025-09-25T19:00:00Z', '2025-09-25T20:30:00Z', false, 'Study Room B', 'TASK', 30);
