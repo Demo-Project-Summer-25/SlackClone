@@ -24,27 +24,27 @@ export interface UpdateCanvasRequest {
 export const canvasService = {
   // Get all canvases
   getCanvases: async (): Promise<Canvas[]> => {
-    return apiService.get<Canvas[]>('/canvases');  
+    return apiService.get<Canvas[]>('/api/canvases');  
   },
 
   // Get a specific canvas
   getCanvas: async (id: string): Promise<Canvas> => {
-    return apiService.get<Canvas>(`/canvases/${id}`);  
+    return apiService.get<Canvas>(`/api/canvases/${id}`);  
   },
 
   // Create a new canvas
   createCanvas: async (data: CreateCanvasRequest, userId: string): Promise<Canvas> => {
    
-    return apiService.post<Canvas>(`/canvases?createdByUserId=${userId}`, data);  
+    return apiService.post<Canvas>(`/api/canvases?createdByUserId=${userId}`, data);  
   },
 
   // Update a canvas
   updateCanvas: async (id: string, canvas: UpdateCanvasRequest): Promise<Canvas> => {
-    return apiService.put<Canvas>(`/canvases/${id}`, canvas);  
+    return apiService.put<Canvas>(`/api/canvases/${id}`, canvas);  
   },
 
   // Delete a canvas
   deleteCanvas: async (id: string): Promise<void> => {
-    return apiService.delete<void>(`/canvases/${id}`);
+    return apiService.delete<void>(`/api/canvases/${id}`);
   },
 };

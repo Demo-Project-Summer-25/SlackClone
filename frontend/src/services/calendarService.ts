@@ -51,27 +51,27 @@ const withUserId = (path: string, userId: string) => {
 
 export const calendarService = {
   async createOrGetMyCalendar(userId: string): Promise<CalendarBootstrap> {
-    return apiService.post<CalendarBootstrap>(withUserId('/calendars/me', userId));
+    return apiService.post<CalendarBootstrap>(withUserId('/api/calendars/me', userId));
   },
 
   async getMyCalendar(userId: string): Promise<CalendarInfo> {
-    return apiService.get<CalendarInfo>(withUserId('/calendars/me', userId));
+    return apiService.get<CalendarInfo>(withUserId('/api/calendars/me', userId));
   },
 
   async listEvents(userId: string, from: string, to: string): Promise<EventResponse[]> {
     const query = apiService.buildQueryString({ from, to, userId });
-    return apiService.get<EventResponse[]>(`/calendar/events${query}`);
+    return apiService.get<EventResponse[]>(`/api/calendar/events${query}`);
   },
 
   async createEvent(userId: string, payload: EventCreateRequest): Promise<EventResponse> {
-    return apiService.post<EventResponse>(withUserId('/calendar/events', userId), payload);
+    return apiService.post<EventResponse>(withUserId('/api/calendar/events', userId), payload);
   },
 
   async deleteEvent(userId: string, eventId: string): Promise<void> {
-    return apiService.delete<void>(withUserId(`/calendar/events/${eventId}`, userId));
+    return apiService.delete<void>(withUserId(`/api/calendar/events/${eventId}`, userId));
   },
 
   async updateEvent(userId: string, eventId: string, payload: EventUpdateRequest): Promise<EventResponse> {
-    return apiService.patch<EventResponse>(withUserId(`/calendar/events/${eventId}`, userId), payload);
+    return apiService.patch<EventResponse>(withUserId(`/api/calendar/events/${eventId}`, userId), payload);
   },
 };

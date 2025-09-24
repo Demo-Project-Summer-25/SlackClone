@@ -4,21 +4,21 @@ import { apiService } from '../services/api'; // ✅ Changed from apiService to 
 export const userService = {
   // GET /api/users/{id}
   async getUserById(id: string): Promise<User> {
-    return apiService.get<User>(`/users/${id}`); // ✅ Changed to ApiService
+    return apiService.get<User>(`/api/users/${id}`); // ✅ Changed to ApiService
   },
 
   // GET /api/users/
   async getAllUsers(): Promise<User[]> {
-    return apiService.get<User[]>('/users'); // ✅ Changed to ApiService
+    return apiService.get<User[]>('/api/users'); // ✅ Changed to ApiService
   },
 
   // PUT /api/users/{id}
   async updateUser(id: string, updates: UserUpdateRequest): Promise<User> {
-    return apiService.put<User>(`/users/${id}`, updates); // ✅ Changed to ApiService
+    return apiService.put<User>(`/api/users/${id}`, updates); // ✅ Changed to ApiService
   },
 
   // DELETE /api/users/{id}
   async deleteUser(id: string): Promise<void> {
-    return apiService.delete<void>(`/users/${id}`); // ✅ Changed to ApiService
+    return apiService.delete<void>(`/api/users/${id}`); // ✅ Changed to ApiService
   }
 };

@@ -153,7 +153,7 @@ function AppContent() {
 
   // ✅ Add function to fetch notifications at App level
   const fetchNotifications = () => {
-    fetch(`http://localhost:8080/api/notifications?userId=${currentUserId}`)
+    fetch(`https://pingandpong.up.railway.app/api/notifications?userId=${currentUserId}`)
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();

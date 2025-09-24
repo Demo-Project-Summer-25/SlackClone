@@ -57,7 +57,7 @@ export default defineConfig({
     open: true,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        target: 'https://pingandpong.up.railway.app',
         changeOrigin: true,
       },
     },

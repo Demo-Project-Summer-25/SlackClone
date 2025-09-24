@@ -21,7 +21,7 @@ export class dmService {
   static async getDmsForUser(userId: string): Promise<DmResponse[]> {
     try {
       console.log(`Fetching DMs for user: ${userId}`);
-      const result = await apiService.get<DmResponse[]>(`/dms/user/${userId}`);
+      const result = await apiService.get<DmResponse[]>(`/api/dms/user/${userId}`);
       console.log('DMs fetched successfully:', result);
       return result;
     } catch (error) {
@@ -37,7 +37,7 @@ export class dmService {
   static async getDm(dmId: string): Promise<DmResponse> {
     try {
       console.log(`Fetching DM: ${dmId}`);
-      const result = await apiService.get<DmResponse>(`/dms/${dmId}`);
+      const result = await apiService.get<DmResponse>(`/api/dms/${dmId}`);
       console.log('DM fetched successfully:', result);
       return result;
     } catch (error) {
@@ -53,7 +53,7 @@ export class dmService {
   static async createDm(request: DmCreateRequest): Promise<DmResponse> {
     try {
       console.log('Creating DM:', request);
-      const result = await apiService.post<DmResponse>('/dms', request);
+      const result = await apiService.post<DmResponse>('/api/dms', request);
       console.log('DM created successfully:', result);
       return result;
     } catch (error) {
@@ -72,7 +72,7 @@ export class dmService {
   ): Promise<DmParticipantResponse> {
     try {
       console.log(`Adding participant to DM ${dmId}:`, request);
-      const result = await apiService.post<DmParticipantResponse>(`/dms/${dmId}/participants`, request);
+      const result = await apiService.post<DmParticipantResponse>(`/api/dms/${dmId}/participants`, request);
       console.log('Participant added successfully:', result);
       return result;
     } catch (error) {
@@ -88,7 +88,7 @@ export class dmService {
   static async removeParticipant(dmId: string, userId: string): Promise<void> {
     try {
       console.log(`Removing participant ${userId} from DM ${dmId}`);
-      await apiService.delete<void>(`/dms/${dmId}/participants/${userId}`);
+      await apiService.delete<void>(`/api/dms/${dmId}/participants/${userId}`);
       console.log('Participant removed successfully');
     } catch (error) {
       console.error('Failed to remove participant:', dmId, userId, error);

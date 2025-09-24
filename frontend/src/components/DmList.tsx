@@ -91,7 +91,7 @@ export function DmList({
     
     for (const notification of dmNotifications) {
       try {
-        await fetch(`http://localhost:8080/api/notifications/${notification.id}/read`, {
+        await fetch(`https://pingandpong.up.railway.app/api/notifications/${notification.id}/read`, {
           method: 'POST',
         });
       } catch (error) {

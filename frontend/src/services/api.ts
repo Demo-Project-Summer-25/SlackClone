@@ -1,7 +1,7 @@
 import { config } from '../config/environment';
 
 // Make sure your API_BASE_URL is correct
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = 'https://pingandpong.up.railway.app';
 
 class ApiService {
   private baseURL = API_BASE_URL;

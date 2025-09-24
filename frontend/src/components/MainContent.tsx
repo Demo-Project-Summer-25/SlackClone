@@ -120,7 +120,7 @@ export function MainContent({
 
   const markNotificationAsRead = async (notificationId: string) => {
     try {
-      await fetch(`http://localhost:8080/api/notifications/${notificationId}/read`, {
+      await fetch(`https://pingandpong.up.railway.app/api/notifications/${notificationId}/read`, {
         method: 'POST',
       });
       
@@ -140,7 +140,7 @@ export function MainContent({
       return;
     }
     
-    fetch("http://localhost:8080/api/notifications")
+    fetch("https://pingandpong.up.railway.app/api/notifications")
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();

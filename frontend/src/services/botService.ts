@@ -17,7 +17,7 @@ export const botService = {
       };
       
       // Use the singleton apiService instance
-      const response = await apiService.post<ChatResponse>(`/bots/chat`, requestBody);
+      const response = await apiService.post<ChatResponse>(`/api/bots/chat`, requestBody);
       
       console.log(' API Response:', response);
       
@@ -43,7 +43,7 @@ export const botService = {
 
   getBotStatus: async (): Promise<string> => {
     try {
-      return await apiService.get<string>('/bots/status');
+      return await apiService.get<string>('/api/bots/status');
     } catch (error) {
       console.error(' Status Error:', error);
       return 'Offline';
@@ -52,7 +52,7 @@ export const botService = {
 
   testBot: async (): Promise<string> => {
     try {
-      return await apiService.get<string>('/bots/test');
+      return await apiService.get<string>('/api/bots/test');
     } catch (error) {
       console.error(' Test Error:', error);
       return 'Test failed';

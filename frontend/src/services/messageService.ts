@@ -22,7 +22,7 @@ export class MessageService {
     const queryString = apiService.buildQueryString({ limit, ...otherParams });
     
     // ✅ Fix: Use instance method for get
-    return apiService.get<MessageResponse[]>(`/channels/${channelId}/messages${queryString}`);
+    return apiService.get<MessageResponse[]>(`/api/channels/${channelId}/messages${queryString}`);
   }
 
   /**
@@ -33,7 +33,7 @@ export class MessageService {
     request: MessageCreateRequest
   ): Promise<MessageResponse> {
     // ✅ Fix: Use instance method
-    return apiService.post<MessageResponse>(`/channels/${channelId}/messages`, request);
+    return apiService.post<MessageResponse>(`/api/channels/${channelId}/messages`, request);
   }
 
   /**
@@ -44,7 +44,7 @@ export class MessageService {
     messageId: string
   ): Promise<MessageResponse> {
     // ✅ Fix: Use instance method
-    return apiService.get<MessageResponse>(`/channels/${channelId}/messages/${messageId}`);
+    return apiService.get<MessageResponse>(`/api/channels/${channelId}/messages/${messageId}`);
   }
 
   // ===============================
@@ -63,7 +63,7 @@ export class MessageService {
       // ✅ Fix: Use instance method for buildQueryString
       const queryString = apiService.buildQueryString(params);
       // ✅ Fix: Use instance method for get
-      const result = await apiService.get<MessageResponse[]>(`/dms/${dmId}/messages${queryString}`);
+      const result = await apiService.get<MessageResponse[]>(`/api/dms/${dmId}/messages${queryString}`);
       console.log('DM messages fetched successfully:', result);
       return result;
     } catch (error) {
@@ -82,7 +82,7 @@ export class MessageService {
     try {
       console.log(`Sending message to DM ${dmId}:`, request);
       // ✅ Fix: Use instance method
-      const result = await apiService.post<MessageResponse>(`/dms/${dmId}/messages`, request);
+      const result = await apiService.post<MessageResponse>(`/api/dms/${dmId}/messages`, request);
       console.log('Message sent successfully:', result);
       return result;
     } catch (error) {
@@ -101,7 +101,7 @@ export class MessageService {
     try {
       console.log(`Updating message ${messageId}:`, request);
       // ✅ Fix: Use instance method
-      const result = await apiService.put<MessageResponse>(`/messages/${messageId}`, request);
+      const result = await apiService.put<MessageResponse>(`/api/messages/${messageId}`, request);
       console.log('Message updated successfully:', result);
       return result;
     } catch (error) {
@@ -117,7 +117,7 @@ export class MessageService {
     try {
       console.log(`Deleting message: ${messageId}`);
       // ✅ Fix: Use instance method
-      await apiService.delete<void>(`/messages/${messageId}`);
+      await apiService.delete<void>(`/api/messages/${messageId}`);
       console.log('Message deleted successfully');
     } catch (error) {
       console.error('Failed to delete message:', messageId, error);

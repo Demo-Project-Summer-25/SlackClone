@@ -347,7 +347,7 @@ export function DirectMessageChat({ dmId, currentUserId, onBack }: DirectMessage
     if (!dmId) return;
 
     const client = new Client({
-      brokerURL: "ws://localhost:8080/ws",
+      brokerURL: "wss://pingandpong.up.railway.app/ws",
       reconnectDelay: 5000,
     });
 
